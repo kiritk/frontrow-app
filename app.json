@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Front Row",
+    "slug": "frontrow",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F5F0E6"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.frontrow.live"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F5F0E6"
+      }
+    },
+    "plugins": [
+      "expo-asset",
+      "expo-font",
+      "@react-native-community/datetimepicker"
+    ]
+  }
+}
