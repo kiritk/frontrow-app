@@ -87,7 +87,6 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
 
   const { month, day, year } = formatDate(event.date);
   const cardStyle = getCardStyle();
-  const hasUserPhoto = event.photos && event.photos.length > 0;
 
   // Check if this is an NFL game with team data
   const isNFLGame = event.sport === 'nfl' && event.home_team && event.away_team;
@@ -96,8 +95,8 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
 
   // Get the background image source for concerts
   const getConcertBackground = () => {
-    if (hasUserPhoto) {
-      return { uri: event.photos![0] };
+    if (event.photos && event.photos.length > 0) {
+      return { uri: event.photos[0] };
     }
     return require('../../assets/images/concert_bg.png');
   };
@@ -108,52 +107,43 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
       <View style={[styles.perforationLeft, { top: PERFORATION_TOP }]} />
       <View style={[styles.perforationRight, { top: PERFORATION_TOP }]} />
 
-      <LinearGradient
-        colors={cardStyle.gradientColors}
-        style={styles.nflGradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+      {/* Stadium background image */}
+      <ImageBackground 
+        source={homeTeam?.stadiumImage}
+        style={styles.nflBackground}
+        imageStyle={styles.nflBackgroundImage}
       >
-        {/* Stadium background if user uploaded photo */}
-        {hasUserPhoto && (
-          <ImageBackground 
-            source={{ uri: event.photos![0] }}
-            style={styles.nflBackgroundImage}
-            imageStyle={styles.nflBackgroundImageStyle}
-          >
-            <LinearGradient
-              colors={['rgba(42, 26, 58, 0.3)', 'rgba(42, 26, 58, 0.7)', 'rgba(42, 26, 58, 0.95)']}
-              style={StyleSheet.absoluteFill}
-            />
-          </ImageBackground>
-        )}
-
-        {/* Team logos section */}
-        <View style={styles.nflTeamsContainer}>
-          {homeTeam && (
-            <Image source={homeTeam.logo} style={styles.nflTeamLogo} />
-          )}
-          <Text style={styles.nflVsText}>vs</Text>
-          {awayTeam && (
-            <Image source={awayTeam.logo} style={styles.nflTeamLogo} />
-          )}
-        </View>
-
-        {/* Bottom info */}
-        <View style={styles.nflInfoSection}>
-          <View style={[styles.datePill, { borderColor: cardStyle.accentColor }]}>
-            <Text style={[styles.datePillMonth, { color: cardStyle.accentColor }]}>{month} {day}</Text>
-            <Text style={[styles.datePillYear, { color: cardStyle.accentColor + 'CC' }]}>{year}</Text>
+        <LinearGradient
+          colors={['rgba(42, 26, 58, 0.4)', 'rgba(42, 26, 58, 0.7)', 'rgba(42, 26, 58, 0.95)']}
+          style={styles.nflGradientOverlay}
+        >
+          {/* Team logos section */}
+          <View style={styles.nflTeamsContainer}>
+            {homeTeam && (
+              <Image source={homeTeam.logo} style={styles.nflTeamLogo} />
+            )}
+            <Text style={styles.nflVsText}>vs</Text>
+            {awayTeam && (
+              <Image source={awayTeam.logo} style={styles.nflTeamLogo} />
+            )}
           </View>
 
-          <View style={styles.venueSection}>
-            <Ionicons name="location-outline" size={12} color={cardStyle.accentColor} />
-            <Text style={[styles.venueText, { color: cardStyle.accentColor }]} numberOfLines={2}>
-              {event.venue}
-            </Text>
+          {/* Bottom info */}
+          <View style={styles.nflInfoSection}>
+            <View style={[styles.datePill, { borderColor: cardStyle.accentColor }]}>
+              <Text style={[styles.datePillMonth, { color: cardStyle.accentColor }]}>{month} {day}</Text>
+              <Text style={[styles.datePillYear, { color: cardStyle.accentColor + 'CC' }]}>{year}</Text>
+            </View>
+
+            <View style={styles.venueSection}>
+              <Ionicons name="location-outline" size={12} color={cardStyle.accentColor} />
+              <Text style={[styles.venueText, { color: cardStyle.accentColor }]} numberOfLines={2}>
+                {event.venue}
+              </Text>
+            </View>
           </View>
-        </View>
-      </LinearGradient>
+        </LinearGradient>
+      </ImageBackground>
     </View>
   );
 
@@ -218,9 +208,9 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
       >
         {/* Image area */}
         <View style={styles.defaultImageArea}>
-          {hasUserPhoto ? (
+          {event.photos && event.photos.length > 0 ? (
             <ImageBackground 
-              source={{ uri: event.photos![0] }} 
+              source={{ uri: event.photos[0] }} 
               style={styles.defaultImageBg}
               imageStyle={{ borderRadius: 8 }}
             >
@@ -237,7 +227,7 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
         </View>
 
         {/* Title if has photo */}
-        {hasUserPhoto && (
+        {event.photos && event.photos.length > 0 && (
           <Text style={styles.defaultTitleWithPhoto} numberOfLines={2}>
             {event.title.toUpperCase()}
           </Text>
@@ -315,17 +305,16 @@ const styles = StyleSheet.create({
   },
 
   // NFL card styles
-  nflGradient: {
+  nflBackground: {
+    flex: 1,
+  },
+  nflBackgroundImage: {
+    resizeMode: 'cover',
+  },
+  nflGradientOverlay: {
     flex: 1,
     padding: 12,
     justifyContent: 'space-between',
-  },
-  nflBackgroundImage: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  nflBackgroundImageStyle: {
-    resizeMode: 'cover',
-    opacity: 0.6,
   },
   nflTeamsContainer: {
     flex: 1,
