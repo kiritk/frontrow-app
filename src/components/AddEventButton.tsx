@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, TouchableOpacity, Modal, TextInput,
   ScrollView, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -36,6 +36,7 @@ type Step = 'type' | 'sport-type' | 'details' | 'photos';
 
 export default function AddEventButton({ onEventAdded }: { onEventAdded: () => void }) {
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<Step>('type');
@@ -158,21 +159,11 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
 
       console.log('Event created successfully:', data);
       
-      // Close modal first
       setModalVisible(false);
       resetForm();
       
-      // Then refresh the list
-      console.log('Calling onEventAdded to refresh list...');
       await onEventAdded();
       
-      // Show success message
-      if (Platform.OS === 'web') {
-        // Don't use alert on web, it's disruptive
-        console.log('Event added successfully!');
-      } else {
-        Alert.alert('Success', 'Event added to your collection!');
-      }
     } catch (e: any) {
       console.error('Error creating event:', e);
       Alert.alert('Error', e.message || 'Failed to create event');
@@ -343,9 +334,12 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     </View>
   );
 
+  // Calculate FAB position based on safe area and tab bar
+  const fabBottom = Platform.OS === 'ios' ? 100 : 90;
+
   return (
     <>
-      <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
+      <TouchableOpacity style={[styles.fab, { bottom: fabBottom }]} onPress={() => setModalVisible(true)}>
         <Text style={styles.fabIcon}>+</Text>
       </TouchableOpacity>
       <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={handleClose}>
@@ -373,8 +367,23 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
 }
 
 const styles = StyleSheet.create({
-  fab: { position: 'absolute', bottom: 30, right: 24, width: 64, height: 64, borderRadius: 32, backgroundColor: COLORS.navy, justifyContent: 'center', alignItems: 'center', shadowColor: COLORS.navy, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8 },
-  fabIcon: { fontSize: 32, color: COLORS.cream, fontWeight: '300' },
+  fab: { 
+    position: 'absolute', 
+    right: 24, 
+    width: 56, 
+    height: 56, 
+    borderRadius: 28, 
+    backgroundColor: COLORS.navy, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    shadowColor: COLORS.navy, 
+    shadowOffset: { width: 0, height: 4 }, 
+    shadowOpacity: 0.3, 
+    shadowRadius: 8, 
+    elevation: 8,
+    zIndex: 999,
+  },
+  fabIcon: { fontSize: 28, color: COLORS.cream, fontWeight: '300' },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   kav: { flex: 1, justifyContent: 'flex-end' },
   modal: { backgroundColor: COLORS.cream, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '92%', minHeight: '70%' },
