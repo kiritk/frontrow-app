@@ -1,6 +1,6 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, StyleSheet, TouchableOpacity, Text, Platform } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,6 +21,7 @@ import EventsScreen from './src/screens/EventsScreen';
 import StatsScreen from './src/screens/StatsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import AuthScreen from './src/screens/AuthScreen';
+import AddEventButton from './src/components/AddEventButton';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { COLORS, FONTS } from './src/theme/colors';
 
@@ -90,23 +91,35 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
   );
 }
 
-function TabNavigator() {
+// Wrapper component to refresh events from any screen
+function TabNavigatorWithFAB() {
+  const [refreshKey, setRefreshKey] = React.useState(0);
+  
+  const handleEventAdded = () => {
+    setRefreshKey(prev => prev + 1);
+  };
+
   return (
-    <Tab.Navigator
-      tabBar={(props) => <CustomTabBar {...props} />}
-      screenOptions={{ headerShown: false }}
-    >
-      <Tab.Screen name="Events" component={EventsScreen} />
-      <Tab.Screen name="Stats" component={StatsScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
-    </Tab.Navigator>
+    <View style={{ flex: 1 }}>
+      <Tab.Navigator
+        tabBar={(props) => <CustomTabBar {...props} />}
+        screenOptions={{ headerShown: false }}
+      >
+        <Tab.Screen name="Events">
+          {() => <EventsScreen key={refreshKey} />}
+        </Tab.Screen>
+        <Tab.Screen name="Stats" component={StatsScreen} />
+        <Tab.Screen name="Profile" component={ProfileScreen} />
+      </Tab.Navigator>
+      <AddEventButton onEventAdded={handleEventAdded} />
+    </View>
   );
 }
 
 function AppContent() {
   const { session, loading } = useAuth();
   if (loading) return <View style={styles.loading}><ActivityIndicator size="large" color={COLORS.navy} /></View>;
-  return <NavigationContainer>{session ? <TabNavigator /> : <AuthScreen />}</NavigationContainer>;
+  return <NavigationContainer>{session ? <TabNavigatorWithFAB /> : <AuthScreen />}</NavigationContainer>;
 }
 
 export default function App() {

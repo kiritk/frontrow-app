@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, SPACING, FONTS } from '../theme/colors';
+import { COLORS, FONTS } from '../theme/colors';
 
 interface EventCardProps {
   event: {
@@ -18,8 +18,9 @@ interface EventCardProps {
 
 export default function EventCard({ event, onDelete }: EventCardProps) {
   const { width } = useWindowDimensions();
-  const CARD_WIDTH = (width - 48 - 12) / 2; // padding (24*2) + gap (12)
+  const CARD_WIDTH = (width - 48 - 12) / 2;
   const CARD_HEIGHT = CARD_WIDTH * 1.3;
+  const PERFORATION_TOP = CARD_HEIGHT * 0.2; // 20% from top
 
   const confirmDelete = () => {
     Alert.alert('Delete Event', `Delete "${event.title}"?`, [
@@ -62,8 +63,8 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
       style={[styles.cardWrapper, { width: CARD_WIDTH, height: CARD_HEIGHT }]}
     >
       <View style={styles.card}>
-        <View style={styles.perforationTopLeft} />
-        <View style={styles.perforationTopRight} />
+        <View style={[styles.perforationTopLeft, { top: PERFORATION_TOP }]} />
+        <View style={[styles.perforationTopRight, { top: PERFORATION_TOP }]} />
 
         <LinearGradient
           colors={getGradientColors()}
@@ -105,7 +106,6 @@ const styles = StyleSheet.create({
   perforationTopLeft: {
     position: 'absolute',
     left: -12,
-    top: 20,
     width: 24,
     height: 24,
     borderRadius: 12,
@@ -115,7 +115,6 @@ const styles = StyleSheet.create({
   perforationTopRight: {
     position: 'absolute',
     right: -12,
-    top: 20,
     width: 24,
     height: 24,
     borderRadius: 12,

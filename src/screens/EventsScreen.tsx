@@ -5,7 +5,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import EventCard from '../components/EventCard';
-import AddEventButton from '../components/AddEventButton';
 import { COLORS, SPACING, FONTS } from '../theme/colors';
 
 const CATEGORY_FILTERS = [
@@ -223,8 +222,6 @@ export default function EventsScreen() {
           <Text style={styles.mapPlaceholderText}>Map view coming soon</Text>
         </View>
       )}
-
-      <AddEventButton onEventAdded={fetchEvents} />
     </SafeAreaView>
   );
 }

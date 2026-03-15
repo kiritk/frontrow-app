@@ -1,18 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Modal, TextInput,
-  ScrollView, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, Image,
+  ScrollView, Platform, Alert, ActivityIndicator, Image, Animated,
+  PanResponder, Dimensions, TouchableWithoutFeedback, Keyboard,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
-let DateTimePicker: any = null;
-if (Platform.OS !== 'web') {
-  DateTimePicker = require('@react-native-community/datetimepicker').default;
-}
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const EVENT_TYPES = [
   { value: 'concert', label: 'Concerts', subtitle: 'Live music', emoji: '🎸' },
@@ -49,6 +48,39 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   const [dateSelected, setDateSelected] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
 
+  // Pan responder for swipe to dismiss
+  const translateY = useRef(new Animated.Value(0)).current;
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return gestureState.dy > 5;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dy > 0) {
+          translateY.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 100) {
+          Animated.timing(translateY, {
+            toValue: SCREEN_HEIGHT,
+            duration: 200,
+            useNativeDriver: true,
+          }).start(() => {
+            handleClose();
+            translateY.setValue(0);
+          });
+        } else {
+          Animated.spring(translateY, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
+
   const resetForm = () => { 
     setStep('type'); 
     setEventType(''); 
@@ -60,10 +92,22 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     setShowDatePicker(false);
     setPhotos([]); 
   };
-  const handleClose = () => { setModalVisible(false); resetForm(); };
 
-  const handleSelectType = (type: string) => { setEventType(type); setStep(type === 'sports' ? 'sport-type' : 'details'); };
-  const handleSelectSportType = (type: string) => { setSportType(type); setStep('details'); };
+  const handleClose = () => { 
+    Keyboard.dismiss();
+    setModalVisible(false); 
+    resetForm(); 
+  };
+
+  const handleSelectType = (type: string) => { 
+    setEventType(type); 
+    setStep(type === 'sports' ? 'sport-type' : 'details'); 
+  };
+  
+  const handleSelectSportType = (type: string) => { 
+    setSportType(type); 
+    setStep('details'); 
+  };
   
   const handleDetailsNext = () => { 
     if (!eventName || !venue || !dateSelected) { 
@@ -74,23 +118,22 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   };
 
   const onDateChange = (event: any, selectedDate?: Date) => {
-    if (Platform.OS === 'android') {
+    if (event.type === 'dismissed') {
       setShowDatePicker(false);
+      return;
     }
     if (selectedDate) {
       setEventDate(selectedDate);
       setDateSelected(true);
     }
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
   };
 
-  const onWebDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const dateString = e.target.value;
-    if (dateString) {
-      const [year, month, day] = dateString.split('-').map(Number);
-      const newDate = new Date(year, month - 1, day);
-      setEventDate(newDate);
-      setDateSelected(true);
-    }
+  const confirmDateSelection = () => {
+    setDateSelected(true);
+    setShowDatePicker(false);
   };
 
   const formatDisplayDate = (date: Date) => {
@@ -109,18 +152,21 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     return `${year}-${month}-${day}`;
   };
 
-  const formatDateForInput = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
   const pickImages = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') { Alert.alert('Permission needed', 'Please allow access to your photos'); return; }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsMultipleSelection: true, selectionLimit: 6 - photos.length, quality: 0.8 });
-    if (!result.canceled) { setPhotos([...photos, ...result.assets.map(a => a.uri)].slice(0, 6)); }
+    if (status !== 'granted') { 
+      Alert.alert('Permission needed', 'Please allow access to your photos'); 
+      return; 
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({ 
+      mediaTypes: ImagePicker.MediaTypeOptions.Images, 
+      allowsMultipleSelection: true, 
+      selectionLimit: 6 - photos.length, 
+      quality: 0.8 
+    });
+    if (!result.canceled) { 
+      setPhotos([...photos, ...result.assets.map(a => a.uri)].slice(0, 6)); 
+    }
   };
 
   const removePhoto = (index: number) => setPhotos(photos.filter((_, i) => i !== index));
@@ -152,8 +198,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
 
       if (error) throw error;
       
-      setModalVisible(false);
-      resetForm();
+      handleClose();
       await onEventAdded();
       
     } catch (e: any) {
@@ -163,7 +208,9 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     }
   };
 
-  const getEventEmoji = () => eventType === 'sports' ? (SPORT_TYPES.find(s => s.value === sportType)?.emoji || '🏆') : (EVENT_TYPES.find(e => e.value === eventType)?.emoji || '🎫');
+  const getEventEmoji = () => eventType === 'sports' 
+    ? (SPORT_TYPES.find(s => s.value === sportType)?.emoji || '🏆') 
+    : (EVENT_TYPES.find(e => e.value === eventType)?.emoji || '🎫');
 
   const getPrompts = () => {
     switch (eventType) {
@@ -194,7 +241,9 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
 
   const renderSportTypeSelection = () => (
     <View style={styles.stepContent}>
-      <TouchableOpacity onPress={() => setStep('type')} style={styles.backButton}><Text style={styles.backText}>← Back</Text></TouchableOpacity>
+      <TouchableOpacity onPress={() => setStep('type')} style={styles.backButton}>
+        <Text style={styles.backText}>← Back</Text>
+      </TouchableOpacity>
       <Text style={styles.stepTitle}>What sport?</Text>
       <Text style={styles.stepSubtitle}>Choose a league</Text>
       <View style={styles.sportGrid}>
@@ -208,97 +257,72 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     </View>
   );
 
-  const renderDatePicker = () => {
-    if (Platform.OS === 'web') {
-      return (
-        <View style={styles.webDateContainer}>
-          <input
-            type="date"
-            value={dateSelected ? formatDateForInput(eventDate) : ''}
-            max={formatDateForInput(new Date())}
-            onChange={onWebDateChange as any}
-            style={{
-              width: '100%',
-              padding: 16,
-              fontSize: 16,
-              fontFamily: 'Outfit, sans-serif',
-              border: 'none',
-              borderRadius: 12,
-              backgroundColor: COLORS.white,
-              color: COLORS.navy,
-              cursor: 'pointer',
-            }}
-          />
-        </View>
-      );
-    }
-
-    return (
-      <>
-        <TouchableOpacity style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
-          <Text style={[styles.dateButtonText, !dateSelected && styles.dateButtonPlaceholder]}>
-            {dateSelected ? formatDisplayDate(eventDate) : 'Select a date'}
-          </Text>
-          <Text style={styles.calendarIcon}>📅</Text>
-        </TouchableOpacity>
-        
-        {showDatePicker && DateTimePicker && (
-          <View style={styles.datePickerContainer}>
-            <DateTimePicker
-              value={eventDate}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={onDateChange}
-              maximumDate={new Date()}
-              themeVariant="light"
-              style={styles.datePicker}
-            />
-            {Platform.OS === 'ios' && (
-              <TouchableOpacity style={styles.datePickerDoneButton} onPress={() => { setShowDatePicker(false); setDateSelected(true); }}>
-                <Text style={styles.datePickerDoneText}>Done</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
-      </>
-    );
-  };
-
   const renderDetails = () => {
     const prompts = getPrompts();
     return (
-      <View style={styles.stepContent}>
-        <TouchableOpacity onPress={() => setStep(eventType === 'sports' ? 'sport-type' : 'type')} style={styles.backButton}>
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.stepTitle}>The Details</Text>
-        <Text style={styles.stepSubtitle}>Tell us about your experience</Text>
-        
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>{prompts.name}</Text>
-          <TextInput style={styles.input} placeholder={prompts.placeholder} placeholderTextColor={COLORS.grayLight} value={eventName} onChangeText={setEventName} />
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.stepContent}>
+          <TouchableOpacity onPress={() => setStep(eventType === 'sports' ? 'sport-type' : 'type')} style={styles.backButton}>
+            <Text style={styles.backText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.stepTitle}>The Details</Text>
+          <Text style={styles.stepSubtitle}>Tell us about your experience</Text>
+          
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>{prompts.name}</Text>
+            <TextInput 
+              style={styles.input} 
+              placeholder={prompts.placeholder} 
+              placeholderTextColor={COLORS.grayLight} 
+              value={eventName} 
+              onChangeText={setEventName}
+              returnKeyType="next"
+              blurOnSubmit={true}
+            />
+          </View>
+          
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Where was it?</Text>
+            <TextInput 
+              style={styles.input} 
+              placeholder="Venue, City" 
+              placeholderTextColor={COLORS.grayLight} 
+              value={venue} 
+              onChangeText={setVenue}
+              returnKeyType="done"
+              blurOnSubmit={true}
+            />
+          </View>
+          
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>When was it?</Text>
+            <TouchableOpacity 
+              style={styles.dateButton} 
+              onPress={() => {
+                Keyboard.dismiss();
+                setShowDatePicker(true);
+              }}
+            >
+              <Text style={[styles.dateButtonText, !dateSelected && styles.dateButtonPlaceholder]}>
+                {dateSelected ? formatDisplayDate(eventDate) : 'Select a date'}
+              </Text>
+              <Text style={styles.calendarIcon}>📅</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <TouchableOpacity style={styles.nextButton} onPress={handleDetailsNext}>
+            <Text style={styles.nextButtonText}>Next</Text>
+          </TouchableOpacity>
         </View>
-        
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Where was it?</Text>
-          <TextInput style={styles.input} placeholder="Venue, City" placeholderTextColor={COLORS.grayLight} value={venue} onChangeText={setVenue} />
-        </View>
-        
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>When was it?</Text>
-          {renderDatePicker()}
-        </View>
-        
-        <TouchableOpacity style={styles.nextButton} onPress={handleDetailsNext}>
-          <Text style={styles.nextButtonText}>Next</Text>
-        </TouchableOpacity>
-      </View>
+      </TouchableWithoutFeedback>
     );
   };
 
   const renderPhotos = () => (
     <View style={styles.stepContent}>
-      <TouchableOpacity onPress={() => setStep('details')} style={styles.backButton}><Text style={styles.backText}>← Back</Text></TouchableOpacity>
+      <TouchableOpacity onPress={() => setStep('details')} style={styles.backButton}>
+        <Text style={styles.backText}>← Back</Text>
+      </TouchableOpacity>
       <View style={styles.photoHeader}>
         <Text style={styles.photoEmoji}>{getEventEmoji()}</Text>
         <Text style={styles.photoEventName}>{eventName}</Text>
@@ -325,7 +349,6 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     </View>
   );
 
-  // Match the tab bar position exactly
   const fabBottom = Math.max(insets.bottom, 20);
 
   return (
@@ -333,25 +356,79 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
       <TouchableOpacity style={[styles.fab, { bottom: fabBottom }]} onPress={() => setModalVisible(true)}>
         <Text style={styles.fabIcon}>+</Text>
       </TouchableOpacity>
-      <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={handleClose}>
+      
+      <Modal 
+        visible={modalVisible} 
+        animationType="slide" 
+        transparent 
+        onRequestClose={handleClose}
+      >
         <View style={styles.overlay}>
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.kav}>
-            <View style={styles.modal}>
-              <SafeAreaView edges={['bottom']} style={{flex: 1}}>
-                <View style={styles.modalHeader}>
-                  <View style={styles.handle} />
-                  <TouchableOpacity onPress={handleClose} style={styles.closeBtn}><Text style={styles.closeBtnText}>✕</Text></TouchableOpacity>
-                </View>
-                <ScrollView style={{flex: 1}} contentContainerStyle={{paddingBottom: 40}} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-                  {step === 'type' && renderTypeSelection()}
-                  {step === 'sport-type' && renderSportTypeSelection()}
-                  {step === 'details' && renderDetails()}
-                  {step === 'photos' && renderPhotos()}
-                </ScrollView>
-              </SafeAreaView>
+          <TouchableWithoutFeedback onPress={handleClose}>
+            <View style={styles.overlayTouchable} />
+          </TouchableWithoutFeedback>
+          
+          <Animated.View 
+            style={[
+              styles.modal, 
+              { transform: [{ translateY }] }
+            ]}
+          >
+            <View {...panResponder.panHandlers} style={styles.modalHeader}>
+              <View style={styles.handle} />
             </View>
-          </KeyboardAvoidingView>
+            <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
+              <Text style={styles.closeBtnText}>✕</Text>
+            </TouchableOpacity>
+            
+            <ScrollView 
+              style={styles.scrollView} 
+              contentContainerStyle={styles.scrollContent}
+              keyboardShouldPersistTaps="handled" 
+              showsVerticalScrollIndicator={false}
+            >
+              {step === 'type' && renderTypeSelection()}
+              {step === 'sport-type' && renderSportTypeSelection()}
+              {step === 'details' && renderDetails()}
+              {step === 'photos' && renderPhotos()}
+            </ScrollView>
+          </Animated.View>
         </View>
+
+        {/* Date Picker Modal Overlay */}
+        {showDatePicker && (
+          <Modal
+            visible={showDatePicker}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowDatePicker(false)}
+          >
+            <TouchableWithoutFeedback onPress={() => setShowDatePicker(false)}>
+              <View style={styles.datePickerOverlay}>
+                <TouchableWithoutFeedback>
+                  <View style={styles.datePickerModal}>
+                    <View style={styles.datePickerHeader}>
+                      <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                        <Text style={styles.datePickerCancel}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={confirmDateSelection}>
+                        <Text style={styles.datePickerDone}>Done</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <DateTimePicker
+                      value={eventDate}
+                      mode="date"
+                      display="inline"
+                      onChange={onDateChange}
+                      maximumDate={new Date()}
+                      style={styles.datePicker}
+                    />
+                  </View>
+                </TouchableWithoutFeedback>
+              </View>
+            </TouchableWithoutFeedback>
+          </Modal>
+        )}
       </Modal>
     </>
   );
@@ -375,14 +452,48 @@ const styles = StyleSheet.create({
     zIndex: 999,
   },
   fabIcon: { fontSize: 32, color: COLORS.cream, fontWeight: '300' },
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  kav: { flex: 1, justifyContent: 'flex-end' },
-  modal: { backgroundColor: COLORS.cream, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '92%', minHeight: '70%' },
-  modalHeader: { alignItems: 'center', paddingTop: SPACING.sm, paddingBottom: SPACING.md, position: 'relative' },
-  handle: { width: 36, height: 4, backgroundColor: COLORS.grayLight, borderRadius: 2 },
-  closeBtn: { position: 'absolute', right: SPACING.lg, top: SPACING.sm, width: 32, height: 32, borderRadius: 16, backgroundColor: COLORS.creamDark, justifyContent: 'center', alignItems: 'center' },
+  overlay: { 
+    flex: 1, 
+    backgroundColor: 'rgba(0,0,0,0.5)', 
+    justifyContent: 'flex-end',
+  },
+  overlayTouchable: {
+    flex: 1,
+  },
+  modal: { 
+    backgroundColor: COLORS.cream, 
+    borderTopLeftRadius: 24, 
+    borderTopRightRadius: 24, 
+    maxHeight: '92%', 
+    minHeight: '70%',
+  },
+  modalHeader: { 
+    alignItems: 'center', 
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  handle: { 
+    width: 40, 
+    height: 5, 
+    backgroundColor: COLORS.grayLight, 
+    borderRadius: 3,
+  },
+  closeBtn: { 
+    position: 'absolute', 
+    right: 20, 
+    top: 12, 
+    width: 32, 
+    height: 32, 
+    borderRadius: 16, 
+    backgroundColor: COLORS.creamDark, 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    zIndex: 10,
+  },
   closeBtnText: { fontSize: 16, color: COLORS.gray },
-  stepContent: { paddingHorizontal: SPACING.lg },
+  scrollView: { flex: 1 },
+  scrollContent: { paddingBottom: 40 },
+  stepContent: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.md },
   backButton: { marginBottom: SPACING.md },
   backText: { fontFamily: FONTS.medium, fontSize: FONT_SIZES.md, color: COLORS.navy },
   stepTitle: { fontFamily: FONTS.bold, fontSize: 28, color: COLORS.navy, marginBottom: SPACING.xs },
@@ -398,16 +509,25 @@ const styles = StyleSheet.create({
   sportLabel: { fontFamily: FONTS.medium, fontSize: FONT_SIZES.md, color: COLORS.navy },
   inputGroup: { marginBottom: SPACING.lg },
   label: { fontFamily: FONTS.medium, fontSize: FONT_SIZES.md, color: COLORS.navy, marginBottom: SPACING.sm },
-  input: { fontFamily: FONTS.regular, backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, padding: SPACING.md, fontSize: FONT_SIZES.md, color: COLORS.navy },
-  dateButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, padding: SPACING.md },
+  input: { 
+    fontFamily: FONTS.regular, 
+    backgroundColor: COLORS.white, 
+    borderRadius: BORDER_RADIUS.lg, 
+    padding: SPACING.md, 
+    fontSize: FONT_SIZES.md, 
+    color: COLORS.navy,
+  },
+  dateButton: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    backgroundColor: COLORS.white, 
+    borderRadius: BORDER_RADIUS.lg, 
+    padding: SPACING.md,
+  },
   dateButtonText: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.navy },
   dateButtonPlaceholder: { color: COLORS.grayLight },
   calendarIcon: { fontSize: 20 },
-  webDateContainer: { borderRadius: BORDER_RADIUS.lg, overflow: 'hidden' },
-  datePickerContainer: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, marginTop: SPACING.sm, overflow: 'hidden' },
-  datePicker: { height: 200, width: '100%' },
-  datePickerDoneButton: { backgroundColor: COLORS.navy, paddingVertical: SPACING.sm, alignItems: 'center' },
-  datePickerDoneText: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.md, color: COLORS.cream },
   nextButton: { backgroundColor: COLORS.navy, borderRadius: BORDER_RADIUS.lg, paddingVertical: SPACING.md, alignItems: 'center', marginTop: SPACING.md },
   nextButtonText: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.lg, color: COLORS.cream },
   photoHeader: { alignItems: 'center', marginBottom: SPACING.xl },
@@ -426,4 +546,38 @@ const styles = StyleSheet.create({
   submitButton: { backgroundColor: COLORS.navy, borderRadius: BORDER_RADIUS.lg, paddingVertical: SPACING.md, alignItems: 'center' },
   submitDisabled: { opacity: 0.7 },
   submitButtonText: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.lg, color: COLORS.cream },
+  
+  // Date Picker Modal styles
+  datePickerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  datePickerModal: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 16,
+    width: '90%',
+    maxWidth: 360,
+  },
+  datePickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    paddingHorizontal: 8,
+  },
+  datePickerCancel: {
+    fontFamily: FONTS.regular,
+    fontSize: FONT_SIZES.md,
+    color: COLORS.gray,
+  },
+  datePickerDone: {
+    fontFamily: FONTS.semiBold,
+    fontSize: FONT_SIZES.md,
+    color: COLORS.navy,
+  },
+  datePicker: {
+    height: 320,
+  },
 });
