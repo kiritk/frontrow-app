@@ -2,9 +2,9 @@ import React, { useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Modal, TextInput,
   ScrollView, Platform, Alert, ActivityIndicator, Image, Animated,
-  PanResponder, Dimensions, TouchableWithoutFeedback, Keyboard, FlatList,
+  PanResponder, Dimensions, TouchableWithoutFeedback, Keyboard,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { supabase } from '../lib/supabase';
@@ -52,9 +52,10 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   // NFL team selection state
   const [homeTeam, setHomeTeam] = useState<NFLTeam | null>(null);
   const [awayTeam, setAwayTeam] = useState<NFLTeam | null>(null);
-  const [showHomeTeamPicker, setShowHomeTeamPicker] = useState(false);
-  const [showAwayTeamPicker, setShowAwayTeamPicker] = useState(false);
-  const [teamSearchQuery, setTeamSearchQuery] = useState('');
+  const [homeTeamQuery, setHomeTeamQuery] = useState('');
+  const [awayTeamQuery, setAwayTeamQuery] = useState('');
+  const [showHomeDropdown, setShowHomeDropdown] = useState(false);
+  const [showAwayDropdown, setShowAwayDropdown] = useState(false);
 
   // Pan responder for swipe to dismiss
   const translateY = useRef(new Animated.Value(0)).current;
@@ -101,7 +102,10 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     setPhotos([]);
     setHomeTeam(null);
     setAwayTeam(null);
-    setTeamSearchQuery('');
+    setHomeTeamQuery('');
+    setAwayTeamQuery('');
+    setShowHomeDropdown(false);
+    setShowAwayDropdown(false);
   };
 
   const handleClose = () => { 
@@ -253,128 +257,126 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
 
   // Sort teams alphabetically by full name
   const sortedTeams = [...NFL_TEAMS].sort((a, b) => a.fullName.localeCompare(b.fullName));
-  
-  const filteredTeams = sortedTeams.filter(team => 
-    team.name.toLowerCase().includes(teamSearchQuery.toLowerCase()) ||
-    team.city.toLowerCase().includes(teamSearchQuery.toLowerCase()) ||
-    team.fullName.toLowerCase().includes(teamSearchQuery.toLowerCase())
-  );
+
+  const getFilteredTeams = (query: string, excludeTeam: NFLTeam | null) => {
+    return sortedTeams.filter(team => {
+      if (excludeTeam && team.name === excludeTeam.name) return false;
+      if (!query) return true;
+      return (
+        team.name.toLowerCase().includes(query.toLowerCase()) ||
+        team.city.toLowerCase().includes(query.toLowerCase()) ||
+        team.fullName.toLowerCase().includes(query.toLowerCase())
+      );
+    });
+  };
 
   const selectHomeTeam = (team: NFLTeam) => {
     setHomeTeam(team);
-    setShowHomeTeamPicker(false);
-    setTeamSearchQuery('');
+    setHomeTeamQuery(team.fullName);
+    setShowHomeDropdown(false);
   };
 
   const selectAwayTeam = (team: NFLTeam) => {
     setAwayTeam(team);
-    setShowAwayTeamPicker(false);
-    setTeamSearchQuery('');
+    setAwayTeamQuery(team.fullName);
+    setShowAwayDropdown(false);
   };
 
-  const renderTeamPicker = (isHome: boolean) => {
-    const otherTeam = isHome ? awayTeam : homeTeam;
-    const setShowPicker = isHome ? setShowHomeTeamPicker : setShowAwayTeamPicker;
-    const selectTeam = isHome ? selectHomeTeam : selectAwayTeam;
-    const availableTeams = filteredTeams.filter(team => team.name !== otherTeam?.name);
-
+  const renderTeamDropdown = (
+    teams: NFLTeam[], 
+    onSelect: (team: NFLTeam) => void,
+    show: boolean
+  ) => {
+    if (!show || teams.length === 0) return null;
+    
     return (
-      <Modal
-        visible={isHome ? showHomeTeamPicker : showAwayTeamPicker}
-        transparent
-        animationType="fade"
-        onRequestClose={() => {
-          setShowPicker(false);
-          setTeamSearchQuery('');
-        }}
-      >
-        <TouchableWithoutFeedback onPress={() => {
-          setShowPicker(false);
-          setTeamSearchQuery('');
-        }}>
-          <View style={styles.teamPickerOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={styles.teamPickerModal}>
-                <TextInput
-                  style={styles.teamSearchInput}
-                  placeholder="Search teams.."
-                  placeholderTextColor={COLORS.grayLight}
-                  value={teamSearchQuery}
-                  onChangeText={setTeamSearchQuery}
-                  autoFocus
-                />
-                <View style={styles.teamListDivider} />
-                <FlatList
-                  data={availableTeams}
-                  keyExtractor={(item) => item.name}
-                  style={styles.teamList}
-                  showsVerticalScrollIndicator={true}
-                  renderItem={({ item, index }) => (
-                    <TouchableOpacity 
-                      style={[
-                        styles.teamListItem,
-                        index === 0 && styles.teamListItemFirst
-                      ]}
-                      onPress={() => selectTeam(item)}
-                    >
-                      <Text style={styles.teamListName}>{item.fullName}</Text>
-                    </TouchableOpacity>
-                  )}
-                />
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
+      <View style={styles.dropdown}>
+        <ScrollView 
+          style={styles.dropdownScroll} 
+          keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled={true}
+        >
+          {teams.slice(0, 5).map((team, index) => (
+            <TouchableOpacity 
+              key={team.name}
+              style={[
+                styles.dropdownItem,
+                index === 0 && styles.dropdownItemFirst
+              ]}
+              onPress={() => onSelect(team)}
+            >
+              <Text style={styles.dropdownItemText}>{team.fullName}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
     );
   };
 
-  const renderNFLTeamSelection = () => (
-    <View style={styles.nflTeamContainer}>
-      <View style={styles.nflTeamRow}>
-        {/* Home Team */}
-        <View style={styles.nflTeamColumn}>
-          <Text style={styles.nflTeamLabel}>Home Team</Text>
-          <TouchableOpacity 
-            style={styles.nflTeamButton}
-            onPress={() => {
-              Keyboard.dismiss();
-              setTeamSearchQuery('');
-              setShowHomeTeamPicker(true);
-            }}
-          >
-            {homeTeam ? (
-              <Text style={styles.nflTeamSelected}>{homeTeam.fullName}</Text>
-            ) : (
-              <Text style={styles.nflTeamPlaceholder}>Search teams..</Text>
-            )}
-          </TouchableOpacity>
-        </View>
+  const renderNFLTeamSelection = () => {
+    const homeFilteredTeams = getFilteredTeams(homeTeamQuery, awayTeam);
+    const awayFilteredTeams = getFilteredTeams(awayTeamQuery, homeTeam);
 
-        {/* VS */}
-        <Text style={styles.nflVsText}>vs</Text>
+    return (
+      <View style={styles.nflTeamContainer}>
+        <View style={styles.nflTeamRow}>
+          {/* Home Team */}
+          <View style={styles.nflTeamColumn}>
+            <Text style={styles.nflTeamLabel}>Home Team</Text>
+            <View style={styles.inputWithDropdown}>
+              <TextInput
+                style={styles.nflTeamInput}
+                placeholder="Search teams.."
+                placeholderTextColor={COLORS.grayLight}
+                value={homeTeamQuery}
+                onChangeText={(text) => {
+                  setHomeTeamQuery(text);
+                  setShowHomeDropdown(true);
+                  if (homeTeam && text !== homeTeam.fullName) {
+                    setHomeTeam(null);
+                  }
+                }}
+                onFocus={() => setShowHomeDropdown(true)}
+                onBlur={() => {
+                  // Delay to allow tap on dropdown item
+                  setTimeout(() => setShowHomeDropdown(false), 200);
+                }}
+              />
+              {renderTeamDropdown(homeFilteredTeams, selectHomeTeam, showHomeDropdown)}
+            </View>
+          </View>
 
-        {/* Away Team */}
-        <View style={styles.nflTeamColumn}>
-          <Text style={styles.nflTeamLabel}>Away Team</Text>
-          <TouchableOpacity 
-            style={styles.nflTeamButton}
-            onPress={() => {
-              Keyboard.dismiss();
-              setTeamSearchQuery('');
-              setShowAwayTeamPicker(true);
-            }}
-          >
-            {awayTeam ? (
-              <Text style={styles.nflTeamSelected}>{awayTeam.fullName}</Text>
-            ) : (
-              <Text style={styles.nflTeamPlaceholder}>Search teams..</Text>
-            )}
-          </TouchableOpacity>
+          {/* VS */}
+          <Text style={styles.nflVsText}>vs</Text>
+
+          {/* Away Team */}
+          <View style={styles.nflTeamColumn}>
+            <Text style={styles.nflTeamLabel}>Away Team</Text>
+            <View style={styles.inputWithDropdown}>
+              <TextInput
+                style={styles.nflTeamInput}
+                placeholder="Search teams.."
+                placeholderTextColor={COLORS.grayLight}
+                value={awayTeamQuery}
+                onChangeText={(text) => {
+                  setAwayTeamQuery(text);
+                  setShowAwayDropdown(true);
+                  if (awayTeam && text !== awayTeam.fullName) {
+                    setAwayTeam(null);
+                  }
+                }}
+                onFocus={() => setShowAwayDropdown(true)}
+                onBlur={() => {
+                  setTimeout(() => setShowAwayDropdown(false), 200);
+                }}
+              />
+              {renderTeamDropdown(awayFilteredTeams, selectAwayTeam, showAwayDropdown)}
+            </View>
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   const renderTypeSelection = () => (
     <View style={styles.stepContent}>
@@ -415,7 +417,11 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     const isNFL = sportType === 'nfl';
 
     return (
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <TouchableWithoutFeedback onPress={() => {
+        Keyboard.dismiss();
+        setShowHomeDropdown(false);
+        setShowAwayDropdown(false);
+      }}>
         <View style={styles.stepContent}>
           <TouchableOpacity onPress={() => setStep(eventType === 'sports' ? 'sport-type' : 'type')} style={styles.backButton}>
             <Text style={styles.backText}>← Back</Text>
@@ -440,7 +446,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
             </View>
           )}
           
-          <View style={styles.inputGroup}>
+          <View style={[styles.inputGroup, isNFL && { zIndex: -1 }]}>
             <Text style={styles.label}>Where was it?</Text>
             <TextInput 
               style={styles.input} 
@@ -453,7 +459,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
             />
           </View>
           
-          <View style={styles.inputGroup}>
+          <View style={[styles.inputGroup, isNFL && { zIndex: -1 }]}>
             <Text style={styles.label}>When was it?</Text>
             <TouchableOpacity 
               style={styles.dateButton} 
@@ -469,12 +475,9 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
             </TouchableOpacity>
           </View>
           
-          <TouchableOpacity style={styles.nextButton} onPress={handleDetailsNext}>
+          <TouchableOpacity style={[styles.nextButton, isNFL && { zIndex: -1 }]} onPress={handleDetailsNext}>
             <Text style={styles.nextButtonText}>Next</Text>
           </TouchableOpacity>
-
-          {renderTeamPicker(true)}
-          {renderTeamPicker(false)}
         </View>
       </TouchableWithoutFeedback>
     );
@@ -751,14 +754,16 @@ const styles = StyleSheet.create({
   // NFL Team Selection styles
   nflTeamContainer: {
     marginBottom: SPACING.lg,
+    zIndex: 10,
   },
   nflTeamRow: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
   },
   nflTeamColumn: {
     flex: 1,
+    zIndex: 10,
   },
   nflTeamLabel: {
     fontFamily: FONTS.medium,
@@ -767,24 +772,18 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
     fontStyle: 'italic',
   },
-  nflTeamButton: {
+  inputWithDropdown: {
+    position: 'relative',
+    zIndex: 10,
+  },
+  nflTeamInput: {
+    fontFamily: FONTS.regular,
     backgroundColor: COLORS.white,
     borderRadius: BORDER_RADIUS.xl,
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.md,
-    minHeight: 50,
-    justifyContent: 'center',
-  },
-  nflTeamSelected: {
-    fontFamily: FONTS.medium,
     fontSize: FONT_SIZES.sm,
     color: COLORS.navy,
-    textAlign: 'center',
-  },
-  nflTeamPlaceholder: {
-    fontFamily: FONTS.regular,
-    fontSize: FONT_SIZES.md,
-    color: COLORS.grayLight,
     textAlign: 'center',
   },
   nflVsText: {
@@ -792,52 +791,41 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.md,
     color: COLORS.gray,
     marginHorizontal: SPACING.sm,
-    marginBottom: SPACING.lg,
+    marginTop: 42,
   },
 
-  // Team Picker Modal styles
-  teamPickerOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  teamPickerModal: {
+  // Dropdown styles
+  dropdown: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
     backgroundColor: COLORS.white,
-    borderRadius: 16,
-    width: '85%',
-    maxWidth: 320,
-    maxHeight: '60%',
-    overflow: 'hidden',
+    borderRadius: BORDER_RADIUS.lg,
+    marginTop: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 100,
+    maxHeight: 200,
   },
-  teamSearchInput: {
-    fontFamily: FONTS.regular,
-    backgroundColor: COLORS.white,
-    padding: SPACING.md,
-    fontSize: FONT_SIZES.md,
-    color: COLORS.navy,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+  dropdownScroll: {
+    maxHeight: 200,
   },
-  teamListDivider: {
-    height: 1,
-    backgroundColor: COLORS.creamDark,
-  },
-  teamList: {
-    flex: 1,
-  },
-  teamListItem: {
-    paddingVertical: 14,
+  dropdownItem: {
+    paddingVertical: 12,
     paddingHorizontal: SPACING.md,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.creamDark,
   },
-  teamListItemFirst: {
+  dropdownItemFirst: {
     backgroundColor: COLORS.cream,
   },
-  teamListName: {
+  dropdownItemText: {
     fontFamily: FONTS.regular,
-    fontSize: FONT_SIZES.md,
+    fontSize: FONT_SIZES.sm,
     color: COLORS.navy,
   },
 });
