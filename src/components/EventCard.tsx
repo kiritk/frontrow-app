@@ -1,11 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, useWindowDimensions, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, useWindowDimensions, ImageBackground, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../theme/colors';
-
-// Default concert background
-const CONCERT_BG = require('../../assets/images/concert_bg.avif');
 
 interface EventCardProps {
   event: {
@@ -51,24 +48,22 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
         return {
           gradientColors: [CONCERT_COLORS.gradientStart, CONCERT_COLORS.gradientMid, CONCERT_COLORS.gradientEnd] as [string, string, string],
           accentColor: CONCERT_COLORS.accent,
-          useAudiowide: true,
-          showMetallic: true,
         };
       case 'sports':
-        if (event.sport === 'nfl') return { gradientColors: ['#1e3a5f', '#2d4a6f', '#2d5a8f'] as [string, string, string], accentColor: '#4a90c2', useAudiowide: false, showMetallic: false };
-        if (event.sport === 'mlb') return { gradientColors: ['#8b2500', '#a83200', '#c04000'] as [string, string, string], accentColor: '#ff6b35', useAudiowide: false, showMetallic: false };
-        if (event.sport === 'nba') return { gradientColors: ['#8b1538', '#a01d42', '#c0294f'] as [string, string, string], accentColor: '#ff4d6d', useAudiowide: false, showMetallic: false };
-        if (event.sport === 'soccer') return { gradientColors: ['#1a5f3c', '#228b4c', '#2ecc71'] as [string, string, string], accentColor: '#5ddb8d', useAudiowide: false, showMetallic: false };
-        if (event.sport === 'tennis') return { gradientColors: ['#2c3e50', '#3a4f63', '#4a6278'] as [string, string, string], accentColor: '#7fb3d3', useAudiowide: false, showMetallic: false };
-        return { gradientColors: ['#1e3a5f', '#2d4a6f', '#3498db'] as [string, string, string], accentColor: '#5dade2', useAudiowide: false, showMetallic: false };
+        if (event.sport === 'nfl') return { gradientColors: ['#1e3a5f', '#2d4a6f', '#2d5a8f'] as [string, string, string], accentColor: '#4a90c2' };
+        if (event.sport === 'mlb') return { gradientColors: ['#8b2500', '#a83200', '#c04000'] as [string, string, string], accentColor: '#ff6b35' };
+        if (event.sport === 'nba') return { gradientColors: ['#8b1538', '#a01d42', '#c0294f'] as [string, string, string], accentColor: '#ff4d6d' };
+        if (event.sport === 'soccer') return { gradientColors: ['#1a5f3c', '#228b4c', '#2ecc71'] as [string, string, string], accentColor: '#5ddb8d' };
+        if (event.sport === 'tennis') return { gradientColors: ['#2c3e50', '#3a4f63', '#4a6278'] as [string, string, string], accentColor: '#7fb3d3' };
+        return { gradientColors: ['#1e3a5f', '#2d4a6f', '#3498db'] as [string, string, string], accentColor: '#5dade2' };
       case 'theater':
-        return { gradientColors: ['#5c2a6e', '#7b3f8e', '#9b59b6'] as [string, string, string], accentColor: '#c39bd3', useAudiowide: false, showMetallic: false };
+        return { gradientColors: ['#5c2a6e', '#7b3f8e', '#9b59b6'] as [string, string, string], accentColor: '#c39bd3' };
       case 'comedy':
-        return { gradientColors: ['#922b21', '#b03a2e', '#cb4335'] as [string, string, string], accentColor: '#f1948a', useAudiowide: false, showMetallic: false };
+        return { gradientColors: ['#922b21', '#b03a2e', '#cb4335'] as [string, string, string], accentColor: '#f1948a' };
       case 'landmark':
-        return { gradientColors: ['#117a65', '#16a085', '#1abc9c'] as [string, string, string], accentColor: '#76d7c4', useAudiowide: false, showMetallic: false };
+        return { gradientColors: ['#117a65', '#16a085', '#1abc9c'] as [string, string, string], accentColor: '#76d7c4' };
       default:
-        return { gradientColors: ['#2c3e50', '#3a4f63', '#4a6278'] as [string, string, string], accentColor: '#85929e', useAudiowide: false, showMetallic: false };
+        return { gradientColors: ['#2c3e50', '#3a4f63', '#4a6278'] as [string, string, string], accentColor: '#85929e' };
     }
   };
 
@@ -84,16 +79,25 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
   const cardStyle = getCardStyle();
   const hasUserPhoto = event.photos && event.photos.length > 0;
 
+  // Get the background image source for concerts
+  const getConcertBackground = () => {
+    if (hasUserPhoto) {
+      return { uri: event.photos![0] };
+    }
+    // Use require for local asset
+    return require('../../assets/images/concert_bg.png');
+  };
+
   const renderConcertCard = () => (
     <View style={[styles.card, { height: CARD_HEIGHT }]}>
       {/* Perforations */}
       <View style={[styles.perforationLeft, { top: PERFORATION_TOP }]} />
       <View style={[styles.perforationRight, { top: PERFORATION_TOP }]} />
 
-      {/* Top section with default concert background or user photo */}
+      {/* Top section with concert background */}
       <View style={styles.topSection}>
         <ImageBackground 
-          source={hasUserPhoto ? { uri: event.photos![0] } : CONCERT_BG}
+          source={getConcertBackground()}
           style={styles.imageBackground}
           imageStyle={styles.imageStyle}
         >
