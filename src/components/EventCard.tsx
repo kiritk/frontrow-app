@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, useWindowDimensions, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, useWindowDimensions, ImageBackground, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../theme/colors';
+import { getTeamByName } from '../data/nflTeams';
 
 interface EventCardProps {
   event: {
@@ -14,6 +15,8 @@ interface EventCardProps {
     venue_location?: string;
     date: string;
     photos?: string[];
+    home_team?: { name: string; city: string; fullName: string };
+    away_team?: { name: string; city: string; fullName: string };
   };
   onDelete: () => void;
 }
@@ -25,6 +28,15 @@ const CONCERT_COLORS = {
   gradientEnd: '#4a1a6b',
   accent: '#9b6dff',
   accentLight: '#c4a7ff',
+};
+
+// NFL card color scheme
+const NFL_COLORS = {
+  gradientStart: '#1a1a2e',
+  gradientMid: '#3d2a4a',
+  gradientEnd: '#6b3a7a',
+  accent: '#c9a0dc',
+  accentLight: '#e0c8eb',
 };
 
 export default function EventCard({ event, onDelete }: EventCardProps) {
@@ -48,7 +60,7 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
           accentColor: CONCERT_COLORS.accent,
         };
       case 'sports':
-        if (event.sport === 'nfl') return { gradientColors: ['#1e3a5f', '#2d4a6f', '#2d5a8f'] as [string, string, string], accentColor: '#4a90c2' };
+        if (event.sport === 'nfl') return { gradientColors: ['#2a1a3a', '#4a2a5a', '#6a3a7a'] as [string, string, string], accentColor: '#c9a0dc' };
         if (event.sport === 'mlb') return { gradientColors: ['#8b2500', '#a83200', '#c04000'] as [string, string, string], accentColor: '#ff6b35' };
         if (event.sport === 'nba') return { gradientColors: ['#8b1538', '#a01d42', '#c0294f'] as [string, string, string], accentColor: '#ff4d6d' };
         if (event.sport === 'soccer') return { gradientColors: ['#1a5f3c', '#228b4c', '#2ecc71'] as [string, string, string], accentColor: '#5ddb8d' };
@@ -77,6 +89,11 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
   const cardStyle = getCardStyle();
   const hasUserPhoto = event.photos && event.photos.length > 0;
 
+  // Check if this is an NFL game with team data
+  const isNFLGame = event.sport === 'nfl' && event.home_team && event.away_team;
+  const homeTeam = isNFLGame ? getTeamByName(event.home_team!.name) : null;
+  const awayTeam = isNFLGame ? getTeamByName(event.away_team!.name) : null;
+
   // Get the background image source for concerts
   const getConcertBackground = () => {
     if (hasUserPhoto) {
@@ -84,6 +101,61 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
     }
     return require('../../assets/images/concert_bg.png');
   };
+
+  const renderNFLCard = () => (
+    <View style={[styles.card, { height: CARD_HEIGHT }]}>
+      {/* Perforations */}
+      <View style={[styles.perforationLeft, { top: PERFORATION_TOP }]} />
+      <View style={[styles.perforationRight, { top: PERFORATION_TOP }]} />
+
+      <LinearGradient
+        colors={cardStyle.gradientColors}
+        style={styles.nflGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        {/* Stadium background if user uploaded photo */}
+        {hasUserPhoto && (
+          <ImageBackground 
+            source={{ uri: event.photos![0] }}
+            style={styles.nflBackgroundImage}
+            imageStyle={styles.nflBackgroundImageStyle}
+          >
+            <LinearGradient
+              colors={['rgba(42, 26, 58, 0.3)', 'rgba(42, 26, 58, 0.7)', 'rgba(42, 26, 58, 0.95)']}
+              style={StyleSheet.absoluteFill}
+            />
+          </ImageBackground>
+        )}
+
+        {/* Team logos section */}
+        <View style={styles.nflTeamsContainer}>
+          {homeTeam && (
+            <Image source={homeTeam.logo} style={styles.nflTeamLogo} />
+          )}
+          <Text style={styles.nflVsText}>vs</Text>
+          {awayTeam && (
+            <Image source={awayTeam.logo} style={styles.nflTeamLogo} />
+          )}
+        </View>
+
+        {/* Bottom info */}
+        <View style={styles.nflInfoSection}>
+          <View style={[styles.datePill, { borderColor: cardStyle.accentColor }]}>
+            <Text style={[styles.datePillMonth, { color: cardStyle.accentColor }]}>{month} {day}</Text>
+            <Text style={[styles.datePillYear, { color: cardStyle.accentColor + 'CC' }]}>{year}</Text>
+          </View>
+
+          <View style={styles.venueSection}>
+            <Ionicons name="location-outline" size={12} color={cardStyle.accentColor} />
+            <Text style={[styles.venueText, { color: cardStyle.accentColor }]} numberOfLines={2}>
+              {event.venue}
+            </Text>
+          </View>
+        </View>
+      </LinearGradient>
+    </View>
+  );
 
   const renderConcertCard = () => (
     <View style={[styles.card, { height: CARD_HEIGHT }]}>
@@ -115,15 +187,15 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
         {/* Date and Venue row */}
         <View style={styles.infoRow}>
           {/* Date pill */}
-          <View style={styles.datePill}>
-            <Text style={styles.datePillMonth}>{month} {day}</Text>
-            <Text style={styles.datePillYear}>{year}</Text>
+          <View style={styles.concertDatePill}>
+            <Text style={styles.concertDatePillMonth}>{month} {day}</Text>
+            <Text style={styles.concertDatePillYear}>{year}</Text>
           </View>
 
           {/* Venue */}
           <View style={styles.venueSection}>
             <Ionicons name="location-outline" size={12} color={CONCERT_COLORS.accentLight} />
-            <Text style={styles.venueText} numberOfLines={2}>
+            <Text style={styles.concertVenueText} numberOfLines={2}>
               {event.venue}
             </Text>
           </View>
@@ -187,13 +259,23 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
     </View>
   );
 
+  const renderCard = () => {
+    if (event.type === 'concert') {
+      return renderConcertCard();
+    } else if (isNFLGame && homeTeam && awayTeam) {
+      return renderNFLCard();
+    } else {
+      return renderDefaultCard();
+    }
+  };
+
   return (
     <TouchableOpacity 
       onLongPress={confirmDelete} 
       activeOpacity={0.9} 
       style={[styles.cardWrapper, { width: CARD_WIDTH }]}
     >
-      {event.type === 'concert' ? renderConcertCard() : renderDefaultCard()}
+      {renderCard()}
     </TouchableOpacity>
   );
 }
@@ -211,7 +293,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     position: 'relative',
-    backgroundColor: '#1a1a2e', // Fallback for shadow to work
+    backgroundColor: '#1a1a2e',
   },
   perforationLeft: {
     position: 'absolute',
@@ -230,6 +312,43 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: COLORS.cream,
     zIndex: 10,
+  },
+
+  // NFL card styles
+  nflGradient: {
+    flex: 1,
+    padding: 12,
+    justifyContent: 'space-between',
+  },
+  nflBackgroundImage: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  nflBackgroundImageStyle: {
+    resizeMode: 'cover',
+    opacity: 0.6,
+  },
+  nflTeamsContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  nflTeamLogo: {
+    width: 55,
+    height: 55,
+    resizeMode: 'contain',
+  },
+  nflVsText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: '#FFFFFF',
+    marginHorizontal: 4,
+  },
+  nflInfoSection: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
   },
 
   // Concert card styles
@@ -265,9 +384,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  datePill: {
+  concertDatePill: {
     borderWidth: 1,
     borderColor: CONCERT_COLORS.accent,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignItems: 'center',
+  },
+  concertDatePillMonth: {
+    fontFamily: FONTS.bold,
+    fontSize: 11,
+    letterSpacing: 0.5,
+    color: CONCERT_COLORS.accentLight,
+  },
+  concertDatePillYear: {
+    fontFamily: FONTS.regular,
+    fontSize: 10,
+    color: CONCERT_COLORS.accent,
+  },
+  concertVenueText: {
+    fontFamily: FONTS.medium,
+    fontSize: 11,
+    textAlign: 'right',
+    flexShrink: 1,
+    color: CONCERT_COLORS.accentLight,
+  },
+
+  // Shared styles
+  datePill: {
+    borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -277,12 +423,10 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
     fontSize: 11,
     letterSpacing: 0.5,
-    color: CONCERT_COLORS.accentLight,
   },
   datePillYear: {
     fontFamily: FONTS.regular,
     fontSize: 10,
-    color: CONCERT_COLORS.accent,
   },
   venueSection: {
     flexDirection: 'row',
@@ -297,7 +441,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     textAlign: 'right',
     flexShrink: 1,
-    color: CONCERT_COLORS.accentLight,
   },
 
   // Default card styles
