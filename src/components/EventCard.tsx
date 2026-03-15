@@ -200,12 +200,18 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
 
 const styles = StyleSheet.create({
   cardWrapper: {
-    marginBottom: 12,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 8,
   },
   card: {
     borderRadius: 16,
     overflow: 'hidden',
     position: 'relative',
+    backgroundColor: '#1a1a2e', // Fallback for shadow to work
   },
   perforationLeft: {
     position: 'absolute',
@@ -249,7 +255,7 @@ const styles = StyleSheet.create({
   },
   concertTitle: {
     fontFamily: FONTS.audiowide,
-    fontSize: 17.5, // 14 * 1.25 = 17.5 (25% increase)
+    fontSize: 17.5,
     color: '#FFFFFF',
     textAlign: 'center',
     letterSpacing: 1.5,
