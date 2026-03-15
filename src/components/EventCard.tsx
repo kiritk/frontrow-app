@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, useWindowDimensions, ImageBackground, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, useWindowDimensions, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../theme/colors';
@@ -25,8 +25,6 @@ const CONCERT_COLORS = {
   gradientEnd: '#4a1a6b',
   accent: '#9b6dff',
   accentLight: '#c4a7ff',
-  metallic: '#2a2a3e',
-  metallicLight: '#3d3d52',
 };
 
 export default function EventCard({ event, onDelete }: EventCardProps) {
@@ -84,7 +82,6 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
     if (hasUserPhoto) {
       return { uri: event.photos![0] };
     }
-    // Use require for local asset
     return require('../../assets/images/concert_bg.png');
   };
 
@@ -108,43 +105,30 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
         </ImageBackground>
       </View>
 
-      {/* Title section */}
-      <View style={[styles.titleSection, { backgroundColor: CONCERT_COLORS.gradientStart }]}>
+      {/* Bottom section - title, date, venue all on same background */}
+      <View style={styles.bottomSection}>
+        {/* Title */}
         <Text style={styles.concertTitle} numberOfLines={2}>
           {event.title.toUpperCase()}
         </Text>
-      </View>
 
-      {/* Dotted divider line */}
-      <View style={[styles.dividerContainer, { backgroundColor: CONCERT_COLORS.gradientStart }]}>
-        <View style={styles.dottedLine}>
-          {Array.from({ length: 20 }).map((_, i) => (
-            <View key={i} style={[styles.dot, { backgroundColor: CONCERT_COLORS.accent + '40' }]} />
-          ))}
+        {/* Date and Venue row */}
+        <View style={styles.infoRow}>
+          {/* Date pill */}
+          <View style={styles.datePill}>
+            <Text style={styles.datePillMonth}>{month} {day}</Text>
+            <Text style={styles.datePillYear}>{year}</Text>
+          </View>
+
+          {/* Venue */}
+          <View style={styles.venueSection}>
+            <Ionicons name="location-outline" size={12} color={CONCERT_COLORS.accentLight} />
+            <Text style={styles.venueText} numberOfLines={2}>
+              {event.venue}
+            </Text>
+          </View>
         </View>
       </View>
-
-      {/* Bottom metallic section */}
-      <LinearGradient
-        colors={[CONCERT_COLORS.metallic, CONCERT_COLORS.metallicLight, CONCERT_COLORS.metallic]}
-        style={styles.metallicSection}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        {/* Date pill */}
-        <View style={[styles.datePill, { borderColor: CONCERT_COLORS.accent }]}>
-          <Text style={[styles.datePillMonth, { color: CONCERT_COLORS.accentLight }]}>{month} {day}</Text>
-          <Text style={[styles.datePillYear, { color: CONCERT_COLORS.accent }]}>{year}</Text>
-        </View>
-
-        {/* Venue */}
-        <View style={styles.venueSection}>
-          <Ionicons name="location-outline" size={12} color={CONCERT_COLORS.accentLight} />
-          <Text style={[styles.venueText, { color: CONCERT_COLORS.accentLight }]} numberOfLines={2}>
-            {event.venue}
-          </Text>
-        </View>
-      </LinearGradient>
     </View>
   );
 
@@ -244,7 +228,7 @@ const styles = StyleSheet.create({
 
   // Concert card styles
   topSection: {
-    height: '45%',
+    height: '50%',
     overflow: 'hidden',
   },
   imageBackground: {
@@ -256,43 +240,28 @@ const styles = StyleSheet.create({
   imageOverlay: {
     ...StyleSheet.absoluteFillObject,
   },
-  titleSection: {
+  bottomSection: {
+    flex: 1,
+    backgroundColor: CONCERT_COLORS.gradientStart,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingVertical: 10,
+    justifyContent: 'space-between',
   },
   concertTitle: {
     fontFamily: FONTS.audiowide,
-    fontSize: 14,
+    fontSize: 17.5, // 14 * 1.25 = 17.5 (25% increase)
     color: '#FFFFFF',
     textAlign: 'center',
-    letterSpacing: 2,
+    letterSpacing: 1.5,
   },
-  dividerContainer: {
-    paddingVertical: 6,
-    alignItems: 'center',
-  },
-  dottedLine: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  dot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-  },
-  metallicSection: {
-    flex: 1,
+  infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
   },
   datePill: {
     borderWidth: 1,
+    borderColor: CONCERT_COLORS.accent,
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -302,10 +271,12 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bold,
     fontSize: 11,
     letterSpacing: 0.5,
+    color: CONCERT_COLORS.accentLight,
   },
   datePillYear: {
     fontFamily: FONTS.regular,
     fontSize: 10,
+    color: CONCERT_COLORS.accent,
   },
   venueSection: {
     flexDirection: 'row',
@@ -320,6 +291,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     textAlign: 'right',
     flexShrink: 1,
+    color: CONCERT_COLORS.accentLight,
   },
 
   // Default card styles
