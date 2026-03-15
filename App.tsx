@@ -1,9 +1,9 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, TouchableOpacity, Text, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -26,7 +26,6 @@ import { COLORS, FONTS } from './src/theme/colors';
 
 const Tab = createBottomTabNavigator();
 
-// Custom ticket icon component
 function TicketIcon({ color, size }: { color: string; size: number }) {
   return (
     <View style={{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }}>
@@ -43,12 +42,7 @@ function TicketIcon({ color, size }: { color: string; size: number }) {
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <View style={{ width: size * 0.2, height: size * 0.2, backgroundColor: color, borderRadius: 2 }} />
         </View>
-        <View style={{
-          height: '100%',
-          borderLeftWidth: 1.5,
-          borderColor: color,
-          borderStyle: 'dashed',
-        }} />
+        <View style={{ height: '100%', borderLeftWidth: 1.5, borderColor: color, borderStyle: 'dashed' }} />
         <View style={{ width: size * 0.25, alignItems: 'center', justifyContent: 'center' }}>
           <View style={{ width: size * 0.1, height: size * 0.1, backgroundColor: color, borderRadius: 1 }} />
         </View>
@@ -57,65 +51,54 @@ function TicketIcon({ color, size }: { color: string; size: number }) {
   );
 }
 
+function CustomTabBar({ state, descriptors, navigation }: any) {
+  const insets = useSafeAreaInsets();
+  
+  const icons: { [key: string]: (color: string, size: number) => React.ReactNode } = {
+    Events: (color, size) => <TicketIcon color={color} size={size} />,
+    Stats: (color, size) => <Ionicons name="bar-chart-outline" size={size} color={color} />,
+    Profile: (color, size) => <Ionicons name="person-outline" size={size} color={color} />,
+  };
+
+  return (
+    <View style={[styles.tabBarWrapper, { bottom: Math.max(insets.bottom, 20) }]}>
+      <View style={styles.tabBarContainer}>
+        {state.routes.map((route: any, index: number) => {
+          const isFocused = state.index === index;
+          const color = isFocused ? COLORS.navy : COLORS.grayLight;
+
+          const onPress = () => {
+            const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+            if (!isFocused && !event.defaultPrevented) {
+              navigation.navigate(route.name);
+            }
+          };
+
+          return (
+            <TouchableOpacity
+              key={route.key}
+              onPress={onPress}
+              style={styles.tabButton}
+            >
+              {icons[route.name](color, 24)}
+              <Text style={[styles.tabLabel, { color }]}>{route.name}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 function TabNavigator() {
   return (
     <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          position: 'absolute',
-          bottom: Platform.OS === 'ios' ? 30 : 20,
-          left: 20,
-          right: 90,
-          height: 64,
-          backgroundColor: COLORS.white,
-          borderRadius: 32,
-          shadowColor: COLORS.navy,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.15,
-          shadowRadius: 12,
-          elevation: 8,
-          borderTopWidth: 0,
-          paddingBottom: 0,
-          paddingTop: 0,
-        },
-        tabBarActiveTintColor: COLORS.navy,
-        tabBarInactiveTintColor: COLORS.grayLight,
-        tabBarLabelStyle: {
-          fontFamily: FONTS.medium,
-          fontSize: 11,
-          marginTop: -2,
-          marginBottom: 8,
-        },
-        tabBarIconStyle: {
-          marginTop: 8,
-        },
-      }}
+      tabBar={(props) => <CustomTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
     >
-      <Tab.Screen 
-        name="Events" 
-        component={EventsScreen} 
-        options={{ 
-          tabBarLabel: 'Events',
-          tabBarIcon: ({ color, size }) => <TicketIcon color={color} size={size} />,
-        }} 
-      />
-      <Tab.Screen 
-        name="Stats" 
-        component={StatsScreen} 
-        options={{ 
-          tabBarLabel: 'Stats',
-          tabBarIcon: ({ color, size }) => <Ionicons name="bar-chart-outline" size={size} color={color} />,
-        }} 
-      />
-      <Tab.Screen 
-        name="Profile" 
-        component={ProfileScreen} 
-        options={{ 
-          tabBarLabel: 'Profile',
-          tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />,
-        }} 
-      />
+      <Tab.Screen name="Events" component={EventsScreen} />
+      <Tab.Screen name="Stats" component={StatsScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }
@@ -156,4 +139,33 @@ export default function App() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.cream },
   loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.cream },
+  tabBarWrapper: {
+    position: 'absolute',
+    left: 20,
+    right: 90,
+    alignItems: 'center',
+  },
+  tabBarContainer: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.white,
+    borderRadius: 32,
+    height: 64,
+    paddingHorizontal: 8,
+    shadowColor: COLORS.navy,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  tabButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+  },
+  tabLabel: {
+    fontFamily: FONTS.medium,
+    fontSize: 11,
+    marginTop: 4,
+  },
 });
