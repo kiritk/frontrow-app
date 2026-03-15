@@ -1,10 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Modal, TextInput,
   ScrollView, Platform, Alert, ActivityIndicator, Image, Animated,
   PanResponder, Dimensions, TouchableWithoutFeedback, Keyboard,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { supabase } from '../lib/supabase';
@@ -61,6 +62,9 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   const homeInputRef = useRef<TextInput>(null);
   const awayInputRef = useRef<TextInput>(null);
 
+  // Slide up animation for modal
+  const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+
   // Pan responder for swipe to dismiss
   const translateY = useRef(new Animated.Value(0)).current;
   const panResponder = useRef(
@@ -94,6 +98,19 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     })
   ).current;
 
+  // Animate modal slide up when opened
+  useEffect(() => {
+    if (modalVisible) {
+      slideAnim.setValue(SCREEN_HEIGHT);
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        tension: 65,
+        friction: 11,
+      }).start();
+    }
+  }, [modalVisible]);
+
   const resetForm = () => { 
     setStep('type'); 
     setEventType(''); 
@@ -112,10 +129,16 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     setShowAwayDropdown(false);
   };
 
-  const handleClose = () => { 
+  const handleClose = () => {
     Keyboard.dismiss();
-    setModalVisible(false); 
-    resetForm(); 
+    Animated.timing(slideAnim, {
+      toValue: SCREEN_HEIGHT,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => {
+      setModalVisible(false);
+      resetForm();
+    });
   };
 
   const handleSelectType = (type: string) => { 
@@ -536,13 +559,13 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
 
   return (
     <>
-      <TouchableOpacity style={[styles.fab, { bottom: fabBottom }]} onPress={() => setModalVisible(true)}>
+      <TouchableOpacity style={[styles.fab, { bottom: fabBottom }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setModalVisible(true); }}>
         <Text style={styles.fabIcon}>+</Text>
       </TouchableOpacity>
       
       <Modal 
         visible={modalVisible} 
-        animationType="slide" 
+        animationType="fade" 
         transparent 
         onRequestClose={handleClose}
       >
@@ -554,7 +577,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
           <Animated.View 
             style={[
               styles.modal, 
-              { transform: [{ translateY }] }
+              { transform: [{ translateY: Animated.add(slideAnim, translateY) }] }
             ]}
           >
             <View {...panResponder.panHandlers} style={styles.modalHeader}>
