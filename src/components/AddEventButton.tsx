@@ -598,6 +598,8 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
                       </TouchableOpacity>
                     </View>
                     <DateTimePicker
+                      themeVariant="light"
+                      accentColor={COLORS.navy}
                       value={eventDate}
                       mode="date"
                       display="inline"
