@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl, ActivityIndicator, TouchableOpacity, ScrollView, Share } from 'react-native';
+import { View, Text, StyleSheet, FlatList, RefreshControl, ActivityIndicator, TouchableOpacity, ScrollView, Share, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import EventCard from '../components/EventCard';
 import { COLORS, SPACING, FONTS } from '../theme/colors';
+
+const APP_LOGO = require('../../assets/images/app logo.png');
 
 const CATEGORY_FILTERS = [
   { value: 'sports', label: 'Sports', icon: 'trophy-outline' as const },
@@ -120,7 +122,7 @@ export default function EventsScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* App Header */}
       <View style={styles.appHeader}>
-        <Text style={styles.appTitle}>Front Row</Text>
+        <Image source={APP_LOGO} style={styles.appLogo} resizeMode="contain" />
         <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
           <Ionicons name="share-outline" size={24} color={COLORS.navy} />
         </TouchableOpacity>
@@ -238,11 +240,9 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 12,
   },
-  appTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: 24,
-    color: COLORS.navy,
-    fontStyle: 'italic',
+  appLogo: {
+    height: 32,
+    width: 120,
   },
   shareButton: { padding: 4 },
 
