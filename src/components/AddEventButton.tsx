@@ -145,27 +145,18 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
         photos: photos.length > 0 ? photos : [],
       };
 
-      console.log('Inserting event:', eventData);
-
       const { data, error } = await supabase
         .from('events')
         .insert([eventData])
         .select();
 
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
-      }
-
-      console.log('Event created successfully:', data);
+      if (error) throw error;
       
       setModalVisible(false);
       resetForm();
-      
       await onEventAdded();
       
     } catch (e: any) {
-      console.error('Error creating event:', e);
       Alert.alert('Error', e.message || 'Failed to create event');
     } finally {
       setLoading(false);
@@ -334,8 +325,8 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     </View>
   );
 
-  // Calculate FAB position based on safe area and tab bar
-  const fabBottom = Platform.OS === 'ios' ? 100 : 90;
+  // Match the tab bar position exactly
+  const fabBottom = Math.max(insets.bottom, 20);
 
   return (
     <>
@@ -369,10 +360,10 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
 const styles = StyleSheet.create({
   fab: { 
     position: 'absolute', 
-    right: 24, 
-    width: 56, 
-    height: 56, 
-    borderRadius: 28, 
+    right: 20,
+    width: 64, 
+    height: 64, 
+    borderRadius: 32, 
     backgroundColor: COLORS.navy, 
     justifyContent: 'center', 
     alignItems: 'center', 
@@ -383,7 +374,7 @@ const styles = StyleSheet.create({
     elevation: 8,
     zIndex: 999,
   },
-  fabIcon: { fontSize: 28, color: COLORS.cream, fontWeight: '300' },
+  fabIcon: { fontSize: 32, color: COLORS.cream, fontWeight: '300' },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   kav: { flex: 1, justifyContent: 'flex-end' },
   modal: { backgroundColor: COLORS.cream, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '92%', minHeight: '70%' },
