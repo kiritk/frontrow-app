@@ -274,12 +274,20 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     setHomeTeam(team);
     setHomeTeamQuery(team.fullName);
     setShowHomeDropdown(false);
+    // Auto-fill venue with stadium
+    setVenue(team.stadium);
+    // Dismiss keyboard
+    Keyboard.dismiss();
+    homeInputRef.current?.blur();
   };
 
   const selectAwayTeam = (team: NFLTeam) => {
     setAwayTeam(team);
     setAwayTeamQuery(team.fullName);
     setShowAwayDropdown(false);
+    // Dismiss keyboard
+    Keyboard.dismiss();
+    awayInputRef.current?.blur();
   };
 
   const renderTeamDropdown = (

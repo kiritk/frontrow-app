@@ -94,13 +94,15 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
 
   const renderNFLCard = () => {
     const homeColor = homeTeam?.primaryColor || '#2a1a3a';
-    const awayColor = awayTeam?.primaryColor || '#4a2a5a';
 
     return (
       <View style={[styles.card, { height: CARD_HEIGHT }]}>
         {/* Perforations */}
         <View style={[styles.perforationLeft, { top: PERFORATION_TOP }]} />
         <View style={[styles.perforationRight, { top: PERFORATION_TOP }]} />
+
+        {/* Bottom solid color - home team */}
+        <View style={[styles.nflBottomColor, { backgroundColor: homeColor }]} />
 
         {/* Stadium image - top 60% */}
         <View style={styles.nflStadiumSection}>
@@ -109,26 +111,21 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
             style={styles.nflStadiumImage}
             imageStyle={styles.nflStadiumImageStyle}
           >
-            {/* Gradient fade from stadium to home team color */}
+            {/* Smooth gradient fade from stadium to home team color */}
             <LinearGradient
-              colors={['transparent', 'transparent', homeColor]}
-              locations={[0, 0.5, 1]}
+              colors={[
+                'transparent',
+                'rgba(0,0,0,0)',
+                homeColor + '40',
+                homeColor + '80',
+                homeColor + 'CC',
+                homeColor,
+              ]}
+              locations={[0, 0.3, 0.5, 0.7, 0.85, 1]}
               style={styles.nflStadiumOverlay}
             />
           </ImageBackground>
         </View>
-
-        {/* Home team color section - 30% */}
-        <View style={[styles.nflHomeColorSection, { backgroundColor: homeColor }]}>
-          <LinearGradient
-            colors={[homeColor, awayColor]}
-            locations={[0.6, 1]}
-            style={styles.nflHomeGradient}
-          />
-        </View>
-
-        {/* Away team color section - 10% */}
-        <View style={[styles.nflAwayColorSection, { backgroundColor: awayColor }]} />
 
         {/* Content overlay */}
         <View style={styles.nflContentOverlay}>
@@ -320,12 +317,15 @@ const styles = StyleSheet.create({
   },
 
   // NFL card styles
+  nflBottomColor: {
+    ...StyleSheet.absoluteFillObject,
+  },
   nflStadiumSection: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: '60%',
+    height: '70%',
   },
   nflStadiumImage: {
     flex: 1,
@@ -335,23 +335,6 @@ const styles = StyleSheet.create({
   },
   nflStadiumOverlay: {
     ...StyleSheet.absoluteFillObject,
-  },
-  nflHomeColorSection: {
-    position: 'absolute',
-    top: '60%',
-    left: 0,
-    right: 0,
-    height: '30%',
-  },
-  nflHomeGradient: {
-    flex: 1,
-  },
-  nflAwayColorSection: {
-    position: 'absolute',
-    top: '90%',
-    left: 0,
-    right: 0,
-    height: '10%',
   },
   nflContentOverlay: {
     ...StyleSheet.absoluteFillObject,
