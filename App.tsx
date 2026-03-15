@@ -1,11 +1,11 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import {
   useFonts,
   Outfit_300Light,
@@ -31,25 +31,25 @@ function TicketIcon({ color, size }: { color: string; size: number }) {
   return (
     <View style={{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }}>
       <View style={{
-        width: size * 0.9,
+        width: size * 0.85,
         height: size * 0.6,
         borderWidth: 2,
         borderColor: color,
         borderRadius: 4,
         flexDirection: 'row',
         alignItems: 'center',
+        overflow: 'hidden',
       }}>
-        <View style={{ flex: 1, alignItems: 'center' }}>
-          <View style={{ width: size * 0.15, height: size * 0.15, backgroundColor: color, borderRadius: 2 }} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: size * 0.2, height: size * 0.2, backgroundColor: color, borderRadius: 2 }} />
         </View>
         <View style={{
-          width: 0,
           height: '100%',
           borderLeftWidth: 1.5,
           borderColor: color,
           borderStyle: 'dashed',
         }} />
-        <View style={{ flex: 0.4, alignItems: 'center' }}>
+        <View style={{ width: size * 0.25, alignItems: 'center', justifyContent: 'center' }}>
           <View style={{ width: size * 0.1, height: size * 0.1, backgroundColor: color, borderRadius: 1 }} />
         </View>
       </View>
@@ -64,12 +64,12 @@ function TabNavigator() {
         headerShown: false,
         tabBarStyle: {
           position: 'absolute',
-          bottom: 30,
-          left: 24,
-          right: 100,
-          height: 70,
+          bottom: Platform.OS === 'ios' ? 30 : 20,
+          left: 20,
+          right: 90,
+          height: 64,
           backgroundColor: COLORS.white,
-          borderRadius: 35,
+          borderRadius: 32,
           shadowColor: COLORS.navy,
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.15,
@@ -77,13 +77,14 @@ function TabNavigator() {
           elevation: 8,
           borderTopWidth: 0,
           paddingBottom: 0,
+          paddingTop: 0,
         },
         tabBarActiveTintColor: COLORS.navy,
         tabBarInactiveTintColor: COLORS.grayLight,
         tabBarLabelStyle: {
           fontFamily: FONTS.medium,
-          fontSize: 12,
-          marginTop: -4,
+          fontSize: 11,
+          marginTop: -2,
           marginBottom: 8,
         },
         tabBarIconStyle: {
@@ -112,7 +113,7 @@ function TabNavigator() {
         component={ProfileScreen} 
         options={{ 
           tabBarLabel: 'Profile',
-          tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />,
         }} 
       />
     </Tab.Navigator>
