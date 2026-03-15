@@ -57,6 +57,10 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   const [showHomeDropdown, setShowHomeDropdown] = useState(false);
   const [showAwayDropdown, setShowAwayDropdown] = useState(false);
 
+  // Refs for text inputs
+  const homeInputRef = useRef<TextInput>(null);
+  const awayInputRef = useRef<TextInput>(null);
+
   // Pan responder for swipe to dismiss
   const translateY = useRef(new Animated.Value(0)).current;
   const panResponder = useRef(
