@@ -16,6 +16,7 @@ import {
   Outfit_800ExtraBold,
   Outfit_900Black,
 } from '@expo-google-fonts/outfit';
+import { Audiowide_400Regular } from '@expo-google-fonts/audiowide';
 
 import EventsScreen from './src/screens/EventsScreen';
 import StatsScreen from './src/screens/StatsScreen';
@@ -91,7 +92,6 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
   );
 }
 
-// Wrapper component to refresh events from any screen
 function TabNavigatorWithFAB() {
   const [refreshKey, setRefreshKey] = React.useState(0);
   
@@ -131,6 +131,7 @@ export default function App() {
     Outfit_700Bold,
     Outfit_800ExtraBold,
     Outfit_900Black,
+    Audiowide_400Regular,
   });
 
   if (!fontsLoaded) {
