@@ -30,15 +30,6 @@ const CONCERT_COLORS = {
   accentLight: '#c4a7ff',
 };
 
-// NFL card color scheme
-const NFL_COLORS = {
-  gradientStart: '#1a1a2e',
-  gradientMid: '#3d2a4a',
-  gradientEnd: '#6b3a7a',
-  accent: '#c9a0dc',
-  accentLight: '#e0c8eb',
-};
-
 export default function EventCard({ event, onDelete }: EventCardProps) {
   const { width } = useWindowDimensions();
   const CARD_WIDTH = (width - 48 - 12) / 2;
@@ -101,23 +92,47 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
     return require('../../assets/images/concert_bg.png');
   };
 
-  const renderNFLCard = () => (
-    <View style={[styles.card, { height: CARD_HEIGHT }]}>
-      {/* Perforations */}
-      <View style={[styles.perforationLeft, { top: PERFORATION_TOP }]} />
-      <View style={[styles.perforationRight, { top: PERFORATION_TOP }]} />
+  const renderNFLCard = () => {
+    const homeColor = homeTeam?.primaryColor || '#2a1a3a';
+    const awayColor = awayTeam?.primaryColor || '#4a2a5a';
 
-      {/* Stadium background image */}
-      <ImageBackground 
-        source={homeTeam?.stadiumImage}
-        style={styles.nflBackground}
-        imageStyle={styles.nflBackgroundImage}
-      >
-        <LinearGradient
-          colors={['rgba(42, 26, 58, 0.4)', 'rgba(42, 26, 58, 0.7)', 'rgba(42, 26, 58, 0.95)']}
-          style={styles.nflGradientOverlay}
-        >
-          {/* Team logos section */}
+    return (
+      <View style={[styles.card, { height: CARD_HEIGHT }]}>
+        {/* Perforations */}
+        <View style={[styles.perforationLeft, { top: PERFORATION_TOP }]} />
+        <View style={[styles.perforationRight, { top: PERFORATION_TOP }]} />
+
+        {/* Stadium image - top 60% */}
+        <View style={styles.nflStadiumSection}>
+          <ImageBackground 
+            source={homeTeam?.stadiumImage}
+            style={styles.nflStadiumImage}
+            imageStyle={styles.nflStadiumImageStyle}
+          >
+            {/* Gradient fade from stadium to home team color */}
+            <LinearGradient
+              colors={['transparent', 'transparent', homeColor]}
+              locations={[0, 0.5, 1]}
+              style={styles.nflStadiumOverlay}
+            />
+          </ImageBackground>
+        </View>
+
+        {/* Home team color section - 30% */}
+        <View style={[styles.nflHomeColorSection, { backgroundColor: homeColor }]}>
+          <LinearGradient
+            colors={[homeColor, awayColor]}
+            locations={[0.6, 1]}
+            style={styles.nflHomeGradient}
+          />
+        </View>
+
+        {/* Away team color section - 10% */}
+        <View style={[styles.nflAwayColorSection, { backgroundColor: awayColor }]} />
+
+        {/* Content overlay */}
+        <View style={styles.nflContentOverlay}>
+          {/* Team logos - centered in card */}
           <View style={styles.nflTeamsContainer}>
             {homeTeam && (
               <Image source={homeTeam.logo} style={styles.nflTeamLogo} />
@@ -130,22 +145,22 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
 
           {/* Bottom info */}
           <View style={styles.nflInfoSection}>
-            <View style={[styles.datePill, { borderColor: cardStyle.accentColor }]}>
-              <Text style={[styles.datePillMonth, { color: cardStyle.accentColor }]}>{month} {day}</Text>
-              <Text style={[styles.datePillYear, { color: cardStyle.accentColor + 'CC' }]}>{year}</Text>
+            <View style={styles.nflDatePill}>
+              <Text style={styles.nflDateMonth}>{month} {day}</Text>
+              <Text style={styles.nflDateYear}>{year}</Text>
             </View>
 
-            <View style={styles.venueSection}>
-              <Ionicons name="location-outline" size={12} color={cardStyle.accentColor} />
-              <Text style={[styles.venueText, { color: cardStyle.accentColor }]} numberOfLines={2}>
+            <View style={styles.nflVenueSection}>
+              <Ionicons name="location-outline" size={12} color="#FFFFFF" />
+              <Text style={styles.nflVenueText} numberOfLines={2}>
                 {event.venue}
               </Text>
             </View>
           </View>
-        </LinearGradient>
-      </ImageBackground>
-    </View>
-  );
+        </View>
+      </View>
+    );
+  };
 
   const renderConcertCard = () => (
     <View style={[styles.card, { height: CARD_HEIGHT }]}>
@@ -305,14 +320,41 @@ const styles = StyleSheet.create({
   },
 
   // NFL card styles
-  nflBackground: {
+  nflStadiumSection: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '60%',
+  },
+  nflStadiumImage: {
     flex: 1,
   },
-  nflBackgroundImage: {
+  nflStadiumImageStyle: {
     resizeMode: 'cover',
   },
-  nflGradientOverlay: {
+  nflStadiumOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  nflHomeColorSection: {
+    position: 'absolute',
+    top: '60%',
+    left: 0,
+    right: 0,
+    height: '30%',
+  },
+  nflHomeGradient: {
     flex: 1,
+  },
+  nflAwayColorSection: {
+    position: 'absolute',
+    top: '90%',
+    left: 0,
+    right: 0,
+    height: '10%',
+  },
+  nflContentOverlay: {
+    ...StyleSheet.absoluteFillObject,
     padding: 12,
     justifyContent: 'space-between',
   },
@@ -338,6 +380,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
+  },
+  nflDatePill: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignItems: 'center',
+  },
+  nflDateMonth: {
+    fontFamily: FONTS.bold,
+    fontSize: 11,
+    letterSpacing: 0.5,
+    color: '#1a1a2e',
+  },
+  nflDateYear: {
+    fontFamily: FONTS.regular,
+    fontSize: 10,
+    color: '#666666',
+  },
+  nflVenueSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'flex-end',
+    marginLeft: 8,
+    gap: 3,
+  },
+  nflVenueText: {
+    fontFamily: FONTS.medium,
+    fontSize: 11,
+    color: '#FFFFFF',
+    textAlign: 'right',
+    flexShrink: 1,
   },
 
   // Concert card styles
@@ -401,22 +476,6 @@ const styles = StyleSheet.create({
   },
 
   // Shared styles
-  datePill: {
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    alignItems: 'center',
-  },
-  datePillMonth: {
-    fontFamily: FONTS.bold,
-    fontSize: 11,
-    letterSpacing: 0.5,
-  },
-  datePillYear: {
-    fontFamily: FONTS.regular,
-    fontSize: 10,
-  },
   venueSection: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -424,12 +483,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     marginLeft: 8,
     gap: 3,
-  },
-  venueText: {
-    fontFamily: FONTS.medium,
-    fontSize: 11,
-    textAlign: 'right',
-    flexShrink: 1,
   },
 
   // Default card styles
