@@ -54,7 +54,6 @@ export default function StatsScreen() {
       const year = new Date(e.date).getFullYear();
       years.add(year);
     });
-    // Add current year if not present
     years.add(new Date().getFullYear());
     return Array.from(years).sort((a, b) => b - a);
   };
@@ -109,7 +108,6 @@ export default function StatsScreen() {
   const maxMonthlyCount = Math.max(...monthlyData, 1);
   const eventTypeData = getEventTypeData();
   const mostVisitedVenue = getMostVisitedVenue();
-  const totalEvents = events.length;
   const years = getYears();
 
   const monthLabels = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
@@ -166,7 +164,6 @@ export default function StatsScreen() {
       const angle = percentage * 360;
       const endAngle = startAngle + angle;
 
-      // Calculate arc path
       const startRad = (startAngle * Math.PI) / 180;
       const endRad = (endAngle * Math.PI) / 180;
 
@@ -193,7 +190,6 @@ export default function StatsScreen() {
     return (
       <Svg width={size} height={size}>
         <G>{segments}</G>
-        {/* Center circle for donut effect */}
         <Circle cx={center} cy={center} r={35} fill={COLORS.white} />
       </Svg>
     );
@@ -209,6 +205,9 @@ export default function StatsScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.navy} />
         }
       >
+        {/* Header */}
+        <Text style={styles.pageTitle}>Stats</Text>
+
         {/* Yearly Activity Bar Chart */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
@@ -350,11 +349,22 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
     paddingBottom: 100,
   },
+  pageTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 32,
+    color: COLORS.navy,
+    marginBottom: SPACING.lg,
+  },
   card: {
     backgroundColor: COLORS.white,
     borderRadius: BORDER_RADIUS.xl,
     padding: SPACING.lg,
     marginBottom: SPACING.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -487,6 +497,11 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.xl,
     overflow: 'hidden',
     marginBottom: SPACING.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   venueCard: {
     height: 140,
