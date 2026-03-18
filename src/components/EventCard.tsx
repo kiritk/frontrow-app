@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../theme/colors';
 import { getTeamByName } from '../data/nflTeams';
+import { getMLBTeamByName } from '../data/mlbTeams';
 
 interface EventCardProps {
   event: {
@@ -52,7 +53,7 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
         };
       case 'sports':
         if (event.sport === 'nfl') return { gradientColors: ['#2a1a3a', '#4a2a5a', '#6a3a7a'] as [string, string, string], accentColor: '#c9a0dc' };
-        if (event.sport === 'mlb') return { gradientColors: ['#8b2500', '#a83200', '#c04000'] as [string, string, string], accentColor: '#ff6b35' };
+        if (event.sport === 'mlb') return { gradientColors: ['#1a3a1a', '#2a5a2a', '#3a7a3a'] as [string, string, string], accentColor: '#90EE90' };
         if (event.sport === 'nba') return { gradientColors: ['#8b1538', '#a01d42', '#c0294f'] as [string, string, string], accentColor: '#ff4d6d' };
         if (event.sport === 'soccer') return { gradientColors: ['#1a5f3c', '#228b4c', '#2ecc71'] as [string, string, string], accentColor: '#5ddb8d' };
         if (event.sport === 'tennis') return { gradientColors: ['#2c3e50', '#3a4f63', '#4a6278'] as [string, string, string], accentColor: '#7fb3d3' };
@@ -79,10 +80,26 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
   const { month, day, year } = formatDate(event.date);
   const cardStyle = getCardStyle();
 
-  // Check if this is an NFL game with team data
+  // Check if this is a team sport with team data
   const isNFLGame = event.sport === 'nfl' && event.home_team && event.away_team;
-  const homeTeam = isNFLGame ? getTeamByName(event.home_team!.name) : null;
-  const awayTeam = isNFLGame ? getTeamByName(event.away_team!.name) : null;
+  const isMLBGame = event.sport === 'mlb' && event.home_team && event.away_team;
+  const isTeamSport = isNFLGame || isMLBGame;
+
+  // Get team data based on sport type
+  const getHomeTeam = () => {
+    if (isNFLGame) return getTeamByName(event.home_team!.name);
+    if (isMLBGame) return getMLBTeamByName(event.home_team!.name);
+    return null;
+  };
+
+  const getAwayTeam = () => {
+    if (isNFLGame) return getTeamByName(event.away_team!.name);
+    if (isMLBGame) return getMLBTeamByName(event.away_team!.name);
+    return null;
+  };
+
+  const homeTeam = getHomeTeam();
+  const awayTeam = getAwayTeam();
 
   // Get the background image source for concerts
   const getConcertBackground = () => {
@@ -92,7 +109,7 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
     return require('../../assets/images/concert_bg.png');
   };
 
-  const renderNFLCard = () => {
+  const renderTeamSportCard = () => {
     const homeColor = homeTeam?.primaryColor || '#2a1a3a';
 
     return (
@@ -102,14 +119,14 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
         <View style={[styles.perforationRight, { top: PERFORATION_TOP }]} />
 
         {/* Bottom solid color - home team */}
-        <View style={[styles.nflBottomColor, { backgroundColor: homeColor }]} />
+        <View style={[styles.teamBottomColor, { backgroundColor: homeColor }]} />
 
         {/* Stadium image - top 60% */}
-        <View style={styles.nflStadiumSection}>
+        <View style={styles.teamStadiumSection}>
           <ImageBackground 
             source={homeTeam?.stadiumImage}
-            style={styles.nflStadiumImage}
-            imageStyle={styles.nflStadiumImageStyle}
+            style={styles.teamStadiumImage}
+            imageStyle={styles.teamStadiumImageStyle}
           >
             {/* Smooth gradient fade from stadium to home team color */}
             <LinearGradient
@@ -122,34 +139,34 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
                 homeColor,
               ]}
               locations={[0, 0.3, 0.5, 0.7, 0.85, 1]}
-              style={styles.nflStadiumOverlay}
+              style={styles.teamStadiumOverlay}
             />
           </ImageBackground>
         </View>
 
         {/* Content overlay */}
-        <View style={styles.nflContentOverlay}>
+        <View style={styles.teamContentOverlay}>
           {/* Team logos - centered in card */}
-          <View style={styles.nflTeamsContainer}>
+          <View style={styles.teamLogosContainer}>
             {homeTeam && (
-              <Image source={homeTeam.logo} style={styles.nflTeamLogo} />
+              <Image source={homeTeam.logo} style={styles.teamLogo} />
             )}
-            <Text style={styles.nflVsText}>vs</Text>
+            <Text style={styles.teamVsText}>vs</Text>
             {awayTeam && (
-              <Image source={awayTeam.logo} style={styles.nflTeamLogo} />
+              <Image source={awayTeam.logo} style={styles.teamLogo} />
             )}
           </View>
 
           {/* Bottom info */}
-          <View style={styles.nflInfoSection}>
-            <View style={styles.nflDatePill}>
-              <Text style={styles.nflDateMonth}>{month} {day}</Text>
-              <Text style={styles.nflDateYear}>{year}</Text>
+          <View style={styles.teamInfoSection}>
+            <View style={styles.teamDatePill}>
+              <Text style={styles.teamDateMonth}>{month} {day}</Text>
+              <Text style={styles.teamDateYear}>{year}</Text>
             </View>
 
-            <View style={styles.nflVenueSection}>
+            <View style={styles.teamVenueSection}>
               <Ionicons name="location-outline" size={12} color="#FFFFFF" />
-              <Text style={styles.nflVenueText} numberOfLines={2}>
+              <Text style={styles.teamVenueText} numberOfLines={2}>
                 {event.venue}
               </Text>
             </View>
@@ -264,8 +281,8 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
   const renderCard = () => {
     if (event.type === 'concert') {
       return renderConcertCard();
-    } else if (isNFLGame && homeTeam && awayTeam) {
-      return renderNFLCard();
+    } else if (isTeamSport && homeTeam && awayTeam) {
+      return renderTeamSportCard();
     } else {
       return renderDefaultCard();
     }
@@ -316,73 +333,73 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
 
-  // NFL card styles
-  nflBottomColor: {
+  // Team sport card styles (NFL, MLB)
+  teamBottomColor: {
     ...StyleSheet.absoluteFillObject,
   },
-  nflStadiumSection: {
+  teamStadiumSection: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     height: '70%',
   },
-  nflStadiumImage: {
+  teamStadiumImage: {
     flex: 1,
   },
-  nflStadiumImageStyle: {
+  teamStadiumImageStyle: {
     resizeMode: 'cover',
   },
-  nflStadiumOverlay: {
+  teamStadiumOverlay: {
     ...StyleSheet.absoluteFillObject,
   },
-  nflContentOverlay: {
+  teamContentOverlay: {
     ...StyleSheet.absoluteFillObject,
     padding: 12,
     justifyContent: 'space-between',
   },
-  nflTeamsContainer: {
+  teamLogosContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
-  nflTeamLogo: {
+  teamLogo: {
     width: 55,
     height: 55,
     resizeMode: 'contain',
   },
-  nflVsText: {
+  teamVsText: {
     fontFamily: FONTS.semiBold,
     fontSize: 14,
     color: '#FFFFFF',
     marginHorizontal: 4,
   },
-  nflInfoSection: {
+  teamInfoSection: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
   },
-  nflDatePill: {
+  teamDatePill: {
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 4,
     alignItems: 'center',
   },
-  nflDateMonth: {
+  teamDateMonth: {
     fontFamily: FONTS.bold,
     fontSize: 11,
     letterSpacing: 0.5,
     color: '#1a1a2e',
   },
-  nflDateYear: {
+  teamDateYear: {
     fontFamily: FONTS.regular,
     fontSize: 10,
     color: '#666666',
   },
-  nflVenueSection: {
+  teamVenueSection: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
@@ -390,7 +407,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     gap: 3,
   },
-  nflVenueText: {
+  teamVenueText: {
     fontFamily: FONTS.medium,
     fontSize: 11,
     color: '#FFFFFF',

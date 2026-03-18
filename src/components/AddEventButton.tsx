@@ -5,13 +5,14 @@ import {
   PanResponder, Dimensions, TouchableWithoutFeedback, Keyboard,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
+import * as Haptics from 'expo-haptics';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 import { NFL_TEAMS, NFLTeam } from '../data/nflTeams';
+import { MLB_TEAMS, MLBTeam } from '../data/mlbTeams';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -26,14 +27,15 @@ const EVENT_TYPES = [
 
 const SPORT_TYPES = [
   { value: 'nfl', label: 'NFL', emoji: '🏈' },
-  { value: 'nba', label: 'NBA', emoji: '🏀' },
   { value: 'mlb', label: 'MLB', emoji: '⚾' },
+  { value: 'nba', label: 'NBA', emoji: '🏀' },
   { value: 'soccer', label: 'Soccer', emoji: '⚽' },
   { value: 'tennis', label: 'Tennis', emoji: '🎾' },
   { value: 'other', label: 'Other', emoji: '🏅' },
 ];
 
 type Step = 'type' | 'sport-type' | 'details' | 'photos';
+type SportTeam = NFLTeam | MLBTeam;
 
 export default function AddEventButton({ onEventAdded }: { onEventAdded: () => void }) {
   const { user } = useAuth();
@@ -50,9 +52,9 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   const [dateSelected, setDateSelected] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
   
-  // NFL team selection state
-  const [homeTeam, setHomeTeam] = useState<NFLTeam | null>(null);
-  const [awayTeam, setAwayTeam] = useState<NFLTeam | null>(null);
+  // Team selection state (works for NFL and MLB)
+  const [homeTeam, setHomeTeam] = useState<SportTeam | null>(null);
+  const [awayTeam, setAwayTeam] = useState<SportTeam | null>(null);
   const [homeTeamQuery, setHomeTeamQuery] = useState('');
   const [awayTeamQuery, setAwayTeamQuery] = useState('');
   const [showHomeDropdown, setShowHomeDropdown] = useState(false);
@@ -152,7 +154,9 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   };
   
   const handleDetailsNext = () => { 
-    if (sportType === 'nfl') {
+    const isTeamSport = sportType === 'nfl' || sportType === 'mlb';
+    
+    if (isTeamSport) {
       if (!homeTeam || !awayTeam || !venue || !dateSelected) { 
         Alert.alert('Error', 'Please fill in all fields'); 
         return; 
@@ -230,7 +234,8 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     setLoading(true);
     
     try {
-      const finalEventName = sportType === 'nfl' && homeTeam && awayTeam 
+      const isTeamSport = sportType === 'nfl' || sportType === 'mlb';
+      const finalEventName = isTeamSport && homeTeam && awayTeam 
         ? `${homeTeam.name} vs ${awayTeam.name}`
         : eventName;
 
@@ -245,7 +250,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
         photos: photos.length > 0 ? photos : [],
       };
 
-      if (sportType === 'nfl' && homeTeam && awayTeam) {
+      if (isTeamSport && homeTeam && awayTeam) {
         eventData.home_team = { name: homeTeam.name, city: homeTeam.city, fullName: homeTeam.fullName };
         eventData.away_team = { name: awayTeam.name, city: awayTeam.city, fullName: awayTeam.fullName };
       }
@@ -282,10 +287,17 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     }
   };
 
-  // Sort teams alphabetically by full name
-  const sortedTeams = [...NFL_TEAMS].sort((a, b) => a.fullName.localeCompare(b.fullName));
+  // Get the appropriate teams list based on sport type
+  const getTeamsList = (): SportTeam[] => {
+    if (sportType === 'nfl') return NFL_TEAMS;
+    if (sportType === 'mlb') return MLB_TEAMS;
+    return [];
+  };
 
-  const getFilteredTeams = (query: string, excludeTeam: NFLTeam | null) => {
+  // Sort teams alphabetically by full name
+  const sortedTeams = [...getTeamsList()].sort((a, b) => a.fullName.localeCompare(b.fullName));
+
+  const getFilteredTeams = (query: string, excludeTeam: SportTeam | null) => {
     return sortedTeams.filter(team => {
       if (excludeTeam && team.name === excludeTeam.name) return false;
       if (!query) return true;
@@ -297,7 +309,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     });
   };
 
-  const selectHomeTeam = (team: NFLTeam) => {
+  const selectHomeTeam = (team: SportTeam) => {
     setHomeTeam(team);
     setHomeTeamQuery(team.fullName);
     setShowHomeDropdown(false);
@@ -308,7 +320,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     homeInputRef.current?.blur();
   };
 
-  const selectAwayTeam = (team: NFLTeam) => {
+  const selectAwayTeam = (team: SportTeam) => {
     setAwayTeam(team);
     setAwayTeamQuery(team.fullName);
     setShowAwayDropdown(false);
@@ -318,8 +330,8 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   };
 
   const renderTeamDropdown = (
-    teams: NFLTeam[], 
-    onSelect: (team: NFLTeam) => void,
+    teams: SportTeam[], 
+    onSelect: (team: SportTeam) => void,
     show: boolean
   ) => {
     if (!show || teams.length === 0) return null;
@@ -328,7 +340,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
       <View style={styles.dropdown}>
         <ScrollView 
           style={styles.dropdownScroll} 
-          keyboardShouldPersistTaps="handled"
+          keyboardShouldPersistTaps="always"
           nestedScrollEnabled={true}
         >
           {teams.slice(0, 5).map((team, index) => (
@@ -348,19 +360,20 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     );
   };
 
-  const renderNFLTeamSelection = () => {
+  const renderTeamSelection = () => {
     const homeFilteredTeams = getFilteredTeams(homeTeamQuery, awayTeam);
     const awayFilteredTeams = getFilteredTeams(awayTeamQuery, homeTeam);
 
     return (
-      <View style={styles.nflTeamContainer}>
-        <View style={styles.nflTeamRow}>
+      <View style={styles.teamContainer}>
+        <View style={styles.teamRow}>
           {/* Home Team */}
-          <View style={styles.nflTeamColumn}>
-            <Text style={styles.nflTeamLabel}>Home Team</Text>
+          <View style={styles.teamColumn}>
+            <Text style={styles.teamLabel}>Home Team</Text>
             <View style={styles.inputWithDropdown}>
               <TextInput
-                style={styles.nflTeamInput}
+                ref={homeInputRef}
+                style={styles.teamInput}
                 placeholder="Search teams.."
                 placeholderTextColor={COLORS.grayLight}
                 value={homeTeamQuery}
@@ -371,10 +384,9 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
                     setHomeTeam(null);
                   }
                 }}
-                onFocus={() => setShowHomeDropdown(true)}
-                onBlur={() => {
-                  // Delay to allow tap on dropdown item
-                  setTimeout(() => setShowHomeDropdown(false), 200);
+                onFocus={() => {
+                  setShowHomeDropdown(true);
+                  setShowAwayDropdown(false);
                 }}
               />
               {renderTeamDropdown(homeFilteredTeams, selectHomeTeam, showHomeDropdown)}
@@ -382,14 +394,15 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
           </View>
 
           {/* VS */}
-          <Text style={styles.nflVsText}>vs</Text>
+          <Text style={styles.vsText}>vs</Text>
 
           {/* Away Team */}
-          <View style={styles.nflTeamColumn}>
-            <Text style={styles.nflTeamLabel}>Away Team</Text>
+          <View style={styles.teamColumn}>
+            <Text style={styles.teamLabel}>Away Team</Text>
             <View style={styles.inputWithDropdown}>
               <TextInput
-                style={styles.nflTeamInput}
+                ref={awayInputRef}
+                style={styles.teamInput}
                 placeholder="Search teams.."
                 placeholderTextColor={COLORS.grayLight}
                 value={awayTeamQuery}
@@ -400,9 +413,9 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
                     setAwayTeam(null);
                   }
                 }}
-                onFocus={() => setShowAwayDropdown(true)}
-                onBlur={() => {
-                  setTimeout(() => setShowAwayDropdown(false), 200);
+                onFocus={() => {
+                  setShowAwayDropdown(true);
+                  setShowHomeDropdown(false);
                 }}
               />
               {renderTeamDropdown(awayFilteredTeams, selectAwayTeam, showAwayDropdown)}
@@ -449,7 +462,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
 
   const renderDetails = () => {
     const prompts = getPrompts();
-    const isNFL = sportType === 'nfl';
+    const isTeamSport = sportType === 'nfl' || sportType === 'mlb';
 
     return (
       <TouchableWithoutFeedback onPress={() => {
@@ -464,8 +477,8 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
           <Text style={styles.stepTitle}>The Details</Text>
           <Text style={styles.stepSubtitle}>Tell us about your experience</Text>
           
-          {isNFL ? (
-            renderNFLTeamSelection()
+          {isTeamSport ? (
+            renderTeamSelection()
           ) : (
             <View style={styles.inputGroup}>
               <Text style={styles.label}>{prompts.name}</Text>
@@ -481,7 +494,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
             </View>
           )}
           
-          <View style={[styles.inputGroup, isNFL && { zIndex: -1 }]}>
+          <View style={[styles.inputGroup, isTeamSport && { zIndex: -1 }]}>
             <Text style={styles.label}>Where was it?</Text>
             <TextInput 
               style={styles.input} 
@@ -494,7 +507,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
             />
           </View>
           
-          <View style={[styles.inputGroup, isNFL && { zIndex: -1 }]}>
+          <View style={[styles.inputGroup, isTeamSport && { zIndex: -1 }]}>
             <Text style={styles.label}>When was it?</Text>
             <TouchableOpacity 
               style={styles.dateButton} 
@@ -510,7 +523,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
             </TouchableOpacity>
           </View>
           
-          <TouchableOpacity style={[styles.nextButton, isNFL && { zIndex: -1 }]} onPress={handleDetailsNext}>
+          <TouchableOpacity style={[styles.nextButton, isTeamSport && { zIndex: -1 }]} onPress={handleDetailsNext}>
             <Text style={styles.nextButtonText}>Next</Text>
           </TouchableOpacity>
         </View>
@@ -519,7 +532,8 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   };
 
   const renderPhotos = () => {
-    const displayTitle = sportType === 'nfl' && homeTeam && awayTeam 
+    const isTeamSport = sportType === 'nfl' || sportType === 'mlb';
+    const displayTitle = isTeamSport && homeTeam && awayTeam 
       ? `${homeTeam.name} vs ${awayTeam.name}`
       : eventName;
 
@@ -788,21 +802,21 @@ const styles = StyleSheet.create({
     height: 320,
   },
 
-  // NFL Team Selection styles
-  nflTeamContainer: {
+  // Team Selection styles (shared for NFL/MLB)
+  teamContainer: {
     marginBottom: SPACING.lg,
     zIndex: 10,
   },
-  nflTeamRow: {
+  teamRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
   },
-  nflTeamColumn: {
+  teamColumn: {
     flex: 1,
     zIndex: 10,
   },
-  nflTeamLabel: {
+  teamLabel: {
     fontFamily: FONTS.medium,
     fontSize: FONT_SIZES.md,
     color: COLORS.gray,
@@ -813,7 +827,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     zIndex: 10,
   },
-  nflTeamInput: {
+  teamInput: {
     fontFamily: FONTS.regular,
     backgroundColor: COLORS.white,
     borderRadius: BORDER_RADIUS.xl,
@@ -823,7 +837,7 @@ const styles = StyleSheet.create({
     color: COLORS.navy,
     textAlign: 'center',
   },
-  nflVsText: {
+  vsText: {
     fontFamily: FONTS.regular,
     fontSize: FONT_SIZES.md,
     color: COLORS.gray,
