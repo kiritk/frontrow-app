@@ -163,51 +163,53 @@ export default function EventsScreen() {
           <Text style={styles.title}>Events</Text>
 
           {/* Year Tabs */}
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
-            style={styles.yearTabs}
-            contentContainerStyle={styles.yearTabsContent}
-          >
-            {years.map(year => (
-              <TouchableOpacity
-                key={year}
-                style={[styles.yearTab, selectedYear === year && styles.yearTabActive]}
-                onPress={() => setSelectedYear(year)}
-              >
-                <Text style={[styles.yearTabText, selectedYear === year && styles.yearTabTextActive]}>
-                  {year}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          <View style={styles.yearTabsContainer}>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false} 
+              contentContainerStyle={styles.yearTabsContent}
+            >
+              {years.map(year => (
+                <TouchableOpacity
+                  key={year}
+                  style={[styles.yearTab, selectedYear === year && styles.yearTabActive]}
+                  onPress={() => setSelectedYear(year)}
+                >
+                  <Text style={[styles.yearTabText, selectedYear === year && styles.yearTabTextActive]}>
+                    {year}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
 
           {/* Category Pills */}
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
-            style={styles.categoryPills}
-            contentContainerStyle={styles.categoryPillsContent}
-          >
-            {CATEGORIES.map(cat => (
-              <TouchableOpacity
-                key={cat.key}
-                style={[styles.categoryPill, selectedCategory === cat.key && styles.categoryPillActive]}
-                onPress={() => setSelectedCategory(cat.key)}
-              >
-                {cat.icon && (
-                  <Ionicons 
-                    name={cat.icon as any} 
-                    size={16} 
-                    color={selectedCategory === cat.key ? COLORS.white : COLORS.navy} 
-                  />
-                )}
-                <Text style={[styles.categoryPillText, selectedCategory === cat.key && styles.categoryPillTextActive]}>
-                  {cat.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          <View style={styles.categoryPillsContainer}>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false} 
+              contentContainerStyle={styles.categoryPillsContent}
+            >
+              {CATEGORIES.map(cat => (
+                <TouchableOpacity
+                  key={cat.key}
+                  style={[styles.categoryPill, selectedCategory === cat.key && styles.categoryPillActive]}
+                  onPress={() => setSelectedCategory(cat.key)}
+                >
+                  {cat.icon && (
+                    <Ionicons 
+                      name={cat.icon as any} 
+                      size={16} 
+                      color={selectedCategory === cat.key ? COLORS.white : COLORS.navy} 
+                    />
+                  )}
+                  <Text style={[styles.categoryPillText, selectedCategory === cat.key && styles.categoryPillTextActive]}>
+                    {cat.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
 
           {/* Events Grid */}
           <FlatList
@@ -291,15 +293,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     marginTop: SPACING.sm,
   },
-  yearTabs: {
+  yearTabsContainer: {
+    height: 36,
     marginTop: SPACING.sm,
   },
   yearTabsContent: {
     paddingHorizontal: SPACING.lg,
-    gap: SPACING.md,
+    gap: SPACING.lg,
+    alignItems: 'center',
+    height: 36,
   },
   yearTab: {
-    paddingBottom: SPACING.xs,
+    justifyContent: 'center',
+    height: 32,
   },
   yearTabActive: {
     borderBottomWidth: 2,
@@ -314,19 +320,20 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     color: COLORS.navy,
   },
-  categoryPills: {
-    marginTop: SPACING.md,
-    minHeight: 44,
-    maxHeight: 44,
+  categoryPillsContainer: {
+    height: 48,
+    marginTop: SPACING.sm,
   },
   categoryPillsContent: {
     paddingHorizontal: SPACING.lg,
     gap: SPACING.sm,
     alignItems: 'center',
+    height: 48,
   },
   categoryPill: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: COLORS.white,
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
