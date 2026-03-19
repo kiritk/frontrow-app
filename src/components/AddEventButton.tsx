@@ -13,6 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 import { NFL_TEAMS, NFLTeam } from '../data/nflTeams';
 import { MLB_TEAMS, MLBTeam } from '../data/mlbTeams';
+import { SORTED_CITIES, USCity } from '../data/usCities';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -60,9 +61,15 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   const [showHomeDropdown, setShowHomeDropdown] = useState(false);
   const [showAwayDropdown, setShowAwayDropdown] = useState(false);
 
+  // City selection state (for non-sports events)
+  const [selectedCity, setSelectedCity] = useState<USCity | null>(null);
+  const [cityQuery, setCityQuery] = useState('');
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
+
   // Refs for text inputs
   const homeInputRef = useRef<TextInput>(null);
   const awayInputRef = useRef<TextInput>(null);
+  const cityInputRef = useRef<TextInput>(null);
 
   // Slide up animation for modal
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
@@ -129,6 +136,9 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     setAwayTeamQuery('');
     setShowHomeDropdown(false);
     setShowAwayDropdown(false);
+    setSelectedCity(null);
+    setCityQuery('');
+    setShowCityDropdown(false);
   };
 
   const handleClose = () => {
@@ -162,11 +172,20 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
         return; 
       }
       setEventName(`${homeTeam.name} vs ${awayTeam.name}`);
-    } else {
+    } else if (eventType === 'sports') {
+      // Other sports (NBA, soccer, tennis, other)
       if (!eventName || !venue || !dateSelected) { 
         Alert.alert('Error', 'Please fill in all fields'); 
         return; 
       }
+    } else {
+      // Non-sports events
+      if (!eventName || !selectedCity || !dateSelected) { 
+        Alert.alert('Error', 'Please fill in all fields'); 
+        return; 
+      }
+      // Set venue to city display name for non-sports
+      setVenue(selectedCity.displayName);
     }
     setStep('photos'); 
   };
@@ -244,11 +263,17 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
         title: finalEventName,
         type: eventType,
         sport: eventType === 'sports' ? sportType : null,
-        venue: venue,
-        venue_location: null,
+        venue: isTeamSport ? venue : (selectedCity?.displayName || venue),
+        venue_location: selectedCity?.displayName || null,
         date: formatDateForDB(eventDate),
         photos: photos.length > 0 ? photos : [],
       };
+
+      // Add coordinates for non-sports events
+      if (selectedCity && !isTeamSport) {
+        eventData.latitude = selectedCity.latitude;
+        eventData.longitude = selectedCity.longitude;
+      }
 
       if (isTeamSport && homeTeam && awayTeam) {
         eventData.home_team = { name: homeTeam.name, city: homeTeam.city, fullName: homeTeam.fullName };
@@ -309,13 +334,20 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     });
   };
 
+  const getFilteredCities = (query: string) => {
+    if (!query) return SORTED_CITIES.slice(0, 5);
+    return SORTED_CITIES.filter(city => 
+      city.displayName.toLowerCase().includes(query.toLowerCase()) ||
+      city.city.toLowerCase().includes(query.toLowerCase()) ||
+      city.state.toLowerCase().includes(query.toLowerCase())
+    ).slice(0, 5);
+  };
+
   const selectHomeTeam = (team: SportTeam) => {
     setHomeTeam(team);
     setHomeTeamQuery(team.fullName);
     setShowHomeDropdown(false);
-    // Auto-fill venue with stadium
     setVenue(team.stadium);
-    // Dismiss keyboard
     Keyboard.dismiss();
     homeInputRef.current?.blur();
   };
@@ -324,9 +356,16 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     setAwayTeam(team);
     setAwayTeamQuery(team.fullName);
     setShowAwayDropdown(false);
-    // Dismiss keyboard
     Keyboard.dismiss();
     awayInputRef.current?.blur();
+  };
+
+  const selectCity = (city: USCity) => {
+    setSelectedCity(city);
+    setCityQuery(city.displayName);
+    setShowCityDropdown(false);
+    Keyboard.dismiss();
+    cityInputRef.current?.blur();
   };
 
   const renderTeamDropdown = (
@@ -353,6 +392,34 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
               onPress={() => onSelect(team)}
             >
               <Text style={styles.dropdownItemText}>{team.fullName}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+    );
+  };
+
+  const renderCityDropdown = () => {
+    const filteredCities = getFilteredCities(cityQuery);
+    if (!showCityDropdown || filteredCities.length === 0) return null;
+    
+    return (
+      <View style={styles.dropdown}>
+        <ScrollView 
+          style={styles.dropdownScroll} 
+          keyboardShouldPersistTaps="always"
+          nestedScrollEnabled={true}
+        >
+          {filteredCities.map((city, index) => (
+            <TouchableOpacity 
+              key={`${city.city}-${city.stateCode}`}
+              style={[
+                styles.dropdownItem,
+                index === 0 && styles.dropdownItemFirst
+              ]}
+              onPress={() => selectCity(city)}
+            >
+              <Text style={styles.dropdownItemText}>{city.displayName}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -426,6 +493,34 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     );
   };
 
+  const renderCitySelection = () => {
+    return (
+      <View style={[styles.inputGroup, { zIndex: 10 }]}>
+        <Text style={styles.label}>Location (City/State)</Text>
+        <View style={styles.inputWithDropdown}>
+          <TextInput
+            ref={cityInputRef}
+            style={styles.input}
+            placeholder="Search cities..."
+            placeholderTextColor={COLORS.grayLight}
+            value={cityQuery}
+            onChangeText={(text) => {
+              setCityQuery(text);
+              setShowCityDropdown(true);
+              if (selectedCity && text !== selectedCity.displayName) {
+                setSelectedCity(null);
+              }
+            }}
+            onFocus={() => {
+              setShowCityDropdown(true);
+            }}
+          />
+          {renderCityDropdown()}
+        </View>
+      </View>
+    );
+  };
+
   const renderTypeSelection = () => (
     <View style={styles.stepContent}>
       <Text style={styles.stepTitle}>What type of event?</Text>
@@ -463,12 +558,14 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   const renderDetails = () => {
     const prompts = getPrompts();
     const isTeamSport = sportType === 'nfl' || sportType === 'mlb';
+    const isNonSportsEvent = eventType !== 'sports';
 
     return (
       <TouchableWithoutFeedback onPress={() => {
         Keyboard.dismiss();
         setShowHomeDropdown(false);
         setShowAwayDropdown(false);
+        setShowCityDropdown(false);
       }}>
         <View style={styles.stepContent}>
           <TouchableOpacity onPress={() => setStep(eventType === 'sports' ? 'sport-type' : 'type')} style={styles.backButton}>
@@ -480,7 +577,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
           {isTeamSport ? (
             renderTeamSelection()
           ) : (
-            <View style={styles.inputGroup}>
+            <View style={[styles.inputGroup, isNonSportsEvent && { zIndex: -1 }]}>
               <Text style={styles.label}>{prompts.name}</Text>
               <TextInput 
                 style={styles.input} 
@@ -490,24 +587,29 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
                 onChangeText={setEventName}
                 returnKeyType="next"
                 blurOnSubmit={true}
+                onFocus={() => setShowCityDropdown(false)}
               />
             </View>
           )}
           
-          <View style={[styles.inputGroup, isTeamSport && { zIndex: -1 }]}>
-            <Text style={styles.label}>Where was it?</Text>
-            <TextInput 
-              style={styles.input} 
-              placeholder="Venue, City" 
-              placeholderTextColor={COLORS.grayLight} 
-              value={venue} 
-              onChangeText={setVenue}
-              returnKeyType="done"
-              blurOnSubmit={true}
-            />
-          </View>
+          {isNonSportsEvent ? (
+            renderCitySelection()
+          ) : (
+            <View style={[styles.inputGroup, isTeamSport && { zIndex: -1 }]}>
+              <Text style={styles.label}>Where was it?</Text>
+              <TextInput 
+                style={styles.input} 
+                placeholder="Venue, City" 
+                placeholderTextColor={COLORS.grayLight} 
+                value={venue} 
+                onChangeText={setVenue}
+                returnKeyType="done"
+                blurOnSubmit={true}
+              />
+            </View>
+          )}
           
-          <View style={[styles.inputGroup, isTeamSport && { zIndex: -1 }]}>
+          <View style={[styles.inputGroup, { zIndex: -2 }]}>
             <Text style={styles.label}>When was it?</Text>
             <TouchableOpacity 
               style={styles.dateButton} 
@@ -523,7 +625,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
             </TouchableOpacity>
           </View>
           
-          <TouchableOpacity style={[styles.nextButton, isTeamSport && { zIndex: -1 }]} onPress={handleDetailsNext}>
+          <TouchableOpacity style={[styles.nextButton, { zIndex: -2 }]} onPress={handleDetailsNext}>
             <Text style={styles.nextButtonText}>Next</Text>
           </TouchableOpacity>
         </View>
@@ -536,6 +638,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     const displayTitle = isTeamSport && homeTeam && awayTeam 
       ? `${homeTeam.name} vs ${awayTeam.name}`
       : eventName;
+    const displayLocation = isTeamSport ? venue : (selectedCity?.displayName || venue);
 
     return (
       <View style={styles.stepContent}>
@@ -545,7 +648,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
         <View style={styles.photoHeader}>
           <Text style={styles.photoEmoji}>{getEventEmoji()}</Text>
           <Text style={styles.photoEventName}>{displayTitle}</Text>
-          <Text style={styles.photoEventLocation}>{venue}</Text>
+          <Text style={styles.photoEventLocation}>{displayLocation}</Text>
         </View>
         <Text style={styles.photoPrompt}>Add up to 6 photos to remember this moment</Text>
         <View style={styles.photoGrid}>

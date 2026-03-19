@@ -12,6 +12,8 @@ interface Event {
   sport?: string;
   venue: string;
   date: string;
+  latitude?: number;
+  longitude?: number;
   home_team?: { name: string; city: string; fullName: string };
   away_team?: { name: string; city: string; fullName: string };
 }
@@ -20,21 +22,63 @@ interface EventsMapProps {
   events: Event[];
 }
 
+const typeEmojis: Record<string, string> = {
+  concert: '🎸',
+  theater: '🎭',
+  comedy: '🎤',
+  landmark: '🏰',
+  other: '✨',
+  sports: '🏆',
+};
+
+const typeColors: Record<string, string> = {
+  concert: '#A855F7',
+  theater: '#3B82F6',
+  comedy: '#EF4444',
+  landmark: '#22C55E',
+  other: '#F59E0B',
+  sports: '#6366F1',
+};
+
 export default function EventsMap({ events }: EventsMapProps) {
   // Get coordinates for an event
   const getEventCoordinates = (event: Event) => {
+    // First check if event has direct lat/lng (non-sports events)
+    if (event.latitude && event.longitude) {
+      return { 
+        latitude: event.latitude, 
+        longitude: event.longitude, 
+        team: null,
+        isTeamSport: false,
+      };
+    }
+    
+    // Check for NFL team coordinates
     if (event.sport === 'nfl' && event.home_team) {
       const team = getTeamByName(event.home_team.name);
       if (team) {
-        return { latitude: team.latitude, longitude: team.longitude, team };
+        return { 
+          latitude: team.latitude, 
+          longitude: team.longitude, 
+          team,
+          isTeamSport: true,
+        };
       }
     }
+    
+    // Check for MLB team coordinates
     if (event.sport === 'mlb' && event.home_team) {
       const team = getMLBTeamByName(event.home_team.name);
       if (team) {
-        return { latitude: team.latitude, longitude: team.longitude, team };
+        return { 
+          latitude: team.latitude, 
+          longitude: team.longitude, 
+          team,
+          isTeamSport: true,
+        };
       }
     }
+    
     return null;
   };
 
@@ -47,7 +91,7 @@ export default function EventsMap({ events }: EventsMapProps) {
       }
       return null;
     })
-    .filter(Boolean) as { event: Event; latitude: number; longitude: number; team: any }[];
+    .filter(Boolean) as { event: Event; latitude: number; longitude: number; team: any; isTeamSport: boolean }[];
 
   // Calculate initial region to fit all markers
   const getInitialRegion = () => {
@@ -101,7 +145,7 @@ export default function EventsMap({ events }: EventsMapProps) {
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyEmoji}>🗺️</Text>
         <Text style={styles.emptyText}>No events with locations yet</Text>
-        <Text style={styles.emptySubtext}>Add NFL or MLB events to see them on the map</Text>
+        <Text style={styles.emptySubtext}>Add events to see them on the map</Text>
       </View>
     );
   }
@@ -113,17 +157,23 @@ export default function EventsMap({ events }: EventsMapProps) {
       showsUserLocation={true}
       showsCompass={true}
     >
-      {eventsWithCoords.map(({ event, latitude, longitude, team }) => (
+      {eventsWithCoords.map(({ event, latitude, longitude, team, isTeamSport }) => (
         <Marker
           key={event.id}
           coordinate={{ latitude, longitude }}
           title={event.title}
           description={event.venue}
         >
-          {/* Custom marker with team logo */}
-          <View style={[styles.markerContainer, { borderColor: team.primaryColor }]}>
-            <Image source={team.logo} style={styles.markerLogo} />
-          </View>
+          {/* Custom marker */}
+          {isTeamSport && team ? (
+            <View style={[styles.markerContainer, { borderColor: team.primaryColor }]}>
+              <Image source={team.logo} style={styles.markerLogo} />
+            </View>
+          ) : (
+            <View style={[styles.emojiMarkerContainer, { borderColor: typeColors[event.type] || '#6B7280' }]}>
+              <Text style={styles.emojiMarker}>{typeEmojis[event.type] || '🎫'}</Text>
+            </View>
+          )}
           
           {/* Custom callout */}
           <Callout style={styles.callout}>
@@ -185,6 +235,23 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     resizeMode: 'contain',
+  },
+  emojiMarkerContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  emojiMarker: {
+    fontSize: 22,
   },
   callout: {
     width: 200,
