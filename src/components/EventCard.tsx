@@ -40,6 +40,15 @@ const THEATER_COLORS = {
   accentLight: '#FFECB3',
 };
 
+// Comedy card color scheme
+const COMEDY_COLORS = {
+  gradientStart: '#1a0505',
+  gradientMid: '#3d0a0a',
+  gradientEnd: '#6b0101',
+  accent: '#FF6B6B',
+  accentLight: '#FFB3B3',
+};
+
 export default function EventCard({ event, onDelete }: EventCardProps) {
   const { width } = useWindowDimensions();
   const CARD_WIDTH = (width - 48 - 12) / 2;
@@ -65,6 +74,11 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
           gradientColors: [THEATER_COLORS.gradientStart, THEATER_COLORS.gradientMid, THEATER_COLORS.gradientEnd] as [string, string, string],
           accentColor: THEATER_COLORS.accent,
         };
+      case 'comedy':
+        return {
+          gradientColors: [COMEDY_COLORS.gradientStart, COMEDY_COLORS.gradientMid, COMEDY_COLORS.gradientEnd] as [string, string, string],
+          accentColor: COMEDY_COLORS.accent,
+        };
       case 'sports':
         if (event.sport === 'nfl') return { gradientColors: ['#2a1a3a', '#4a2a5a', '#6a3a7a'] as [string, string, string], accentColor: '#c9a0dc' };
         if (event.sport === 'mlb') return { gradientColors: ['#1a3a1a', '#2a5a2a', '#3a7a3a'] as [string, string, string], accentColor: '#90EE90' };
@@ -72,8 +86,6 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
         if (event.sport === 'soccer') return { gradientColors: ['#1a5f3c', '#228b4c', '#2ecc71'] as [string, string, string], accentColor: '#5ddb8d' };
         if (event.sport === 'tennis') return { gradientColors: ['#2c3e50', '#3a4f63', '#4a6278'] as [string, string, string], accentColor: '#7fb3d3' };
         return { gradientColors: ['#1e3a5f', '#2d4a6f', '#3498db'] as [string, string, string], accentColor: '#5dade2' };
-      case 'comedy':
-        return { gradientColors: ['#922b21', '#b03a2e', '#cb4335'] as [string, string, string], accentColor: '#f1948a' };
       case 'landmark':
         return { gradientColors: ['#117a65', '#16a085', '#1abc9c'] as [string, string, string], accentColor: '#76d7c4' };
       default:
@@ -127,6 +139,14 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
       return { uri: event.photos[0] };
     }
     return require('../../assets/images/theater_bg.jpg');
+  };
+
+  // Get the background image source for comedy
+  const getComedyBackground = () => {
+    if (event.photos && event.photos.length > 0) {
+      return { uri: event.photos[0] };
+    }
+    return require('../../assets/images/comedy_bg.jpg');
   };
 
   const renderTeamSportCard = () => {
@@ -290,6 +310,53 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
     </View>
   );
 
+  const renderComedyCard = () => (
+    <View style={[styles.card, { height: CARD_HEIGHT }]}>
+      {/* Perforations */}
+      <View style={[styles.perforationLeft, { top: PERFORATION_TOP }]} />
+      <View style={[styles.perforationRight, { top: PERFORATION_TOP }]} />
+
+      {/* Top section with comedy background */}
+      <View style={styles.topSection}>
+        <ImageBackground 
+          source={getComedyBackground()}
+          style={styles.imageBackground}
+          imageStyle={styles.imageStyle}
+        >
+          <LinearGradient
+            colors={['transparent', 'rgba(26, 5, 5, 0.7)', COMEDY_COLORS.gradientStart]}
+            style={styles.imageOverlay}
+          />
+        </ImageBackground>
+      </View>
+
+      {/* Bottom section - title, date, venue */}
+      <View style={[styles.bottomSection, { backgroundColor: COMEDY_COLORS.gradientStart }]}>
+        {/* Title */}
+        <Text style={styles.comedyTitle} numberOfLines={2}>
+          {event.title}
+        </Text>
+
+        {/* Date and Venue row */}
+        <View style={styles.infoRow}>
+          {/* Date pill */}
+          <View style={styles.comedyDatePill}>
+            <Text style={styles.comedyDatePillMonth}>{month} {day}</Text>
+            <Text style={styles.comedyDatePillYear}>{year}</Text>
+          </View>
+
+          {/* Venue */}
+          <View style={styles.venueSection}>
+            <Ionicons name="location-outline" size={12} color={COMEDY_COLORS.accentLight} />
+            <Text style={styles.comedyVenueText} numberOfLines={2}>
+              {event.venue}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+
   const renderDefaultCard = () => (
     <View style={[styles.card, { height: CARD_HEIGHT }]}>
       {/* Perforations */}
@@ -350,6 +417,8 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
       return renderConcertCard();
     } else if (event.type === 'theater') {
       return renderTheaterCard();
+    } else if (event.type === 'comedy') {
+      return renderComedyCard();
     } else if (isTeamSport && homeTeam && awayTeam) {
       return renderTeamSportCard();
     } else {
@@ -577,6 +646,41 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     flexShrink: 1,
     color: THEATER_COLORS.accentLight,
+  },
+
+  // Comedy card styles
+  comedyTitle: {
+    fontFamily: FONTS.modak,
+    fontSize: 22,
+    color: COMEDY_COLORS.accent,
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+  comedyDatePill: {
+    borderWidth: 1,
+    borderColor: COMEDY_COLORS.accent,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignItems: 'center',
+  },
+  comedyDatePillMonth: {
+    fontFamily: FONTS.bold,
+    fontSize: 11,
+    letterSpacing: 0.5,
+    color: COMEDY_COLORS.accentLight,
+  },
+  comedyDatePillYear: {
+    fontFamily: FONTS.regular,
+    fontSize: 10,
+    color: COMEDY_COLORS.accent,
+  },
+  comedyVenueText: {
+    fontFamily: FONTS.medium,
+    fontSize: 11,
+    textAlign: 'right',
+    flexShrink: 1,
+    color: COMEDY_COLORS.accentLight,
   },
 
   // Shared styles

@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFonts, Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold, Outfit_700Bold } from '@expo-google-fonts/outfit';
 import { Audiowide_400Regular } from '@expo-google-fonts/audiowide';
 import { Limelight_400Regular } from '@expo-google-fonts/limelight';
+import { Modak_400Regular } from '@expo-google-fonts/modak';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { COLORS, FONTS } from './src/theme/colors';
 
@@ -129,6 +130,7 @@ export default function App() {
     Outfit_700Bold,
     Audiowide_400Regular,
     Limelight_400Regular,
+    Modak_400Regular,
   });
 
   if (!fontsLoaded) {

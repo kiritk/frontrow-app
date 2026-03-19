@@ -27,6 +27,7 @@ export const FONTS = {
   bold: 'Outfit_700Bold',
   audiowide: 'Audiowide_400Regular',
   limelight: 'Limelight_400Regular',
+  modak: 'Modak_400Regular',
 };
 
 export const FONT_SIZES = {
