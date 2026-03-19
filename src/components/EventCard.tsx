@@ -58,6 +58,15 @@ const LANDMARK_COLORS = {
   accentLight: '#E8D4C4',
 };
 
+// Other card color scheme
+const OTHER_COLORS = {
+  gradientStart: '#2a1510',
+  gradientMid: '#4d2a1f',
+  gradientEnd: '#e6563b',
+  accent: '#FFB899',
+  accentLight: '#FFE0D4',
+};
+
 export default function EventCard({ event, onDelete }: EventCardProps) {
   const { width } = useWindowDimensions();
   const CARD_WIDTH = (width - 48 - 12) / 2;
@@ -92,6 +101,11 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
         return {
           gradientColors: [LANDMARK_COLORS.gradientStart, LANDMARK_COLORS.gradientMid, LANDMARK_COLORS.gradientEnd] as [string, string, string],
           accentColor: LANDMARK_COLORS.accent,
+        };
+      case 'other':
+        return {
+          gradientColors: [OTHER_COLORS.gradientStart, OTHER_COLORS.gradientMid, OTHER_COLORS.gradientEnd] as [string, string, string],
+          accentColor: OTHER_COLORS.accent,
         };
       case 'sports':
         if (event.sport === 'nfl') return { gradientColors: ['#2a1a3a', '#4a2a5a', '#6a3a7a'] as [string, string, string], accentColor: '#c9a0dc' };
@@ -167,6 +181,14 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
       return { uri: event.photos[0] };
     }
     return require('../../assets/images/landmark_bg.jpg');
+  };
+
+  // Get the background image source for other
+  const getOtherBackground = () => {
+    if (event.photos && event.photos.length > 0) {
+      return { uri: event.photos[0] };
+    }
+    return require('../../assets/images/other_bg.jpg');
   };
 
   const renderTeamSportCard = () => {
@@ -424,6 +446,53 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
     </View>
   );
 
+  const renderOtherCard = () => (
+    <View style={[styles.card, { height: CARD_HEIGHT }]}>
+      {/* Perforations */}
+      <View style={[styles.perforationLeft, { top: PERFORATION_TOP }]} />
+      <View style={[styles.perforationRight, { top: PERFORATION_TOP }]} />
+
+      {/* Top section with other background */}
+      <View style={styles.topSection}>
+        <ImageBackground 
+          source={getOtherBackground()}
+          style={styles.imageBackground}
+          imageStyle={styles.imageStyle}
+        >
+          <LinearGradient
+            colors={['transparent', 'rgba(42, 21, 16, 0.7)', OTHER_COLORS.gradientStart]}
+            style={styles.imageOverlay}
+          />
+        </ImageBackground>
+      </View>
+
+      {/* Bottom section - title, date, venue */}
+      <View style={[styles.bottomSection, { backgroundColor: OTHER_COLORS.gradientStart }]}>
+        {/* Title */}
+        <Text style={styles.otherTitle} numberOfLines={2}>
+          {event.title}
+        </Text>
+
+        {/* Date and Venue row */}
+        <View style={styles.infoRow}>
+          {/* Date pill */}
+          <View style={styles.otherDatePill}>
+            <Text style={styles.otherDatePillMonth}>{month} {day}</Text>
+            <Text style={styles.otherDatePillYear}>{year}</Text>
+          </View>
+
+          {/* Venue */}
+          <View style={styles.venueSection}>
+            <Ionicons name="location-outline" size={12} color={OTHER_COLORS.accentLight} />
+            <Text style={styles.otherVenueText} numberOfLines={2}>
+              {event.venue}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+
   const renderDefaultCard = () => (
     <View style={[styles.card, { height: CARD_HEIGHT }]}>
       {/* Perforations */}
@@ -488,6 +557,8 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
       return renderComedyCard();
     } else if (event.type === 'landmark') {
       return renderLandmarkCard();
+    } else if (event.type === 'other') {
+      return renderOtherCard();
     } else if (isTeamSport && homeTeam && awayTeam) {
       return renderTeamSportCard();
     } else {
@@ -785,6 +856,41 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     flexShrink: 1,
     color: LANDMARK_COLORS.accentLight,
+  },
+
+  // Other card styles
+  otherTitle: {
+    fontFamily: FONTS.zain,
+    fontSize: 20,
+    color: OTHER_COLORS.accent,
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+  otherDatePill: {
+    borderWidth: 1,
+    borderColor: OTHER_COLORS.accent,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignItems: 'center',
+  },
+  otherDatePillMonth: {
+    fontFamily: FONTS.bold,
+    fontSize: 11,
+    letterSpacing: 0.5,
+    color: OTHER_COLORS.accentLight,
+  },
+  otherDatePillYear: {
+    fontFamily: FONTS.regular,
+    fontSize: 10,
+    color: OTHER_COLORS.accent,
+  },
+  otherVenueText: {
+    fontFamily: FONTS.medium,
+    fontSize: 11,
+    textAlign: 'right',
+    flexShrink: 1,
+    color: OTHER_COLORS.accentLight,
   },
 
   // Shared styles

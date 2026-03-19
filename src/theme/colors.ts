@@ -29,6 +29,7 @@ export const FONTS = {
   limelight: 'Limelight_400Regular',
   modak: 'Modak_400Regular',
   iceland: 'Iceland_400Regular',
+  zain: 'Zain_400Regular',
 };
 
 export const FONT_SIZES = {
