@@ -28,6 +28,7 @@ export const FONTS = {
   audiowide: 'Audiowide_400Regular',
   limelight: 'Limelight_400Regular',
   modak: 'Modak_400Regular',
+  iceland: 'Iceland_400Regular',
 };
 
 export const FONT_SIZES = {

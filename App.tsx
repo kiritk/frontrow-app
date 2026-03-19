@@ -9,6 +9,7 @@ import { useFonts, Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold, Outf
 import { Audiowide_400Regular } from '@expo-google-fonts/audiowide';
 import { Limelight_400Regular } from '@expo-google-fonts/limelight';
 import { Modak_400Regular } from '@expo-google-fonts/modak';
+import { Iceland_400Regular } from '@expo-google-fonts/iceland';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { COLORS, FONTS } from './src/theme/colors';
 
@@ -131,6 +132,7 @@ export default function App() {
     Audiowide_400Regular,
     Limelight_400Regular,
     Modak_400Regular,
+    Iceland_400Regular,
   });
 
   if (!fontsLoaded) {

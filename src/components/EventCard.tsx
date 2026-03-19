@@ -49,6 +49,15 @@ const COMEDY_COLORS = {
   accentLight: '#FFB3B3',
 };
 
+// Landmark card color scheme
+const LANDMARK_COLORS = {
+  gradientStart: '#1a1917',
+  gradientMid: '#2d2b28',
+  gradientEnd: '#3b3734',
+  accent: '#D4A574',
+  accentLight: '#E8D4C4',
+};
+
 export default function EventCard({ event, onDelete }: EventCardProps) {
   const { width } = useWindowDimensions();
   const CARD_WIDTH = (width - 48 - 12) / 2;
@@ -79,6 +88,11 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
           gradientColors: [COMEDY_COLORS.gradientStart, COMEDY_COLORS.gradientMid, COMEDY_COLORS.gradientEnd] as [string, string, string],
           accentColor: COMEDY_COLORS.accent,
         };
+      case 'landmark':
+        return {
+          gradientColors: [LANDMARK_COLORS.gradientStart, LANDMARK_COLORS.gradientMid, LANDMARK_COLORS.gradientEnd] as [string, string, string],
+          accentColor: LANDMARK_COLORS.accent,
+        };
       case 'sports':
         if (event.sport === 'nfl') return { gradientColors: ['#2a1a3a', '#4a2a5a', '#6a3a7a'] as [string, string, string], accentColor: '#c9a0dc' };
         if (event.sport === 'mlb') return { gradientColors: ['#1a3a1a', '#2a5a2a', '#3a7a3a'] as [string, string, string], accentColor: '#90EE90' };
@@ -86,8 +100,6 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
         if (event.sport === 'soccer') return { gradientColors: ['#1a5f3c', '#228b4c', '#2ecc71'] as [string, string, string], accentColor: '#5ddb8d' };
         if (event.sport === 'tennis') return { gradientColors: ['#2c3e50', '#3a4f63', '#4a6278'] as [string, string, string], accentColor: '#7fb3d3' };
         return { gradientColors: ['#1e3a5f', '#2d4a6f', '#3498db'] as [string, string, string], accentColor: '#5dade2' };
-      case 'landmark':
-        return { gradientColors: ['#117a65', '#16a085', '#1abc9c'] as [string, string, string], accentColor: '#76d7c4' };
       default:
         return { gradientColors: ['#2c3e50', '#3a4f63', '#4a6278'] as [string, string, string], accentColor: '#85929e' };
     }
@@ -147,6 +159,14 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
       return { uri: event.photos[0] };
     }
     return require('../../assets/images/comedy_bg.jpg');
+  };
+
+  // Get the background image source for landmark
+  const getLandmarkBackground = () => {
+    if (event.photos && event.photos.length > 0) {
+      return { uri: event.photos[0] };
+    }
+    return require('../../assets/images/landmark_bg.jpg');
   };
 
   const renderTeamSportCard = () => {
@@ -357,6 +377,53 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
     </View>
   );
 
+  const renderLandmarkCard = () => (
+    <View style={[styles.card, { height: CARD_HEIGHT }]}>
+      {/* Perforations */}
+      <View style={[styles.perforationLeft, { top: PERFORATION_TOP }]} />
+      <View style={[styles.perforationRight, { top: PERFORATION_TOP }]} />
+
+      {/* Top section with landmark background */}
+      <View style={styles.topSection}>
+        <ImageBackground 
+          source={getLandmarkBackground()}
+          style={styles.imageBackground}
+          imageStyle={styles.imageStyle}
+        >
+          <LinearGradient
+            colors={['transparent', 'rgba(26, 25, 23, 0.7)', LANDMARK_COLORS.gradientStart]}
+            style={styles.imageOverlay}
+          />
+        </ImageBackground>
+      </View>
+
+      {/* Bottom section - title, date, venue */}
+      <View style={[styles.bottomSection, { backgroundColor: LANDMARK_COLORS.gradientStart }]}>
+        {/* Title */}
+        <Text style={styles.landmarkTitle} numberOfLines={2}>
+          {event.title.toUpperCase()}
+        </Text>
+
+        {/* Date and Venue row */}
+        <View style={styles.infoRow}>
+          {/* Date pill */}
+          <View style={styles.landmarkDatePill}>
+            <Text style={styles.landmarkDatePillMonth}>{month} {day}</Text>
+            <Text style={styles.landmarkDatePillYear}>{year}</Text>
+          </View>
+
+          {/* Venue */}
+          <View style={styles.venueSection}>
+            <Ionicons name="location-outline" size={12} color={LANDMARK_COLORS.accentLight} />
+            <Text style={styles.landmarkVenueText} numberOfLines={2}>
+              {event.venue}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+
   const renderDefaultCard = () => (
     <View style={[styles.card, { height: CARD_HEIGHT }]}>
       {/* Perforations */}
@@ -419,6 +486,8 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
       return renderTheaterCard();
     } else if (event.type === 'comedy') {
       return renderComedyCard();
+    } else if (event.type === 'landmark') {
+      return renderLandmarkCard();
     } else if (isTeamSport && homeTeam && awayTeam) {
       return renderTeamSportCard();
     } else {
@@ -681,6 +750,41 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     flexShrink: 1,
     color: COMEDY_COLORS.accentLight,
+  },
+
+  // Landmark card styles
+  landmarkTitle: {
+    fontFamily: FONTS.iceland,
+    fontSize: 20,
+    color: LANDMARK_COLORS.accent,
+    textAlign: 'center',
+    letterSpacing: 1.5,
+  },
+  landmarkDatePill: {
+    borderWidth: 1,
+    borderColor: LANDMARK_COLORS.accent,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignItems: 'center',
+  },
+  landmarkDatePillMonth: {
+    fontFamily: FONTS.bold,
+    fontSize: 11,
+    letterSpacing: 0.5,
+    color: LANDMARK_COLORS.accentLight,
+  },
+  landmarkDatePillYear: {
+    fontFamily: FONTS.regular,
+    fontSize: 10,
+    color: LANDMARK_COLORS.accent,
+  },
+  landmarkVenueText: {
+    fontFamily: FONTS.medium,
+    fontSize: 11,
+    textAlign: 'right',
+    flexShrink: 1,
+    color: LANDMARK_COLORS.accentLight,
   },
 
   // Shared styles
