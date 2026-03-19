@@ -1,89 +1,74 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  useFonts,
-  Outfit_300Light,
-  Outfit_400Regular,
-  Outfit_500Medium,
-  Outfit_600SemiBold,
-  Outfit_700Bold,
-  Outfit_800ExtraBold,
-  Outfit_900Black,
-} from '@expo-google-fonts/outfit';
+import { useFonts, Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold, Outfit_700Bold } from '@expo-google-fonts/outfit';
 import { Audiowide_400Regular } from '@expo-google-fonts/audiowide';
-
-import EventsScreen from './src/screens/EventsScreen';
-import StatsScreen from './src/screens/StatsScreen';
-import ProfileScreen from './src/screens/ProfileScreen';
-import AuthScreen from './src/screens/AuthScreen';
-import AddEventButton from './src/components/AddEventButton';
+import { Limelight_400Regular } from '@expo-google-fonts/limelight';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { COLORS, FONTS } from './src/theme/colors';
 
+import AuthScreen from './src/screens/AuthScreen';
+import EventsScreen from './src/screens/EventsScreen';
+import StatsScreen from './src/screens/StatsScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
+import AddEventButton from './src/components/AddEventButton';
+
 const Tab = createBottomTabNavigator();
 
-function TicketIcon({ color, size }: { color: string; size: number }) {
-  return (
-    <View style={{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }}>
-      <View style={{
-        width: size * 0.85,
-        height: size * 0.6,
-        borderWidth: 2,
-        borderColor: color,
-        borderRadius: 4,
-        flexDirection: 'row',
-        alignItems: 'center',
-        overflow: 'hidden',
-      }}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <View style={{ width: size * 0.2, height: size * 0.2, backgroundColor: color, borderRadius: 2 }} />
-        </View>
-        <View style={{ height: '100%', borderLeftWidth: 1.5, borderColor: color, borderStyle: 'dashed' }} />
-        <View style={{ width: size * 0.25, alignItems: 'center', justifyContent: 'center' }}>
-          <View style={{ width: size * 0.1, height: size * 0.1, backgroundColor: color, borderRadius: 1 }} />
-        </View>
-      </View>
-    </View>
-  );
-}
-
 function CustomTabBar({ state, descriptors, navigation }: any) {
-  const insets = useSafeAreaInsets();
-  
-  const icons: { [key: string]: (color: string, size: number) => React.ReactNode } = {
-    Events: (color, size) => <TicketIcon color={color} size={size} />,
-    Stats: (color, size) => <Ionicons name="bar-chart-outline" size={size} color={color} />,
-    Profile: (color, size) => <Ionicons name="person-outline" size={size} color={color} />,
-  };
-
   return (
-    <View style={[styles.tabBarWrapper, { bottom: Math.max(insets.bottom, 20) }]}>
+    <View style={styles.tabBarWrapper}>
       <View style={styles.tabBarContainer}>
         {state.routes.map((route: any, index: number) => {
+          const { options } = descriptors[route.key];
           const isFocused = state.index === index;
-          const color = isFocused ? COLORS.navy : COLORS.grayLight;
 
           const onPress = () => {
-            const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
+
             if (!isFocused && !event.defaultPrevented) {
               navigation.navigate(route.name);
             }
           };
 
+          let iconName: keyof typeof Ionicons.glyphMap = 'ellipse';
+          if (route.name === 'Events') {
+            iconName = isFocused ? 'ticket' : 'ticket-outline';
+          } else if (route.name === 'Stats') {
+            iconName = isFocused ? 'stats-chart' : 'stats-chart-outline';
+          } else if (route.name === 'Profile') {
+            iconName = isFocused ? 'person' : 'person-outline';
+          }
+
           return (
             <TouchableOpacity
               key={route.key}
+              accessibilityRole="button"
+              accessibilityState={isFocused ? { selected: true } : {}}
+              accessibilityLabel={options.tabBarAccessibilityLabel}
+              testID={options.tabBarTestID}
               onPress={onPress}
               style={styles.tabButton}
             >
-              {icons[route.name](color, 24)}
-              <Text style={[styles.tabLabel, { color }]}>{route.name}</Text>
+              <Ionicons 
+                name={iconName} 
+                size={24} 
+                color={isFocused ? COLORS.navy : COLORS.gray} 
+              />
+              <Text style={[
+                styles.tabLabel,
+                { color: isFocused ? COLORS.navy : COLORS.gray }
+              ]}>
+                {route.name}
+              </Text>
             </TouchableOpacity>
           );
         })}
@@ -93,8 +78,8 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
 }
 
 function TabNavigatorWithFAB() {
-  const [refreshKey, setRefreshKey] = React.useState(0);
-  
+  const [refreshKey, setRefreshKey] = useState(0);
+
   const handleEventAdded = () => {
     setRefreshKey(prev => prev + 1);
   };
@@ -103,7 +88,9 @@ function TabNavigatorWithFAB() {
     <View style={{ flex: 1 }}>
       <Tab.Navigator
         tabBar={(props) => <CustomTabBar {...props} />}
-        screenOptions={{ headerShown: false }}
+        screenOptions={{
+          headerShown: false,
+        }}
       >
         <Tab.Screen name="Events">
           {() => <EventsScreen key={refreshKey} />}
@@ -117,55 +104,73 @@ function TabNavigatorWithFAB() {
 }
 
 function AppContent() {
-  const { session, loading } = useAuth();
-  if (loading) return <View style={styles.loading}><ActivityIndicator size="large" color={COLORS.navy} /></View>;
-  return <NavigationContainer>{session ? <TabNavigatorWithFAB /> : <AuthScreen />}</NavigationContainer>;
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.navy} />
+      </View>
+    );
+  }
+
+  if (!user) {
+    return <AuthScreen />;
+  }
+
+  return <TabNavigatorWithFAB />;
 }
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    Outfit_300Light,
     Outfit_400Regular,
     Outfit_500Medium,
     Outfit_600SemiBold,
     Outfit_700Bold,
-    Outfit_800ExtraBold,
-    Outfit_900Black,
     Audiowide_400Regular,
+    Limelight_400Regular,
   });
 
   if (!fontsLoaded) {
-    return <View style={styles.loading}><ActivityIndicator size="large" color={COLORS.navy} /></View>;
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.navy} />
+      </View>
+    );
   }
 
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <SafeAreaProvider>
-        <AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <NavigationContainer>
           <StatusBar style="dark" />
           <AppContent />
-        </AuthProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+        </NavigationContainer>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.cream },
-  loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.cream },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.cream,
+  },
   tabBarWrapper: {
     position: 'absolute',
+    bottom: 24,
     left: 20,
-    right: 90,
-    alignItems: 'center',
+    right: 100,
   },
   tabBarContainer: {
     flexDirection: 'row',
     backgroundColor: COLORS.white,
     borderRadius: 32,
-    height: 64,
+    paddingVertical: 8,
     paddingHorizontal: 8,
-    shadowColor: COLORS.navy,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
@@ -180,6 +185,6 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontFamily: FONTS.medium,
     fontSize: 11,
-    marginTop: 4,
+    marginTop: 2,
   },
 });

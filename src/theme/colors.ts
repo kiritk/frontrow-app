@@ -1,22 +1,32 @@
 export const COLORS = {
-  cream: '#F5F0E6',
-  creamDark: '#E8E1D4',
+  // Primary
   navy: '#1e3a5f',
-  navyLight: '#2d5a8f',
+  cream: '#F5F0E6',
+  creamDark: '#E8E0D0',
+  
+  // Neutrals
   white: '#FFFFFF',
   black: '#000000',
   gray: '#6B7280',
   grayLight: '#9CA3AF',
-  error: '#DC2626',
-  success: '#16A34A',
+  grayDark: '#374151',
+  
+  // Accent
+  gold: '#D4AF37',
+  
+  // Status
+  success: '#10B981',
+  error: '#EF4444',
+  warning: '#F59E0B',
 };
 
-export const SPACING = {
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
+export const FONTS = {
+  regular: 'Outfit_400Regular',
+  medium: 'Outfit_500Medium',
+  semiBold: 'Outfit_600SemiBold',
+  bold: 'Outfit_700Bold',
+  audiowide: 'Audiowide_400Regular',
+  limelight: 'Limelight_400Regular',
 };
 
 export const FONT_SIZES = {
@@ -24,6 +34,16 @@ export const FONT_SIZES = {
   sm: 14,
   md: 16,
   lg: 18,
+  xl: 20,
+  xxl: 24,
+  xxxl: 32,
+};
+
+export const SPACING = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
   xl: 24,
   xxl: 32,
 };
@@ -33,16 +53,6 @@ export const BORDER_RADIUS = {
   md: 8,
   lg: 12,
   xl: 16,
+  xxl: 24,
   full: 9999,
-};
-
-export const FONTS = {
-  light: 'Outfit_300Light',
-  regular: 'Outfit_400Regular',
-  medium: 'Outfit_500Medium',
-  semiBold: 'Outfit_600SemiBold',
-  bold: 'Outfit_700Bold',
-  extraBold: 'Outfit_800ExtraBold',
-  black: 'Outfit_900Black',
-  audiowide: 'Audiowide_400Regular',
 };
