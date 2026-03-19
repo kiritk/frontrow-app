@@ -17,6 +17,8 @@ interface Event {
   venue_location?: string;
   date: string;
   photos?: string[];
+  latitude?: number;
+  longitude?: number;
   home_team?: { name: string; city: string; fullName: string };
   away_team?: { name: string; city: string; fullName: string };
 }
@@ -291,7 +293,6 @@ const styles = StyleSheet.create({
   },
   yearTabs: {
     marginTop: SPACING.sm,
-    maxHeight: 40,
   },
   yearTabsContent: {
     paddingHorizontal: SPACING.lg,
@@ -315,11 +316,13 @@ const styles = StyleSheet.create({
   },
   categoryPills: {
     marginTop: SPACING.md,
+    minHeight: 44,
     maxHeight: 44,
   },
   categoryPillsContent: {
     paddingHorizontal: SPACING.lg,
     gap: SPACING.sm,
+    alignItems: 'center',
   },
   categoryPill: {
     flexDirection: 'row',
@@ -329,6 +332,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     borderRadius: BORDER_RADIUS.xl,
     gap: 6,
+    height: 36,
   },
   categoryPillActive: {
     backgroundColor: COLORS.navy,
