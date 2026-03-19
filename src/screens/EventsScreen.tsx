@@ -1,31 +1,44 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl, ActivityIndicator, TouchableOpacity, ScrollView, Share, Image } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import EventCard from '../components/EventCard';
-import { COLORS, SPACING, FONTS } from '../theme/colors';
+import EventsMap from '../components/EventsMap';
+import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
-const APP_LOGO = require('../../assets/images/app logo.png');
+interface Event {
+  id: string;
+  title: string;
+  type: string;
+  sport?: string;
+  venue: string;
+  venue_location?: string;
+  date: string;
+  photos?: string[];
+  home_team?: { name: string; city: string; fullName: string };
+  away_team?: { name: string; city: string; fullName: string };
+}
 
-const CATEGORY_FILTERS = [
-  { value: 'sports', label: 'Sports', icon: 'trophy-outline' as const },
-  { value: 'concert', label: 'Concerts', icon: 'musical-notes-outline' as const },
-  { value: 'theater', label: 'Theater', icon: 'pricetag-outline' as const },
-  { value: 'comedy', label: 'Comedy', icon: 'mic-outline' as const },
-  { value: 'landmark', label: 'Landmarks', icon: 'business-outline' as const },
-  { value: 'other', label: 'Other', icon: 'grid-outline' as const },
+const CATEGORIES = [
+  { key: 'all', label: 'All', icon: null },
+  { key: 'sports', label: 'Sports', icon: 'trophy-outline' },
+  { key: 'concert', label: 'Concerts', icon: 'musical-notes-outline' },
+  { key: 'theater', label: 'Theater', icon: 'ticket-outline' },
+  { key: 'comedy', label: 'Comedy', icon: 'mic-outline' },
+  { key: 'landmark', label: 'Landmarks', icon: 'location-outline' },
+  { key: 'other', label: 'Other', icon: 'ellipsis-horizontal-outline' },
 ];
 
 export default function EventsScreen() {
   const { user } = useAuth();
-  const [events, setEvents] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
-  const [selectedYear, setSelectedYear] = useState<string>('all');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedYear, setSelectedYear] = useState<string>('All');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const fetchEvents = useCallback(async () => {
     if (!user) return;
@@ -35,346 +48,323 @@ export default function EventsScreen() {
         .select('*')
         .eq('user_id', user.id)
         .order('date', { ascending: false });
+
       if (error) throw error;
       setEvents(data || []);
-    } catch (error) { 
-      console.error('Error fetching events:', error); 
-    } finally { 
-      setLoading(false); 
+    } catch (error) {
+      console.error('Error fetching events:', error);
     }
   }, [user]);
 
-  useEffect(() => { fetchEvents(); }, [fetchEvents]);
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
 
-  const onRefresh = async () => { setRefreshing(true); await fetchEvents(); setRefreshing(false); };
+  useEffect(() => {
+    let filtered = [...events];
+
+    // Filter by year
+    if (selectedYear !== 'All' && selectedYear !== 'Upcoming') {
+      filtered = filtered.filter(e => new Date(e.date).getFullYear().toString() === selectedYear);
+    } else if (selectedYear === 'Upcoming') {
+      filtered = filtered.filter(e => new Date(e.date) >= new Date());
+    }
+
+    // Filter by category
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(e => e.type === selectedCategory);
+    }
+
+    setFilteredEvents(filtered);
+  }, [events, selectedYear, selectedCategory]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchEvents();
+    setRefreshing(false);
+  };
 
   const handleDeleteEvent = async (eventId: string) => {
     try {
       const { error } = await supabase.from('events').delete().eq('id', eventId);
       if (error) throw error;
-      setEvents((prev) => prev.filter((e) => e.id !== eventId));
-    } catch (error) { console.error('Error deleting event:', error); }
-  };
-
-  const handleShare = async () => {
-    try {
-      await Share.share({
-        message: `Check out my Front Row collection! I've attended ${events.length} events.`,
-        title: 'Front Row',
-      });
+      setEvents(events.filter(e => e.id !== eventId));
     } catch (error) {
-      console.error('Error sharing:', error);
+      console.error('Error deleting event:', error);
     }
   };
 
-  const years = useMemo(() => {
-    const yearSet = new Set<string>();
-    events.forEach(event => {
-      const year = new Date(event.date).getFullYear().toString();
-      yearSet.add(year);
+  // Get unique years from events
+  const getYears = () => {
+    const years = new Set<string>();
+    events.forEach(e => {
+      years.add(new Date(e.date).getFullYear().toString());
     });
-    return Array.from(yearSet).sort((a, b) => parseInt(b) - parseInt(a));
-  }, [events]);
-
-  const filteredEvents = useMemo(() => {
-    let filtered = events;
-    if (selectedYear === 'upcoming') {
-      const today = new Date();
-      filtered = filtered.filter(event => new Date(event.date) >= today);
-    } else if (selectedYear !== 'all') {
-      filtered = filtered.filter(event => new Date(event.date).getFullYear().toString() === selectedYear);
-    }
-    if (selectedCategory) {
-      filtered = filtered.filter(event => event.type === selectedCategory);
-    }
-    return filtered;
-  }, [events, selectedYear, selectedCategory]);
-
-  const toggleCategory = (category: string) => {
-    setSelectedCategory(selectedCategory === category ? null : category);
+    return ['Upcoming', 'All', ...Array.from(years).sort((a, b) => Number(b) - Number(a))];
   };
 
-  const renderEvent = ({ item }: { item: any }) => (
+  const years = getYears();
+
+  const renderEventCard = ({ item }: { item: Event }) => (
     <EventCard event={item} onDelete={() => handleDeleteEvent(item.id)} />
   );
 
-  const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <Text style={styles.emptyEmoji}>🎫</Text>
-      <Text style={styles.emptyTitle}>No events yet</Text>
-      <Text style={styles.emptySubtitle}>Tap the + button to add your first event</Text>
-    </View>
-  );
-
-  const renderFilteredEmptyState = () => (
-    <View style={styles.emptyState}>
-      <Text style={styles.emptyEmoji}>🔍</Text>
-      <Text style={styles.emptyTitle}>No events found</Text>
-      <Text style={styles.emptySubtitle}>Try adjusting your filters</Text>
-    </View>
-  );
-
-  if (loading) {
-    return <View style={styles.loadingContainer}><ActivityIndicator size="large" color={COLORS.navy} /></View>;
-  }
-
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* App Header */}
-      <View style={styles.appHeader}>
-        <Image source={APP_LOGO} style={styles.appLogo} resizeMode="contain" />
-        <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Image 
+          source={require('../../assets/images/app logo.png')} 
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <TouchableOpacity style={styles.shareButton}>
           <Ionicons name="share-outline" size={24} color={COLORS.navy} />
         </TouchableOpacity>
       </View>
 
-      {/* List/Map Toggle */}
-      {events.length > 0 && (
-        <View style={styles.toggleContainer}>
-          <View style={styles.toggleWrapper}>
-            <TouchableOpacity
-              style={[styles.toggleButton, viewMode === 'list' && styles.toggleButtonActive]}
-              onPress={() => setViewMode('list')}
-            >
-              <Ionicons name="list" size={16} color={viewMode === 'list' ? COLORS.white : COLORS.navy} />
-              <Text style={[styles.toggleText, viewMode === 'list' && styles.toggleTextActive]}>List</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.toggleButton, viewMode === 'map' && styles.toggleButtonActive]}
-              onPress={() => setViewMode('map')}
-            >
-              <Ionicons name="map-outline" size={16} color={viewMode === 'map' ? COLORS.white : COLORS.navy} />
-              <Text style={[styles.toggleText, viewMode === 'map' && styles.toggleTextActive]}>Map</Text>
-            </TouchableOpacity>
-          </View>
+      {/* View Mode Toggle */}
+      <View style={styles.viewToggleContainer}>
+        <View style={styles.viewToggle}>
+          <TouchableOpacity
+            style={[styles.viewToggleButton, viewMode === 'list' && styles.viewToggleButtonActive]}
+            onPress={() => setViewMode('list')}
+          >
+            <Ionicons 
+              name="list" 
+              size={18} 
+              color={viewMode === 'list' ? COLORS.white : COLORS.navy} 
+            />
+            <Text style={[styles.viewToggleText, viewMode === 'list' && styles.viewToggleTextActive]}>
+              List
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.viewToggleButton, viewMode === 'map' && styles.viewToggleButtonActive]}
+            onPress={() => setViewMode('map')}
+          >
+            <Ionicons 
+              name="map-outline" 
+              size={18} 
+              color={viewMode === 'map' ? COLORS.white : COLORS.navy} 
+            />
+            <Text style={[styles.viewToggleText, viewMode === 'map' && styles.viewToggleTextActive]}>
+              Map
+            </Text>
+          </TouchableOpacity>
         </View>
-      )}
-
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Events</Text>
       </View>
 
-      {/* Year Tabs */}
-      {events.length > 0 && (
-        <View style={styles.yearTabsContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.yearTabs}>
-            <TouchableOpacity style={styles.yearTab} onPress={() => setSelectedYear('upcoming')}>
-              <Text style={[styles.yearTabText, selectedYear === 'upcoming' && styles.yearTabTextActive]}>Upcoming</Text>
-              {selectedYear === 'upcoming' && <View style={styles.yearTabIndicator} />}
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.yearTab} onPress={() => setSelectedYear('all')}>
-              <Text style={[styles.yearTabText, selectedYear === 'all' && styles.yearTabTextActive]}>All</Text>
-              {selectedYear === 'all' && <View style={styles.yearTabIndicator} />}
-            </TouchableOpacity>
+      {viewMode === 'list' ? (
+        <>
+          {/* Title */}
+          <Text style={styles.title}>Events</Text>
+
+          {/* Year Tabs */}
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false} 
+            style={styles.yearTabs}
+            contentContainerStyle={styles.yearTabsContent}
+          >
             {years.map(year => (
-              <TouchableOpacity key={year} style={styles.yearTab} onPress={() => setSelectedYear(year)}>
-                <Text style={[styles.yearTabText, selectedYear === year && styles.yearTabTextActive]}>{year}</Text>
-                {selectedYear === year && <View style={styles.yearTabIndicator} />}
+              <TouchableOpacity
+                key={year}
+                style={[styles.yearTab, selectedYear === year && styles.yearTabActive]}
+                onPress={() => setSelectedYear(year)}
+              >
+                <Text style={[styles.yearTabText, selectedYear === year && styles.yearTabTextActive]}>
+                  {year}
+                </Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
-          <View style={styles.yearTabsDivider} />
-        </View>
-      )}
 
-      {/* Category Pills */}
-      {events.length > 0 && (
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          contentContainerStyle={styles.categoryPills}
-          style={styles.categoryContainer}
-        >
-          {CATEGORY_FILTERS.map(category => (
-            <TouchableOpacity
-              key={category.value}
-              style={[styles.categoryPill, selectedCategory === category.value && styles.categoryPillActive]}
-              onPress={() => toggleCategory(category.value)}
-            >
-              <Ionicons 
-                name={category.icon} 
-                size={14} 
-                color={selectedCategory === category.value ? COLORS.white : COLORS.navy} 
-              />
-              <Text style={[styles.categoryText, selectedCategory === category.value && styles.categoryTextActive]}>
-                {category.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      )}
+          {/* Category Pills */}
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false} 
+            style={styles.categoryPills}
+            contentContainerStyle={styles.categoryPillsContent}
+          >
+            {CATEGORIES.map(cat => (
+              <TouchableOpacity
+                key={cat.key}
+                style={[styles.categoryPill, selectedCategory === cat.key && styles.categoryPillActive]}
+                onPress={() => setSelectedCategory(cat.key)}
+              >
+                {cat.icon && (
+                  <Ionicons 
+                    name={cat.icon as any} 
+                    size={16} 
+                    color={selectedCategory === cat.key ? COLORS.white : COLORS.navy} 
+                  />
+                )}
+                <Text style={[styles.categoryPillText, selectedCategory === cat.key && styles.categoryPillTextActive]}>
+                  {cat.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
 
-      {/* Content */}
-      {viewMode === 'list' ? (
-        <FlatList
-          data={filteredEvents}
-          renderItem={renderEvent}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          columnWrapperStyle={filteredEvents.length > 0 ? styles.row : undefined}
-          contentContainerStyle={[styles.listContent, filteredEvents.length === 0 && styles.emptyListContent]}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={events.length === 0 ? renderEmptyState : renderFilteredEmptyState}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.navy} />}
-        />
+          {/* Events Grid */}
+          <FlatList
+            data={filteredEvents}
+            renderItem={renderEventCard}
+            keyExtractor={item => item.id}
+            numColumns={2}
+            columnWrapperStyle={styles.row}
+            contentContainerStyle={styles.listContent}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.navy} />
+            }
+            ListEmptyComponent={
+              <View style={styles.empty}>
+                <Text style={styles.emptyEmoji}>🎫</Text>
+                <Text style={styles.emptyText}>No events yet</Text>
+                <Text style={styles.emptySubtext}>Tap + to add your first event</Text>
+              </View>
+            }
+          />
+        </>
       ) : (
-        <View style={styles.mapPlaceholder}>
-          <Text style={styles.mapPlaceholderEmoji}>🗺️</Text>
-          <Text style={styles.mapPlaceholderText}>Map view coming soon</Text>
-        </View>
+        <EventsMap events={filteredEvents} />
       )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.cream },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.cream },
-  
-  appHeader: {
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.cream,
+  },
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 8,
-    paddingBottom: 12,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
   },
-  appLogo: {
-    height: 32,
-    width: 120,
+  logo: {
+    height: 40,
+    width: 140,
   },
-  shareButton: { padding: 4 },
-
-  toggleContainer: {
+  shareButton: {
+    padding: SPACING.xs,
+  },
+  viewToggleContainer: {
     alignItems: 'center',
-    paddingBottom: 12,
+    paddingVertical: SPACING.sm,
   },
-  toggleWrapper: {
+  viewToggle: {
     flexDirection: 'row',
     backgroundColor: COLORS.white,
-    borderRadius: 20,
-    padding: 3,
-    shadowColor: COLORS.navy,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: 4,
   },
-  toggleButton: {
+  viewToggleButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 17,
-    gap: 4,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    gap: 6,
   },
-  toggleButtonActive: { backgroundColor: COLORS.navy },
-  toggleText: {
+  viewToggleButtonActive: {
+    backgroundColor: COLORS.navy,
+  },
+  viewToggleText: {
     fontFamily: FONTS.medium,
-    fontSize: 14,
+    fontSize: FONT_SIZES.sm,
     color: COLORS.navy,
   },
-  toggleTextActive: { color: COLORS.white },
-
-  header: { 
-    paddingHorizontal: 24, 
-    paddingBottom: 8,
+  viewToggleTextActive: {
+    color: COLORS.white,
   },
-  title: { 
-    fontFamily: FONTS.bold, 
-    fontSize: 28, 
+  title: {
+    fontFamily: FONTS.bold,
+    fontSize: 32,
     color: COLORS.navy,
+    paddingHorizontal: SPACING.lg,
+    marginTop: SPACING.sm,
   },
-
-  yearTabsContainer: { marginBottom: 8 },
   yearTabs: {
-    paddingHorizontal: 24,
-    gap: 20,
-    paddingBottom: 8,
+    marginTop: SPACING.sm,
+    maxHeight: 40,
   },
-  yearTab: { position: 'relative' },
+  yearTabsContent: {
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.md,
+  },
+  yearTab: {
+    paddingBottom: SPACING.xs,
+  },
+  yearTabActive: {
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.navy,
+  },
   yearTabText: {
     fontFamily: FONTS.regular,
-    fontSize: 15,
-    color: COLORS.grayLight,
+    fontSize: FONT_SIZES.md,
+    color: COLORS.gray,
   },
   yearTabTextActive: {
     fontFamily: FONTS.semiBold,
     color: COLORS.navy,
   },
-  yearTabIndicator: {
-    position: 'absolute',
-    bottom: -6,
-    left: 0,
-    right: 0,
-    height: 2,
-    backgroundColor: COLORS.navy,
-    borderRadius: 1,
-  },
-  yearTabsDivider: {
-    height: 1,
-    backgroundColor: COLORS.creamDark,
-    marginHorizontal: 16,
-    marginTop: 4,
-  },
-
-  categoryContainer: { 
-    maxHeight: 44,
-    marginBottom: 12,
-  },
   categoryPills: {
-    paddingHorizontal: 24,
-    gap: 8,
-    alignItems: 'center',
+    marginTop: SPACING.md,
+    maxHeight: 44,
+  },
+  categoryPillsContent: {
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.sm,
   },
   categoryPill: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.white,
-    height: 36,
-    paddingHorizontal: 12,
-    borderRadius: 18,
-    gap: 5,
-    borderWidth: 1,
-    borderColor: COLORS.creamDark,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: BORDER_RADIUS.xl,
+    gap: 6,
   },
   categoryPillActive: {
     backgroundColor: COLORS.navy,
-    borderColor: COLORS.navy,
   },
-  categoryText: {
+  categoryPillText: {
     fontFamily: FONTS.medium,
-    fontSize: 13,
+    fontSize: FONT_SIZES.sm,
     color: COLORS.navy,
   },
-  categoryTextActive: { color: COLORS.white },
-
-  listContent: { 
-    paddingHorizontal: 24, 
-    paddingBottom: 120,
-    paddingTop: 4,
+  categoryPillTextActive: {
+    color: COLORS.white,
   },
-  emptyListContent: { flexGrow: 1 },
-  row: { 
+  listContent: {
+    padding: SPACING.lg,
+    paddingBottom: 100,
+  },
+  row: {
     justifyContent: 'space-between',
-    gap: 12,
   },
-  
-  emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 100 },
-  emptyEmoji: { fontSize: 48, marginBottom: 12 },
-  emptyTitle: { fontFamily: FONTS.semiBold, fontSize: 18, color: COLORS.navy, marginBottom: 4 },
-  emptySubtitle: { fontFamily: FONTS.regular, fontSize: 14, color: COLORS.gray, textAlign: 'center' },
-
-  mapPlaceholder: {
-    flex: 1,
-    justifyContent: 'center',
+  empty: {
     alignItems: 'center',
+    paddingTop: 60,
   },
-  mapPlaceholderEmoji: { fontSize: 48, marginBottom: 12 },
-  mapPlaceholderText: {
-    fontFamily: FONTS.medium,
-    fontSize: 16,
+  emptyEmoji: {
+    fontSize: 64,
+  },
+  emptyText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: FONT_SIZES.lg,
+    color: COLORS.navy,
+    marginTop: SPACING.md,
+  },
+  emptySubtext: {
+    fontFamily: FONTS.regular,
+    fontSize: FONT_SIZES.md,
     color: COLORS.gray,
+    marginTop: SPACING.xs,
   },
 });
