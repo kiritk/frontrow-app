@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
@@ -25,6 +25,7 @@ const Tab = createBottomTabNavigator();
 function CustomTabBar({ state, descriptors, navigation }: any) {
   return (
     <View style={styles.tabBarWrapper}>
+      {/* Tab Pills Container */}
       <View style={styles.tabBarContainer}>
         {state.routes.map((route: any, index: number) => {
           const { options } = descriptors[route.key];
@@ -168,14 +169,18 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 24,
     left: 20,
-    right: 100,
+    right: 88,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   tabBarContainer: {
+    flex: 1,
     flexDirection: 'row',
     backgroundColor: COLORS.white,
-    borderRadius: 32,
-    paddingVertical: 8,
-    paddingHorizontal: 8,
+    borderRadius: 50,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
@@ -186,7 +191,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
+    paddingVertical: 4,
   },
   tabLabel: {
     fontFamily: FONTS.medium,

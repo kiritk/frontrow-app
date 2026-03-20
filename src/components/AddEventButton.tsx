@@ -411,7 +411,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
 
   return (
     <>
-      <TouchableOpacity style={[styles.fab, { bottom: fabBottom }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); setModalVisible(true); }}>
+      <TouchableOpacity style={[styles.fab, { bottom: 24 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); setModalVisible(true); }}>
         <Text style={styles.fabIcon}>+</Text>
       </TouchableOpacity>
       
