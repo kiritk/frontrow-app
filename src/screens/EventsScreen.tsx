@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
@@ -115,11 +115,7 @@ export default function EventsScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <Image 
-          source={require('../../assets/images/app logo.png')} 
-          style={styles.logo}
-          resizeMode="contain"
-        />
+        <Text style={styles.logoText}>Front Row</Text>
         <TouchableOpacity style={styles.shareButton}>
           <Ionicons name="share-outline" size={24} color={COLORS.navy} />
         </TouchableOpacity>
@@ -250,9 +246,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
   },
-  logo: {
-    height: 40,
-    width: 140,
+  logoText: {
+    fontFamily: FONTS.vt323,
+    fontSize: 28,
+    color: COLORS.navy,
   },
   shareButton: {
     padding: SPACING.xs,

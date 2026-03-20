@@ -30,6 +30,7 @@ export const FONTS = {
   modak: 'Modak_400Regular',
   iceland: 'Iceland_400Regular',
   zain: 'Zain_400Regular',
+  vt323: 'VT323_400Regular',
 };
 
 export const FONT_SIZES = {

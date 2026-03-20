@@ -11,6 +11,7 @@ import { Limelight_400Regular } from '@expo-google-fonts/limelight';
 import { Modak_400Regular } from '@expo-google-fonts/modak';
 import { Iceland_400Regular } from '@expo-google-fonts/iceland';
 import { Zain_400Regular } from '@expo-google-fonts/zain';
+import { VT323_400Regular } from '@expo-google-fonts/vt323';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { COLORS, FONTS } from './src/theme/colors';
 
@@ -136,6 +137,7 @@ export default function App() {
     Modak_400Regular,
     Iceland_400Regular,
     Zain_400Regular,
+    VT323_400Regular,
   });
 
   if (!fontsLoaded) {
