@@ -52,6 +52,8 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   const [venue, setVenue] = useState('');
   const [eventDate, setEventDate] = useState<Date>(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+
+  useEffect(() => { console.log("showDatePicker is now:", showDatePicker); }, [showDatePicker]);
   const [dateSelected, setDateSelected] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
   const [cityInputFocused, setCityInputFocused] = useState(false);
@@ -159,6 +161,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     setShowHomeDropdown(false);
     setShowAwayDropdown(false);
     setShowDatePicker(true);
+    console.log("State set to true, current value will update on next render");
   };
 
   const onDateChange = (event: any, selectedDate?: Date) => {
