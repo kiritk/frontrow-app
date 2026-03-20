@@ -424,14 +424,14 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
               <TextInput style={styles.input} placeholder="Venue, City" placeholderTextColor={COLORS.grayLight} value={venue} onChangeText={setVenue} returnKeyType="done" blurOnSubmit />
             </View>
           )}
-          <View style={[styles.inputGroup, { zIndex: -2 }]}>
+          <View style={styles.inputGroup}>
             <Text style={styles.label}>When was it?</Text>
-            <TouchableOpacity style={styles.dateButton} onPress={openDatePicker}>
+            <TouchableOpacity style={styles.dateButton} onPress={openDatePicker} activeOpacity={0.7}>
               <Text style={[styles.dateButtonText, !dateSelected && styles.dateButtonPlaceholder]}>{dateSelected ? formatDisplayDate(eventDate) : 'Select a date'}</Text>
               <Text style={styles.calendarIcon}>📅</Text>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity style={[styles.nextButton, { zIndex: -2 }]} onPress={handleDetailsNext}><Text style={styles.nextButtonText}>Next</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.nextButton} onPress={handleDetailsNext} activeOpacity={0.7}><Text style={styles.nextButtonText}>Next</Text></TouchableOpacity>
         </View>
       </TouchableWithoutFeedback>
     );
