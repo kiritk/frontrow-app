@@ -1,10 +1,18 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, useWindowDimensions, ImageBackground, Image } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { 
+  View, Text, StyleSheet, TouchableOpacity, Alert, useWindowDimensions, 
+  ImageBackground, Image, Animated, Modal, FlatList, Dimensions 
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS } from '../theme/colors';
+import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
+import { supabase } from '../lib/supabase';
+import { COLORS, FONTS, SPACING, FONT_SIZES, BORDER_RADIUS } from '../theme/colors';
 import { getTeamByName } from '../data/nflTeams';
 import { getMLBTeamByName } from '../data/mlbTeams';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface EventCardProps {
   event: {
@@ -20,9 +28,10 @@ interface EventCardProps {
     away_team?: { name: string; city: string; fullName: string };
   };
   onDelete: () => void;
+  onUpdate?: () => void;
 }
 
-// Concert card color scheme
+// Color schemes
 const CONCERT_COLORS = {
   gradientStart: '#1a1a2e',
   gradientMid: '#2d1f3d',
@@ -31,7 +40,6 @@ const CONCERT_COLORS = {
   accentLight: '#c4a7ff',
 };
 
-// Theater card color scheme
 const THEATER_COLORS = {
   gradientStart: '#1a0a0a',
   gradientMid: '#3d1a1a',
@@ -40,7 +48,6 @@ const THEATER_COLORS = {
   accentLight: '#FFECB3',
 };
 
-// Comedy card color scheme
 const COMEDY_COLORS = {
   gradientStart: '#1a0505',
   gradientMid: '#3d0a0a',
@@ -49,7 +56,6 @@ const COMEDY_COLORS = {
   accentLight: '#FFB3B3',
 };
 
-// Landmark card color scheme
 const LANDMARK_COLORS = {
   gradientStart: '#1a1917',
   gradientMid: '#2d2b28',
@@ -58,7 +64,6 @@ const LANDMARK_COLORS = {
   accentLight: '#E8D4C4',
 };
 
-// Other card color scheme
 const OTHER_COLORS = {
   gradientStart: '#2a1510',
   gradientMid: '#4d2a1f',
@@ -67,11 +72,102 @@ const OTHER_COLORS = {
   accentLight: '#FFE0D4',
 };
 
-export default function EventCard({ event, onDelete }: EventCardProps) {
+export default function EventCard({ event, onDelete, onUpdate }: EventCardProps) {
   const { width } = useWindowDimensions();
   const CARD_WIDTH = (width - 48 - 12) / 2;
   const CARD_HEIGHT = CARD_WIDTH * 1.4;
   const PERFORATION_TOP = CARD_HEIGHT * 0.2;
+
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [showPhotoViewer, setShowPhotoViewer] = useState(false);
+  const [photos, setPhotos] = useState<string[]>(event.photos || []);
+  const flipAnimation = useRef(new Animated.Value(0)).current;
+
+  const photoCount = photos.length;
+
+  const flipToBack = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Animated.spring(flipAnimation, {
+      toValue: 1,
+      friction: 8,
+      tension: 10,
+      useNativeDriver: true,
+    }).start();
+    setIsFlipped(true);
+  };
+
+  const flipToFront = () => {
+    Animated.spring(flipAnimation, {
+      toValue: 0,
+      friction: 8,
+      tension: 10,
+      useNativeDriver: true,
+    }).start();
+    setIsFlipped(false);
+  };
+
+  const handleCardPress = () => {
+    if (isFlipped) {
+      flipToFront();
+    } else {
+      flipToBack();
+    }
+  };
+
+  const frontInterpolate = flipAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '180deg'],
+  });
+
+  const backInterpolate = flipAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['180deg', '360deg'],
+  });
+
+  const frontAnimatedStyle = {
+    transform: [{ rotateY: frontInterpolate }],
+  };
+
+  const backAnimatedStyle = {
+    transform: [{ rotateY: backInterpolate }],
+  };
+
+  const pickImages = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Please allow access to your photos');
+      return;
+    }
+
+    const remainingSlots = 6 - photoCount;
+    if (remainingSlots <= 0) {
+      Alert.alert('Limit reached', 'Maximum 6 photos per event');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      selectionLimit: remainingSlots,
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      const newPhotos = [...photos, ...result.assets.map(a => a.uri)].slice(0, 6);
+      setPhotos(newPhotos);
+      
+      // Update in Supabase
+      try {
+        await supabase
+          .from('events')
+          .update({ photos: newPhotos })
+          .eq('id', event.id);
+        onUpdate?.();
+      } catch (error) {
+        console.error('Error updating photos:', error);
+      }
+    }
+  };
 
   const confirmDelete = () => {
     Alert.alert('Delete Event', `Delete "${event.title}"?`, [
@@ -83,30 +179,15 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
   const getCardStyle = () => {
     switch (event.type) {
       case 'concert':
-        return {
-          gradientColors: [CONCERT_COLORS.gradientStart, CONCERT_COLORS.gradientMid, CONCERT_COLORS.gradientEnd] as [string, string, string],
-          accentColor: CONCERT_COLORS.accent,
-        };
+        return { gradientColors: [CONCERT_COLORS.gradientStart, CONCERT_COLORS.gradientMid, CONCERT_COLORS.gradientEnd] as [string, string, string], accentColor: CONCERT_COLORS.accent };
       case 'theater':
-        return {
-          gradientColors: [THEATER_COLORS.gradientStart, THEATER_COLORS.gradientMid, THEATER_COLORS.gradientEnd] as [string, string, string],
-          accentColor: THEATER_COLORS.accent,
-        };
+        return { gradientColors: [THEATER_COLORS.gradientStart, THEATER_COLORS.gradientMid, THEATER_COLORS.gradientEnd] as [string, string, string], accentColor: THEATER_COLORS.accent };
       case 'comedy':
-        return {
-          gradientColors: [COMEDY_COLORS.gradientStart, COMEDY_COLORS.gradientMid, COMEDY_COLORS.gradientEnd] as [string, string, string],
-          accentColor: COMEDY_COLORS.accent,
-        };
+        return { gradientColors: [COMEDY_COLORS.gradientStart, COMEDY_COLORS.gradientMid, COMEDY_COLORS.gradientEnd] as [string, string, string], accentColor: COMEDY_COLORS.accent };
       case 'landmark':
-        return {
-          gradientColors: [LANDMARK_COLORS.gradientStart, LANDMARK_COLORS.gradientMid, LANDMARK_COLORS.gradientEnd] as [string, string, string],
-          accentColor: LANDMARK_COLORS.accent,
-        };
+        return { gradientColors: [LANDMARK_COLORS.gradientStart, LANDMARK_COLORS.gradientMid, LANDMARK_COLORS.gradientEnd] as [string, string, string], accentColor: LANDMARK_COLORS.accent };
       case 'other':
-        return {
-          gradientColors: [OTHER_COLORS.gradientStart, OTHER_COLORS.gradientMid, OTHER_COLORS.gradientEnd] as [string, string, string],
-          accentColor: OTHER_COLORS.accent,
-        };
+        return { gradientColors: [OTHER_COLORS.gradientStart, OTHER_COLORS.gradientMid, OTHER_COLORS.gradientEnd] as [string, string, string], accentColor: OTHER_COLORS.accent };
       case 'sports':
         if (event.sport === 'nfl') return { gradientColors: ['#2a1a3a', '#4a2a5a', '#6a3a7a'] as [string, string, string], accentColor: '#c9a0dc' };
         if (event.sport === 'mlb') return { gradientColors: ['#1a3a1a', '#2a5a2a', '#3a7a3a'] as [string, string, string], accentColor: '#90EE90' };
@@ -130,12 +211,10 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
   const { month, day, year } = formatDate(event.date);
   const cardStyle = getCardStyle();
 
-  // Check if this is a team sport with team data
   const isNFLGame = event.sport === 'nfl' && event.home_team && event.away_team;
   const isMLBGame = event.sport === 'mlb' && event.home_team && event.away_team;
   const isTeamSport = isNFLGame || isMLBGame;
 
-  // Get team data based on sport type
   const getHomeTeam = () => {
     if (isNFLGame) return getTeamByName(event.home_team!.name);
     if (isMLBGame) return getMLBTeamByName(event.home_team!.name);
@@ -151,106 +230,123 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
   const homeTeam = getHomeTeam();
   const awayTeam = getAwayTeam();
 
-  // Get the background image source for concerts
   const getConcertBackground = () => {
-    if (event.photos && event.photos.length > 0) {
-      return { uri: event.photos[0] };
-    }
+    if (photos && photos.length > 0) return { uri: photos[0] };
     return require('../../assets/images/concert_bg.png');
   };
 
-  // Get the background image source for theater
   const getTheaterBackground = () => {
-    if (event.photos && event.photos.length > 0) {
-      return { uri: event.photos[0] };
-    }
+    if (photos && photos.length > 0) return { uri: photos[0] };
     return require('../../assets/images/theater_bg.jpg');
   };
 
-  // Get the background image source for comedy
   const getComedyBackground = () => {
-    if (event.photos && event.photos.length > 0) {
-      return { uri: event.photos[0] };
-    }
+    if (photos && photos.length > 0) return { uri: photos[0] };
     return require('../../assets/images/comedy_bg.jpg');
   };
 
-  // Get the background image source for landmark
   const getLandmarkBackground = () => {
-    if (event.photos && event.photos.length > 0) {
-      return { uri: event.photos[0] };
-    }
+    if (photos && photos.length > 0) return { uri: photos[0] };
     return require('../../assets/images/landmark_bg.jpg');
   };
 
-  // Get the background image source for other
   const getOtherBackground = () => {
-    if (event.photos && event.photos.length > 0) {
-      return { uri: event.photos[0] };
-    }
+    if (photos && photos.length > 0) return { uri: photos[0] };
     return require('../../assets/images/other_bg.jpg');
   };
 
-  const renderTeamSportCard = () => {
-    const homeColor = homeTeam?.primaryColor || '#2a1a3a';
+  // Photo Viewer Modal
+  const renderPhotoViewer = () => (
+    <Modal visible={showPhotoViewer} transparent animationType="fade" onRequestClose={() => setShowPhotoViewer(false)}>
+      <View style={styles.photoViewerOverlay}>
+        <TouchableOpacity style={styles.photoViewerClose} onPress={() => setShowPhotoViewer(false)}>
+          <Ionicons name="close" size={28} color={COLORS.white} />
+        </TouchableOpacity>
+        <FlatList
+          data={photos}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(_, index) => index.toString()}
+          renderItem={({ item }) => (
+            <View style={styles.photoViewerSlide}>
+              <Image source={{ uri: item }} style={styles.photoViewerImage} resizeMode="contain" />
+            </View>
+          )}
+        />
+        <View style={styles.photoViewerIndicator}>
+          <Text style={styles.photoViewerIndicatorText}>{photos.length} photo{photos.length !== 1 ? 's' : ''}</Text>
+        </View>
+      </View>
+    </Modal>
+  );
 
-    return (
-      <View style={[styles.card, { height: CARD_HEIGHT }]}>
-        {/* Perforations */}
-        <View style={[styles.perforationLeft, { top: PERFORATION_TOP }]} />
-        <View style={[styles.perforationRight, { top: PERFORATION_TOP }]} />
-
-        {/* Bottom solid color - home team */}
-        <View style={[styles.teamBottomColor, { backgroundColor: homeColor }]} />
-
-        {/* Stadium image - top 60% */}
-        <View style={styles.teamStadiumSection}>
-          <ImageBackground 
-            source={homeTeam?.stadiumImage}
-            style={styles.teamStadiumImage}
-            imageStyle={styles.teamStadiumImageStyle}
-          >
-            {/* Smooth gradient fade from stadium to home team color */}
-            <LinearGradient
-              colors={[
-                'transparent',
-                'rgba(0,0,0,0)',
-                homeColor + '40',
-                homeColor + '80',
-                homeColor + 'CC',
-                homeColor,
-              ]}
-              locations={[0, 0.3, 0.5, 0.7, 0.85, 1]}
-              style={styles.teamStadiumOverlay}
-            />
-          </ImageBackground>
+  // Back of card
+  const renderBackSide = () => (
+    <Animated.View style={[styles.cardBack, { height: CARD_HEIGHT }, backAnimatedStyle]}>
+      <View style={styles.backContent}>
+        <Text style={styles.backPhotoCount}>{photoCount} Photo{photoCount !== 1 ? 's' : ''}</Text>
+        
+        <View style={styles.backButtonsContainer}>
+          {photoCount === 0 && (
+            <TouchableOpacity style={styles.backButton} onPress={pickImages}>
+              <Ionicons name="camera-outline" size={20} color={COLORS.navy} />
+              <Text style={styles.backButtonText}>Add Photos</Text>
+            </TouchableOpacity>
+          )}
+          
+          {photoCount > 0 && photoCount < 6 && (
+            <>
+              <TouchableOpacity style={styles.backButton} onPress={pickImages}>
+                <Ionicons name="camera-outline" size={20} color={COLORS.navy} />
+                <Text style={styles.backButtonText}>Add Photos</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.backButton, styles.backButtonSecondary]} onPress={() => setShowPhotoViewer(true)}>
+                <Ionicons name="images-outline" size={20} color={COLORS.white} />
+                <Text style={styles.backButtonTextSecondary}>View Photos</Text>
+              </TouchableOpacity>
+            </>
+          )}
+          
+          {photoCount >= 6 && (
+            <TouchableOpacity style={[styles.backButton, styles.backButtonSecondary]} onPress={() => setShowPhotoViewer(true)}>
+              <Ionicons name="images-outline" size={20} color={COLORS.white} />
+              <Text style={styles.backButtonTextSecondary}>View Photos</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
-        {/* Content overlay */}
-        <View style={styles.teamContentOverlay}>
-          {/* Team logos - centered in card */}
-          <View style={styles.teamLogosContainer}>
-            {homeTeam && (
-              <Image source={homeTeam.logo} style={styles.teamLogo} />
-            )}
-            <Text style={styles.teamVsText}>vs</Text>
-            {awayTeam && (
-              <Image source={awayTeam.logo} style={styles.teamLogo} />
-            )}
-          </View>
+        <Text style={styles.backTapHint}>Tap to flip back</Text>
+      </View>
+    </Animated.View>
+  );
 
-          {/* Bottom info */}
+  const renderTeamSportCard = () => {
+    const homeColor = homeTeam?.primaryColor || '#2a1a3a';
+    return (
+      <View style={[styles.card, { height: CARD_HEIGHT }]}>
+        <View style={[styles.perforationLeft, { top: PERFORATION_TOP }]} />
+        <View style={[styles.perforationRight, { top: PERFORATION_TOP }]} />
+        <View style={[styles.teamBottomColor, { backgroundColor: homeColor }]} />
+        <View style={styles.teamStadiumSection}>
+          <ImageBackground source={homeTeam?.stadiumImage} style={styles.teamStadiumImage} imageStyle={styles.teamStadiumImageStyle}>
+            <LinearGradient colors={['transparent', 'rgba(0,0,0,0)', homeColor + '40', homeColor + '80', homeColor + 'CC', homeColor]} locations={[0, 0.3, 0.5, 0.7, 0.85, 1]} style={styles.teamStadiumOverlay} />
+          </ImageBackground>
+        </View>
+        <View style={styles.teamContentOverlay}>
+          <View style={styles.teamLogosContainer}>
+            {homeTeam && <Image source={homeTeam.logo} style={styles.teamLogo} />}
+            <Text style={styles.teamVsText}>vs</Text>
+            {awayTeam && <Image source={awayTeam.logo} style={styles.teamLogo} />}
+          </View>
           <View style={styles.teamInfoSection}>
             <View style={styles.teamDatePill}>
               <Text style={styles.teamDateMonth}>{month} {day}</Text>
               <Text style={styles.teamDateYear}>{year}</Text>
             </View>
-
             <View style={styles.teamVenueSection}>
               <Ionicons name="location-outline" size={12} color="#FFFFFF" />
-              <Text style={styles.teamVenueText} numberOfLines={2}>
-                {event.venue}
-              </Text>
+              <Text style={styles.teamVenueText} numberOfLines={2}>{event.venue}</Text>
             </View>
           </View>
         </View>
@@ -260,45 +356,23 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
 
   const renderConcertCard = () => (
     <View style={[styles.card, { height: CARD_HEIGHT }]}>
-      {/* Perforations */}
       <View style={[styles.perforationLeft, { top: PERFORATION_TOP }]} />
       <View style={[styles.perforationRight, { top: PERFORATION_TOP }]} />
-
-      {/* Top section with concert background */}
       <View style={styles.topSection}>
-        <ImageBackground 
-          source={getConcertBackground()}
-          style={styles.imageBackground}
-          imageStyle={styles.imageStyle}
-        >
-          <LinearGradient
-            colors={['transparent', 'rgba(26, 26, 46, 0.7)', CONCERT_COLORS.gradientStart]}
-            style={styles.imageOverlay}
-          />
+        <ImageBackground source={getConcertBackground()} style={styles.imageBackground} imageStyle={styles.imageStyle}>
+          <LinearGradient colors={['transparent', 'rgba(26, 26, 46, 0.7)', CONCERT_COLORS.gradientStart]} style={styles.imageOverlay} />
         </ImageBackground>
       </View>
-
-      {/* Bottom section - title, date, venue all on same background */}
       <View style={styles.bottomSection}>
-        {/* Title */}
-        <Text style={styles.concertTitle} numberOfLines={2}>
-          {event.title.toUpperCase()}
-        </Text>
-
-        {/* Date and Venue row */}
+        <Text style={styles.concertTitle} numberOfLines={2}>{event.title.toUpperCase()}</Text>
         <View style={styles.infoRow}>
-          {/* Date pill */}
           <View style={styles.concertDatePill}>
             <Text style={styles.concertDatePillMonth}>{month} {day}</Text>
             <Text style={styles.concertDatePillYear}>{year}</Text>
           </View>
-
-          {/* Venue */}
           <View style={styles.venueSection}>
             <Ionicons name="location-outline" size={12} color={CONCERT_COLORS.accentLight} />
-            <Text style={styles.concertVenueText} numberOfLines={2}>
-              {event.venue}
-            </Text>
+            <Text style={styles.concertVenueText} numberOfLines={2}>{event.venue}</Text>
           </View>
         </View>
       </View>
@@ -307,45 +381,23 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
 
   const renderTheaterCard = () => (
     <View style={[styles.card, { height: CARD_HEIGHT }]}>
-      {/* Perforations */}
       <View style={[styles.perforationLeft, { top: PERFORATION_TOP }]} />
       <View style={[styles.perforationRight, { top: PERFORATION_TOP }]} />
-
-      {/* Top section with theater background */}
       <View style={styles.topSection}>
-        <ImageBackground 
-          source={getTheaterBackground()}
-          style={styles.imageBackground}
-          imageStyle={styles.imageStyle}
-        >
-          <LinearGradient
-            colors={['transparent', 'rgba(26, 10, 10, 0.7)', THEATER_COLORS.gradientStart]}
-            style={styles.imageOverlay}
-          />
+        <ImageBackground source={getTheaterBackground()} style={styles.imageBackground} imageStyle={styles.imageStyle}>
+          <LinearGradient colors={['transparent', 'rgba(26, 10, 10, 0.7)', THEATER_COLORS.gradientStart]} style={styles.imageOverlay} />
         </ImageBackground>
       </View>
-
-      {/* Bottom section - title, date, venue */}
       <View style={[styles.bottomSection, { backgroundColor: THEATER_COLORS.gradientStart }]}>
-        {/* Title */}
-        <Text style={styles.theaterTitle} numberOfLines={2}>
-          {event.title.toUpperCase()}
-        </Text>
-
-        {/* Date and Venue row */}
+        <Text style={styles.theaterTitle} numberOfLines={2}>{event.title.toUpperCase()}</Text>
         <View style={styles.infoRow}>
-          {/* Date pill */}
           <View style={styles.theaterDatePill}>
             <Text style={styles.theaterDatePillMonth}>{month} {day}</Text>
             <Text style={styles.theaterDatePillYear}>{year}</Text>
           </View>
-
-          {/* Venue */}
           <View style={styles.venueSection}>
             <Ionicons name="location-outline" size={12} color={THEATER_COLORS.accentLight} />
-            <Text style={styles.theaterVenueText} numberOfLines={2}>
-              {event.venue}
-            </Text>
+            <Text style={styles.theaterVenueText} numberOfLines={2}>{event.venue}</Text>
           </View>
         </View>
       </View>
@@ -354,45 +406,23 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
 
   const renderComedyCard = () => (
     <View style={[styles.card, { height: CARD_HEIGHT }]}>
-      {/* Perforations */}
       <View style={[styles.perforationLeft, { top: PERFORATION_TOP }]} />
       <View style={[styles.perforationRight, { top: PERFORATION_TOP }]} />
-
-      {/* Top section with comedy background */}
       <View style={styles.topSection}>
-        <ImageBackground 
-          source={getComedyBackground()}
-          style={styles.imageBackground}
-          imageStyle={styles.imageStyle}
-        >
-          <LinearGradient
-            colors={['transparent', 'rgba(26, 5, 5, 0.7)', COMEDY_COLORS.gradientStart]}
-            style={styles.imageOverlay}
-          />
+        <ImageBackground source={getComedyBackground()} style={styles.imageBackground} imageStyle={styles.imageStyle}>
+          <LinearGradient colors={['transparent', 'rgba(26, 5, 5, 0.7)', COMEDY_COLORS.gradientStart]} style={styles.imageOverlay} />
         </ImageBackground>
       </View>
-
-      {/* Bottom section - title, date, venue */}
       <View style={[styles.bottomSection, { backgroundColor: COMEDY_COLORS.gradientStart }]}>
-        {/* Title */}
-        <Text style={styles.comedyTitle} numberOfLines={2}>
-          {event.title}
-        </Text>
-
-        {/* Date and Venue row */}
+        <Text style={styles.comedyTitle} numberOfLines={2}>{event.title}</Text>
         <View style={styles.infoRow}>
-          {/* Date pill */}
           <View style={styles.comedyDatePill}>
             <Text style={styles.comedyDatePillMonth}>{month} {day}</Text>
             <Text style={styles.comedyDatePillYear}>{year}</Text>
           </View>
-
-          {/* Venue */}
           <View style={styles.venueSection}>
             <Ionicons name="location-outline" size={12} color={COMEDY_COLORS.accentLight} />
-            <Text style={styles.comedyVenueText} numberOfLines={2}>
-              {event.venue}
-            </Text>
+            <Text style={styles.comedyVenueText} numberOfLines={2}>{event.venue}</Text>
           </View>
         </View>
       </View>
@@ -401,45 +431,23 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
 
   const renderLandmarkCard = () => (
     <View style={[styles.card, { height: CARD_HEIGHT }]}>
-      {/* Perforations */}
       <View style={[styles.perforationLeft, { top: PERFORATION_TOP }]} />
       <View style={[styles.perforationRight, { top: PERFORATION_TOP }]} />
-
-      {/* Top section with landmark background */}
       <View style={styles.topSection}>
-        <ImageBackground 
-          source={getLandmarkBackground()}
-          style={styles.imageBackground}
-          imageStyle={styles.imageStyle}
-        >
-          <LinearGradient
-            colors={['transparent', 'rgba(26, 25, 23, 0.7)', LANDMARK_COLORS.gradientStart]}
-            style={styles.imageOverlay}
-          />
+        <ImageBackground source={getLandmarkBackground()} style={styles.imageBackground} imageStyle={styles.imageStyle}>
+          <LinearGradient colors={['transparent', 'rgba(26, 25, 23, 0.7)', LANDMARK_COLORS.gradientStart]} style={styles.imageOverlay} />
         </ImageBackground>
       </View>
-
-      {/* Bottom section - title, date, venue */}
       <View style={[styles.bottomSection, { backgroundColor: LANDMARK_COLORS.gradientStart }]}>
-        {/* Title */}
-        <Text style={styles.landmarkTitle} numberOfLines={2}>
-          {event.title.toUpperCase()}
-        </Text>
-
-        {/* Date and Venue row */}
+        <Text style={styles.landmarkTitle} numberOfLines={2}>{event.title.toUpperCase()}</Text>
         <View style={styles.infoRow}>
-          {/* Date pill */}
           <View style={styles.landmarkDatePill}>
             <Text style={styles.landmarkDatePillMonth}>{month} {day}</Text>
             <Text style={styles.landmarkDatePillYear}>{year}</Text>
           </View>
-
-          {/* Venue */}
           <View style={styles.venueSection}>
             <Ionicons name="location-outline" size={12} color={LANDMARK_COLORS.accentLight} />
-            <Text style={styles.landmarkVenueText} numberOfLines={2}>
-              {event.venue}
-            </Text>
+            <Text style={styles.landmarkVenueText} numberOfLines={2}>{event.venue}</Text>
           </View>
         </View>
       </View>
@@ -448,45 +456,23 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
 
   const renderOtherCard = () => (
     <View style={[styles.card, { height: CARD_HEIGHT }]}>
-      {/* Perforations */}
       <View style={[styles.perforationLeft, { top: PERFORATION_TOP }]} />
       <View style={[styles.perforationRight, { top: PERFORATION_TOP }]} />
-
-      {/* Top section with other background */}
       <View style={styles.topSection}>
-        <ImageBackground 
-          source={getOtherBackground()}
-          style={styles.imageBackground}
-          imageStyle={styles.imageStyle}
-        >
-          <LinearGradient
-            colors={['transparent', 'rgba(42, 21, 16, 0.7)', OTHER_COLORS.gradientStart]}
-            style={styles.imageOverlay}
-          />
+        <ImageBackground source={getOtherBackground()} style={styles.imageBackground} imageStyle={styles.imageStyle}>
+          <LinearGradient colors={['transparent', 'rgba(42, 21, 16, 0.7)', OTHER_COLORS.gradientStart]} style={styles.imageOverlay} />
         </ImageBackground>
       </View>
-
-      {/* Bottom section - title, date, venue */}
       <View style={[styles.bottomSection, { backgroundColor: OTHER_COLORS.gradientStart }]}>
-        {/* Title */}
-        <Text style={styles.otherTitle} numberOfLines={2}>
-          {event.title}
-        </Text>
-
-        {/* Date and Venue row */}
+        <Text style={styles.otherTitle} numberOfLines={2}>{event.title}</Text>
         <View style={styles.infoRow}>
-          {/* Date pill */}
           <View style={styles.otherDatePill}>
             <Text style={styles.otherDatePillMonth}>{month} {day}</Text>
             <Text style={styles.otherDatePillYear}>{year}</Text>
           </View>
-
-          {/* Venue */}
           <View style={styles.venueSection}>
             <Ionicons name="location-outline" size={12} color={OTHER_COLORS.accentLight} />
-            <Text style={styles.otherVenueText} numberOfLines={2}>
-              {event.venue}
-            </Text>
+            <Text style={styles.otherVenueText} numberOfLines={2}>{event.venue}</Text>
           </View>
         </View>
       </View>
@@ -495,50 +481,24 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
 
   const renderDefaultCard = () => (
     <View style={[styles.card, { height: CARD_HEIGHT }]}>
-      {/* Perforations */}
       <View style={[styles.perforationLeft, { top: PERFORATION_TOP }]} />
       <View style={[styles.perforationRight, { top: PERFORATION_TOP }]} />
-
-      <LinearGradient
-        colors={cardStyle.gradientColors}
-        style={styles.defaultGradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        {/* Image area */}
+      <LinearGradient colors={cardStyle.gradientColors} style={styles.defaultGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
         <View style={styles.defaultImageArea}>
-          {event.photos && event.photos.length > 0 ? (
-            <ImageBackground 
-              source={{ uri: event.photos[0] }} 
-              style={styles.defaultImageBg}
-              imageStyle={{ borderRadius: 8 }}
-            >
-              <LinearGradient
-                colors={['transparent', cardStyle.gradientColors[0] + 'CC']}
-                style={StyleSheet.absoluteFill}
-              />
+          {photos && photos.length > 0 ? (
+            <ImageBackground source={{ uri: photos[0] }} style={styles.defaultImageBg} imageStyle={{ borderRadius: 8 }}>
+              <LinearGradient colors={['transparent', cardStyle.gradientColors[0] + 'CC']} style={StyleSheet.absoluteFill} />
             </ImageBackground>
           ) : (
-            <Text style={styles.defaultTitle} numberOfLines={2}>
-              {event.title.toUpperCase()}
-            </Text>
+            <Text style={styles.defaultTitle} numberOfLines={2}>{event.title.toUpperCase()}</Text>
           )}
         </View>
-
-        {/* Title if has photo */}
-        {event.photos && event.photos.length > 0 && (
-          <Text style={styles.defaultTitleWithPhoto} numberOfLines={2}>
-            {event.title.toUpperCase()}
-          </Text>
-        )}
-
-        {/* Bottom info */}
+        {photos && photos.length > 0 && <Text style={styles.defaultTitleWithPhoto} numberOfLines={2}>{event.title.toUpperCase()}</Text>}
         <View style={styles.defaultInfoSection}>
           <View style={[styles.defaultDateBadge, { backgroundColor: cardStyle.accentColor + '20', borderColor: cardStyle.accentColor }]}>
             <Text style={[styles.defaultDateText, { color: cardStyle.accentColor }]}>{month} {day}</Text>
             <Text style={[styles.defaultYearText, { color: cardStyle.accentColor + 'CC' }]}>{year}</Text>
           </View>
-
           <View style={styles.defaultVenueContainer}>
             <Ionicons name="location-outline" size={10} color="#fff" />
             <Text style={styles.defaultVenueText} numberOfLines={2}>{event.venue}</Text>
@@ -548,32 +508,33 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
     </View>
   );
 
-  const renderCard = () => {
-    if (event.type === 'concert') {
-      return renderConcertCard();
-    } else if (event.type === 'theater') {
-      return renderTheaterCard();
-    } else if (event.type === 'comedy') {
-      return renderComedyCard();
-    } else if (event.type === 'landmark') {
-      return renderLandmarkCard();
-    } else if (event.type === 'other') {
-      return renderOtherCard();
-    } else if (isTeamSport && homeTeam && awayTeam) {
-      return renderTeamSportCard();
-    } else {
-      return renderDefaultCard();
-    }
+  const renderFrontCard = () => {
+    if (event.type === 'concert') return renderConcertCard();
+    if (event.type === 'theater') return renderTheaterCard();
+    if (event.type === 'comedy') return renderComedyCard();
+    if (event.type === 'landmark') return renderLandmarkCard();
+    if (event.type === 'other') return renderOtherCard();
+    if (isTeamSport && homeTeam && awayTeam) return renderTeamSportCard();
+    return renderDefaultCard();
   };
 
   return (
-    <TouchableOpacity 
-      onLongPress={confirmDelete} 
-      activeOpacity={0.9} 
-      style={[styles.cardWrapper, { width: CARD_WIDTH }]}
-    >
-      {renderCard()}
-    </TouchableOpacity>
+    <View style={[styles.cardWrapper, { width: CARD_WIDTH }]}>
+      {/* Front Side */}
+      <Animated.View style={[styles.cardFront, { height: CARD_HEIGHT }, frontAnimatedStyle]}>
+        <TouchableOpacity onPress={handleCardPress} onLongPress={confirmDelete} activeOpacity={0.95}>
+          {renderFrontCard()}
+        </TouchableOpacity>
+      </Animated.View>
+
+      {/* Back Side */}
+      <TouchableOpacity onPress={handleCardPress} activeOpacity={0.95} style={[styles.cardBackWrapper, { width: CARD_WIDTH }]}>
+        {renderBackSide()}
+      </TouchableOpacity>
+
+      {/* Photo Viewer Modal */}
+      {renderPhotoViewer()}
+    </View>
   );
 }
 
@@ -585,6 +546,65 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 10,
     elevation: 8,
+  },
+  cardFront: {
+    backfaceVisibility: 'hidden',
+  },
+  cardBackWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  cardBack: {
+    backfaceVisibility: 'hidden',
+    backgroundColor: COLORS.white,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  backContent: {
+    flex: 1,
+    padding: SPACING.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backPhotoCount: {
+    fontFamily: FONTS.bold,
+    fontSize: FONT_SIZES.xl,
+    color: COLORS.navy,
+    marginBottom: SPACING.lg,
+  },
+  backButtonsContainer: {
+    width: '100%',
+    gap: SPACING.sm,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.cream,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    gap: SPACING.xs,
+  },
+  backButtonSecondary: {
+    backgroundColor: COLORS.navy,
+  },
+  backButtonText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.navy,
+  },
+  backButtonTextSecondary: {
+    fontFamily: FONTS.semiBold,
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.white,
+  },
+  backTapHint: {
+    fontFamily: FONTS.regular,
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.gray,
+    marginTop: SPACING.lg,
   },
   card: {
     borderRadius: 8,
@@ -610,365 +630,109 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cream,
     zIndex: 10,
   },
-
-  // Team sport card styles (NFL, MLB)
-  teamBottomColor: {
-    ...StyleSheet.absoluteFillObject,
+  // Photo Viewer
+  photoViewerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.95)',
+    justifyContent: 'center',
   },
-  teamStadiumSection: {
+  photoViewerClose: {
     position: 'absolute',
-    top: 0,
+    top: 60,
+    right: 20,
+    zIndex: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  photoViewerSlide: {
+    width: SCREEN_WIDTH,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  photoViewerImage: {
+    width: SCREEN_WIDTH - 40,
+    height: SCREEN_HEIGHT * 0.7,
+  },
+  photoViewerIndicator: {
+    position: 'absolute',
+    bottom: 60,
     left: 0,
     right: 0,
-    height: '70%',
-  },
-  teamStadiumImage: {
-    flex: 1,
-  },
-  teamStadiumImageStyle: {
-    resizeMode: 'cover',
-  },
-  teamStadiumOverlay: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  teamContentOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    padding: 12,
-    justifyContent: 'space-between',
-  },
-  teamLogosContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  teamLogo: {
-    width: 55,
-    height: 55,
-    resizeMode: 'contain',
-  },
-  teamVsText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 14,
-    color: '#FFFFFF',
-    marginHorizontal: 4,
-  },
-  teamInfoSection: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-  },
-  teamDatePill: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
     alignItems: 'center',
   },
-  teamDateMonth: {
-    fontFamily: FONTS.bold,
-    fontSize: 11,
-    letterSpacing: 0.5,
-    color: '#1a1a2e',
-  },
-  teamDateYear: {
-    fontFamily: FONTS.regular,
-    fontSize: 10,
-    color: '#666666',
-  },
-  teamVenueSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'flex-end',
-    marginLeft: 8,
-    gap: 3,
-  },
-  teamVenueText: {
+  photoViewerIndicatorText: {
     fontFamily: FONTS.medium,
-    fontSize: 11,
-    color: '#FFFFFF',
-    textAlign: 'right',
-    flexShrink: 1,
+    fontSize: FONT_SIZES.md,
+    color: COLORS.white,
   },
-
+  // Team sport card styles
+  teamBottomColor: { ...StyleSheet.absoluteFillObject },
+  teamStadiumSection: { position: 'absolute', top: 0, left: 0, right: 0, height: '70%' },
+  teamStadiumImage: { flex: 1 },
+  teamStadiumImageStyle: { resizeMode: 'cover' },
+  teamStadiumOverlay: { ...StyleSheet.absoluteFillObject },
+  teamContentOverlay: { ...StyleSheet.absoluteFillObject, padding: 12, justifyContent: 'space-between' },
+  teamLogosContainer: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  teamLogo: { width: 55, height: 55, resizeMode: 'contain' },
+  teamVsText: { fontFamily: FONTS.semiBold, fontSize: 14, color: '#FFFFFF', marginHorizontal: 4 },
+  teamInfoSection: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
+  teamDatePill: { backgroundColor: '#FFFFFF', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, alignItems: 'center' },
+  teamDateMonth: { fontFamily: FONTS.bold, fontSize: 11, letterSpacing: 0.5, color: '#1a1a2e' },
+  teamDateYear: { fontFamily: FONTS.regular, fontSize: 10, color: '#666666' },
+  teamVenueSection: { flexDirection: 'row', alignItems: 'center', flex: 1, justifyContent: 'flex-end', marginLeft: 8, gap: 3 },
+  teamVenueText: { fontFamily: FONTS.medium, fontSize: 11, color: '#FFFFFF', textAlign: 'right', flexShrink: 1 },
   // Concert card styles
-  topSection: {
-    height: '50%',
-    overflow: 'hidden',
-  },
-  imageBackground: {
-    flex: 1,
-  },
-  imageStyle: {
-    resizeMode: 'cover',
-  },
-  imageOverlay: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  bottomSection: {
-    flex: 1,
-    backgroundColor: CONCERT_COLORS.gradientStart,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    justifyContent: 'space-between',
-  },
-  concertTitle: {
-    fontFamily: FONTS.audiowide,
-    fontSize: 17.5,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    letterSpacing: 1.5,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  concertDatePill: {
-    borderWidth: 1,
-    borderColor: CONCERT_COLORS.accent,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    alignItems: 'center',
-  },
-  concertDatePillMonth: {
-    fontFamily: FONTS.bold,
-    fontSize: 11,
-    letterSpacing: 0.5,
-    color: CONCERT_COLORS.accentLight,
-  },
-  concertDatePillYear: {
-    fontFamily: FONTS.regular,
-    fontSize: 10,
-    color: CONCERT_COLORS.accent,
-  },
-  concertVenueText: {
-    fontFamily: FONTS.medium,
-    fontSize: 11,
-    textAlign: 'right',
-    flexShrink: 1,
-    color: CONCERT_COLORS.accentLight,
-  },
-
+  topSection: { height: '50%', overflow: 'hidden' },
+  imageBackground: { flex: 1 },
+  imageStyle: { resizeMode: 'cover' },
+  imageOverlay: { ...StyleSheet.absoluteFillObject },
+  bottomSection: { flex: 1, backgroundColor: CONCERT_COLORS.gradientStart, paddingHorizontal: 12, paddingVertical: 10, justifyContent: 'space-between' },
+  concertTitle: { fontFamily: FONTS.audiowide, fontSize: 17.5, color: '#FFFFFF', textAlign: 'center', letterSpacing: 1.5 },
+  infoRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  concertDatePill: { borderWidth: 1, borderColor: CONCERT_COLORS.accent, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, alignItems: 'center' },
+  concertDatePillMonth: { fontFamily: FONTS.bold, fontSize: 11, letterSpacing: 0.5, color: CONCERT_COLORS.accentLight },
+  concertDatePillYear: { fontFamily: FONTS.regular, fontSize: 10, color: CONCERT_COLORS.accent },
+  concertVenueText: { fontFamily: FONTS.medium, fontSize: 11, textAlign: 'right', flexShrink: 1, color: CONCERT_COLORS.accentLight },
   // Theater card styles
-  theaterTitle: {
-    fontFamily: FONTS.limelight,
-    fontSize: 18,
-    color: THEATER_COLORS.accent,
-    textAlign: 'center',
-    letterSpacing: 1,
-  },
-  theaterDatePill: {
-    borderWidth: 1,
-    borderColor: THEATER_COLORS.accent,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    alignItems: 'center',
-  },
-  theaterDatePillMonth: {
-    fontFamily: FONTS.bold,
-    fontSize: 11,
-    letterSpacing: 0.5,
-    color: THEATER_COLORS.accentLight,
-  },
-  theaterDatePillYear: {
-    fontFamily: FONTS.regular,
-    fontSize: 10,
-    color: THEATER_COLORS.accent,
-  },
-  theaterVenueText: {
-    fontFamily: FONTS.medium,
-    fontSize: 11,
-    textAlign: 'right',
-    flexShrink: 1,
-    color: THEATER_COLORS.accentLight,
-  },
-
+  theaterTitle: { fontFamily: FONTS.limelight, fontSize: 18, color: THEATER_COLORS.accent, textAlign: 'center', letterSpacing: 1 },
+  theaterDatePill: { borderWidth: 1, borderColor: THEATER_COLORS.accent, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, alignItems: 'center' },
+  theaterDatePillMonth: { fontFamily: FONTS.bold, fontSize: 11, letterSpacing: 0.5, color: THEATER_COLORS.accentLight },
+  theaterDatePillYear: { fontFamily: FONTS.regular, fontSize: 10, color: THEATER_COLORS.accent },
+  theaterVenueText: { fontFamily: FONTS.medium, fontSize: 11, textAlign: 'right', flexShrink: 1, color: THEATER_COLORS.accentLight },
   // Comedy card styles
-  comedyTitle: {
-    fontFamily: FONTS.modak,
-    fontSize: 22,
-    color: COMEDY_COLORS.accent,
-    textAlign: 'center',
-    letterSpacing: 0.5,
-  },
-  comedyDatePill: {
-    borderWidth: 1,
-    borderColor: COMEDY_COLORS.accent,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    alignItems: 'center',
-  },
-  comedyDatePillMonth: {
-    fontFamily: FONTS.bold,
-    fontSize: 11,
-    letterSpacing: 0.5,
-    color: COMEDY_COLORS.accentLight,
-  },
-  comedyDatePillYear: {
-    fontFamily: FONTS.regular,
-    fontSize: 10,
-    color: COMEDY_COLORS.accent,
-  },
-  comedyVenueText: {
-    fontFamily: FONTS.medium,
-    fontSize: 11,
-    textAlign: 'right',
-    flexShrink: 1,
-    color: COMEDY_COLORS.accentLight,
-  },
-
+  comedyTitle: { fontFamily: FONTS.modak, fontSize: 22, color: COMEDY_COLORS.accent, textAlign: 'center', letterSpacing: 0.5 },
+  comedyDatePill: { borderWidth: 1, borderColor: COMEDY_COLORS.accent, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, alignItems: 'center' },
+  comedyDatePillMonth: { fontFamily: FONTS.bold, fontSize: 11, letterSpacing: 0.5, color: COMEDY_COLORS.accentLight },
+  comedyDatePillYear: { fontFamily: FONTS.regular, fontSize: 10, color: COMEDY_COLORS.accent },
+  comedyVenueText: { fontFamily: FONTS.medium, fontSize: 11, textAlign: 'right', flexShrink: 1, color: COMEDY_COLORS.accentLight },
   // Landmark card styles
-  landmarkTitle: {
-    fontFamily: FONTS.iceland,
-    fontSize: 20,
-    color: LANDMARK_COLORS.accent,
-    textAlign: 'center',
-    letterSpacing: 1.5,
-  },
-  landmarkDatePill: {
-    borderWidth: 1,
-    borderColor: LANDMARK_COLORS.accent,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    alignItems: 'center',
-  },
-  landmarkDatePillMonth: {
-    fontFamily: FONTS.bold,
-    fontSize: 11,
-    letterSpacing: 0.5,
-    color: LANDMARK_COLORS.accentLight,
-  },
-  landmarkDatePillYear: {
-    fontFamily: FONTS.regular,
-    fontSize: 10,
-    color: LANDMARK_COLORS.accent,
-  },
-  landmarkVenueText: {
-    fontFamily: FONTS.medium,
-    fontSize: 11,
-    textAlign: 'right',
-    flexShrink: 1,
-    color: LANDMARK_COLORS.accentLight,
-  },
-
+  landmarkTitle: { fontFamily: FONTS.iceland, fontSize: 20, color: LANDMARK_COLORS.accent, textAlign: 'center', letterSpacing: 1.5 },
+  landmarkDatePill: { borderWidth: 1, borderColor: LANDMARK_COLORS.accent, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, alignItems: 'center' },
+  landmarkDatePillMonth: { fontFamily: FONTS.bold, fontSize: 11, letterSpacing: 0.5, color: LANDMARK_COLORS.accentLight },
+  landmarkDatePillYear: { fontFamily: FONTS.regular, fontSize: 10, color: LANDMARK_COLORS.accent },
+  landmarkVenueText: { fontFamily: FONTS.medium, fontSize: 11, textAlign: 'right', flexShrink: 1, color: LANDMARK_COLORS.accentLight },
   // Other card styles
-  otherTitle: {
-    fontFamily: FONTS.zain,
-    fontSize: 20,
-    color: OTHER_COLORS.accent,
-    textAlign: 'center',
-    letterSpacing: 0.5,
-  },
-  otherDatePill: {
-    borderWidth: 1,
-    borderColor: OTHER_COLORS.accent,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    alignItems: 'center',
-  },
-  otherDatePillMonth: {
-    fontFamily: FONTS.bold,
-    fontSize: 11,
-    letterSpacing: 0.5,
-    color: OTHER_COLORS.accentLight,
-  },
-  otherDatePillYear: {
-    fontFamily: FONTS.regular,
-    fontSize: 10,
-    color: OTHER_COLORS.accent,
-  },
-  otherVenueText: {
-    fontFamily: FONTS.medium,
-    fontSize: 11,
-    textAlign: 'right',
-    flexShrink: 1,
-    color: OTHER_COLORS.accentLight,
-  },
-
+  otherTitle: { fontFamily: FONTS.zain, fontSize: 20, color: OTHER_COLORS.accent, textAlign: 'center', letterSpacing: 0.5 },
+  otherDatePill: { borderWidth: 1, borderColor: OTHER_COLORS.accent, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, alignItems: 'center' },
+  otherDatePillMonth: { fontFamily: FONTS.bold, fontSize: 11, letterSpacing: 0.5, color: OTHER_COLORS.accentLight },
+  otherDatePillYear: { fontFamily: FONTS.regular, fontSize: 10, color: OTHER_COLORS.accent },
+  otherVenueText: { fontFamily: FONTS.medium, fontSize: 11, textAlign: 'right', flexShrink: 1, color: OTHER_COLORS.accentLight },
   // Shared styles
-  venueSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'flex-end',
-    marginLeft: 8,
-    gap: 3,
-  },
-
+  venueSection: { flexDirection: 'row', alignItems: 'center', flex: 1, justifyContent: 'flex-end', marginLeft: 8, gap: 3 },
   // Default card styles
-  defaultGradient: {
-    flex: 1,
-    padding: 12,
-    justifyContent: 'space-between',
-  },
-  defaultImageArea: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  defaultImageBg: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'flex-end',
-  },
-  defaultTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: 15,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    letterSpacing: 0.5,
-  },
-  defaultTitleWithPhoto: {
-    fontFamily: FONTS.bold,
-    fontSize: 14,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    letterSpacing: 0.5,
-    marginTop: 8,
-  },
-  defaultInfoSection: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    marginTop: 8,
-  },
-  defaultDateBadge: {
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    alignItems: 'center',
-  },
-  defaultDateText: {
-    fontFamily: FONTS.bold,
-    fontSize: 11,
-    letterSpacing: 0.5,
-  },
-  defaultYearText: {
-    fontFamily: FONTS.regular,
-    fontSize: 10,
-  },
-  defaultVenueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'flex-end',
-    marginLeft: 8,
-    gap: 3,
-  },
-  defaultVenueText: {
-    fontFamily: FONTS.medium,
-    fontSize: 11,
-    color: '#FFFFFF',
-    textAlign: 'right',
-    flexShrink: 1,
-  },
+  defaultGradient: { flex: 1, padding: 12, justifyContent: 'space-between' },
+  defaultImageArea: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  defaultImageBg: { width: '100%', height: '100%', justifyContent: 'flex-end' },
+  defaultTitle: { fontFamily: FONTS.bold, fontSize: 15, color: '#FFFFFF', textAlign: 'center', letterSpacing: 0.5 },
+  defaultTitleWithPhoto: { fontFamily: FONTS.bold, fontSize: 14, color: '#FFFFFF', textAlign: 'center', letterSpacing: 0.5, marginTop: 8 },
+  defaultInfoSection: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 8 },
+  defaultDateBadge: { borderWidth: 1, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, alignItems: 'center' },
+  defaultDateText: { fontFamily: FONTS.bold, fontSize: 11, letterSpacing: 0.5 },
+  defaultYearText: { fontFamily: FONTS.regular, fontSize: 10 },
+  defaultVenueContainer: { flexDirection: 'row', alignItems: 'center', flex: 1, justifyContent: 'flex-end', marginLeft: 8, gap: 3 },
+  defaultVenueText: { fontFamily: FONTS.medium, fontSize: 11, color: '#FFFFFF', textAlign: 'right', flexShrink: 1 },
 });
