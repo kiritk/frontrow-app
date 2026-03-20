@@ -477,17 +477,34 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
               {step === 'sport-type' && renderSportTypeSelection()}
               {step === 'details' && renderDetails()}
               {step === 'photos' && renderPhotos()}
-              {showDatePicker && (
-                <View style={styles.datePickerContainer}>
-                  <DateTimePicker value={eventDate} mode="date" display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={onDateChange} maximumDate={new Date(2030, 11, 31)} minimumDate={new Date(1950, 0, 1)} themeVariant="light" />
-                  {Platform.OS === 'ios' && (
-                    <TouchableOpacity style={styles.dateConfirmButton} onPress={confirmDateSelection}><Text style={styles.dateConfirmText}>Confirm Date</Text></TouchableOpacity>
-                  )}
-                </View>
-              )}
+              
             </ScrollView>
           </Animated.View>
         </View>
+      </Modal>
+
+      <Modal visible={showDatePicker} animationType="fade" transparent onRequestClose={() => setShowDatePicker(false)}>
+        <TouchableWithoutFeedback onPress={() => setShowDatePicker(false)}>
+          <View style={styles.datePickerOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.datePickerModal}>
+                <DateTimePicker 
+                  value={eventDate} 
+                  mode="date" 
+                  display="spinner"
+                  onChange={onDateChange} 
+                  maximumDate={new Date(2030, 11, 31)} 
+                  minimumDate={new Date(1950, 0, 1)} 
+                  themeVariant="light"
+                  style={{ height: 200 }}
+                />
+                <TouchableOpacity style={styles.dateConfirmButton} onPress={confirmDateSelection}>
+                  <Text style={styles.dateConfirmText}>Confirm Date</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
       </Modal>
     </>
   );
@@ -535,7 +552,8 @@ const styles = StyleSheet.create({
   dateButtonText: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.navy },
   dateButtonPlaceholder: { color: COLORS.grayLight },
   calendarIcon: { fontSize: 20 },
-  datePickerContainer: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, marginHorizontal: SPACING.lg, marginTop: SPACING.md, padding: SPACING.md },
+  datePickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  datePickerModal: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, padding: SPACING.lg, width: '85%', alignItems: 'center' },
   dateConfirmButton: { backgroundColor: COLORS.navy, borderRadius: BORDER_RADIUS.md, padding: SPACING.md, alignItems: 'center', marginTop: SPACING.sm },
   dateConfirmText: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.md, color: COLORS.white },
   nextButton: { backgroundColor: COLORS.navy, borderRadius: BORDER_RADIUS.lg, padding: SPACING.lg, alignItems: 'center', marginTop: SPACING.lg },
