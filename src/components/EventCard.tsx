@@ -104,24 +104,12 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
     outputRange: ['180deg', '360deg'],
   });
 
-  const frontOpacity = flipAnimation.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [1, 0, 0],
-  });
-
-  const backOpacity = flipAnimation.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [0, 0, 1],
-  });
-
   const frontAnimatedStyle = {
     transform: [{ rotateY: frontInterpolate }],
-    opacity: frontOpacity,
   };
 
   const backAnimatedStyle = {
     transform: [{ rotateY: backInterpolate }],
-    opacity: backOpacity,
   };
 
   const pickImages = async () => {
@@ -233,6 +221,11 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
 
   const renderBackSide = () => (
     <View style={[styles.cardBack, { height: CARD_HEIGHT }]}>
+      {/* Delete button */}
+      <TouchableOpacity style={styles.deleteButton} onPress={confirmDelete}>
+        <Ionicons name="trash-outline" size={18} color={COLORS.white} />
+      </TouchableOpacity>
+
       <View style={styles.backContent}>
         <Text style={styles.backPhotoCount}>{photoCount} Photo{photoCount !== 1 ? 's' : ''}</Text>
         
@@ -472,7 +465,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
       {/* Front Side */}
       {!isFlipped && (
         <Animated.View style={[styles.cardFace, { height: CARD_HEIGHT }, frontAnimatedStyle]}>
-          <TouchableOpacity onPress={handleCardPress} onLongPress={confirmDelete} activeOpacity={0.95} style={{ flex: 1 }}>
+          <TouchableOpacity onPress={handleCardPress} activeOpacity={0.95} style={{ flex: 1 }}>
             {renderFrontCard()}
           </TouchableOpacity>
         </Animated.View>
@@ -480,7 +473,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
 
       {/* Back Side */}
       {isFlipped && (
-        <Animated.View style={[styles.cardFace, styles.cardFaceBack, { height: CARD_HEIGHT }, backAnimatedStyle]}>
+        <Animated.View style={[styles.cardFace, { height: CARD_HEIGHT }, backAnimatedStyle]}>
           <TouchableOpacity onPress={handleCardPress} activeOpacity={0.95} style={{ flex: 1 }}>
             {renderBackSide()}
           </TouchableOpacity>
@@ -508,14 +501,23 @@ const styles = StyleSheet.create({
     right: 0,
     backfaceVisibility: 'hidden',
   },
-  cardFaceBack: {
-    // Back face doesn't need additional styles now
-  },
   cardBack: {
     backgroundColor: COLORS.white,
     borderRadius: 8,
     overflow: 'hidden',
     flex: 1,
+  },
+  deleteButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#E53935',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
   },
   backContent: {
     flex: 1,
