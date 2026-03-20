@@ -156,12 +156,21 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   };
 
   const onDateChange = (event: any, selectedDate?: Date) => {
-    if (event.type === 'dismissed') { setShowDatePicker(false); return; }
-    if (selectedDate) { setEventDate(selectedDate); setDateSelected(true); }
-    if (Platform.OS === 'android') setShowDatePicker(false);
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+      if (event.type === 'dismissed') return;
+    }
+    if (selectedDate) { 
+      setEventDate(selectedDate); 
+      setDateSelected(true); 
+    }
   };
 
-  const confirmDateSelection = () => { setDateSelected(true); setShowDatePicker(false); };
+  const confirmDateSelection = () => { 
+    setDateSelected(true); 
+    setShowDatePicker(false); 
+  };
+  
   const formatDisplayDate = (date: Date) => date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   const formatDateForDB = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
@@ -275,6 +284,12 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     const filteredCities = getFilteredCities(cityQuery);
     if (filteredCities.length > 0) selectCity(filteredCities[0]);
     else { setCityInputFocused(false); setShowCityDropdown(false); Keyboard.dismiss(); }
+  };
+
+  const openDatePicker = () => {
+    Keyboard.dismiss();
+    setCityInputFocused(false);
+    setShowDatePicker(true);
   };
 
   const renderTeamDropdown = (teams: SportTeam[], onSelect: (team: SportTeam) => void, show: boolean) => {
@@ -411,7 +426,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
           )}
           <View style={[styles.inputGroup, { zIndex: -2 }]}>
             <Text style={styles.label}>When was it?</Text>
-            <TouchableOpacity style={styles.dateButton} onPress={() => { Keyboard.dismiss(); setCityInputFocused(false); setShowDatePicker(true); }}>
+            <TouchableOpacity style={styles.dateButton} onPress={openDatePicker}>
               <Text style={[styles.dateButtonText, !dateSelected && styles.dateButtonPlaceholder]}>{dateSelected ? formatDisplayDate(eventDate) : 'Select a date'}</Text>
               <Text style={styles.calendarIcon}>📅</Text>
             </TouchableOpacity>
@@ -468,6 +483,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
         <ConfettiCannon count={150} origin={{ x: SCREEN_WIDTH / 2, y: -20 }} fadeOut explosionSpeed={400} fallSpeed={2500} colors={[COLORS.navy, '#FFD700', '#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3']} autoStart />
       )}
 
+      {/* Main Add Event Modal */}
       <Modal visible={modalVisible} animationType="none" transparent presentationStyle="overFullScreen" onRequestClose={handleClose}>
         <View style={styles.modalOverlay}>
           <Animated.View style={[styles.modalContainer, { transform: [{ translateY: Animated.add(slideAnim, Animated.add(translateY, modalOffsetAnim)) }] }]}>
@@ -477,17 +493,18 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
               {step === 'sport-type' && renderSportTypeSelection()}
               {step === 'details' && renderDetails()}
               {step === 'photos' && renderPhotos()}
-              
             </ScrollView>
           </Animated.View>
         </View>
       </Modal>
 
+      {/* Date Picker Modal */}
       <Modal visible={showDatePicker} animationType="fade" transparent onRequestClose={() => setShowDatePicker(false)}>
         <TouchableWithoutFeedback onPress={() => setShowDatePicker(false)}>
           <View style={styles.datePickerOverlay}>
-            <TouchableWithoutFeedback>
+            <TouchableWithoutFeedback onPress={() => {}}>
               <View style={styles.datePickerModal}>
+                <Text style={styles.datePickerTitle}>Select Date</Text>
                 <DateTimePicker 
                   value={eventDate} 
                   mode="date" 
@@ -496,7 +513,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
                   maximumDate={new Date(2030, 11, 31)} 
                   minimumDate={new Date(1950, 0, 1)} 
                   themeVariant="light"
-                  style={{ height: 200 }}
+                  style={styles.datePicker}
                 />
                 <TouchableOpacity style={styles.dateConfirmButton} onPress={confirmDateSelection}>
                   <Text style={styles.dateConfirmText}>Confirm Date</Text>
@@ -554,7 +571,9 @@ const styles = StyleSheet.create({
   calendarIcon: { fontSize: 20 },
   datePickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
   datePickerModal: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, padding: SPACING.lg, width: '85%', alignItems: 'center' },
-  dateConfirmButton: { backgroundColor: COLORS.navy, borderRadius: BORDER_RADIUS.md, padding: SPACING.md, alignItems: 'center', marginTop: SPACING.sm },
+  datePickerTitle: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.lg, color: COLORS.navy, marginBottom: SPACING.md },
+  datePicker: { height: 200, width: '100%' },
+  dateConfirmButton: { backgroundColor: COLORS.navy, borderRadius: BORDER_RADIUS.md, padding: SPACING.md, alignItems: 'center', marginTop: SPACING.md, width: '100%' },
   dateConfirmText: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.md, color: COLORS.white },
   nextButton: { backgroundColor: COLORS.navy, borderRadius: BORDER_RADIUS.lg, padding: SPACING.lg, alignItems: 'center', marginTop: SPACING.lg },
   nextButtonText: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.md, color: COLORS.white },
