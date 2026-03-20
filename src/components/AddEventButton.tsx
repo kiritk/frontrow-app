@@ -224,9 +224,19 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
 
   const getEventEmoji = () => eventType === 'sports' ? (SPORT_TYPES.find(s => s.value === sportType)?.emoji || '🏆') : (EVENT_TYPES.find(e => e.value === eventType)?.emoji || '🎫');
   const getPrompts = () => {
+    if (eventType === 'sports') {
+      switch (sportType) {
+        case 'nfl': return { name: 'Who played?', placeholder: '49ers vs Chiefs...' };
+        case 'mlb': return { name: 'Who played?', placeholder: 'Yankees vs Red Sox...' };
+        case 'nba': return { name: 'Who played?', placeholder: 'Warriors vs Celtics...' };
+        case 'soccer': return { name: 'Who played?', placeholder: 'Real Madrid vs Barcelona...' };
+        case 'tennis': return { name: 'Who played?', placeholder: 'Alcaraz vs Djokovic...' };
+        case 'other': return { name: 'What was the event?', placeholder: '2026 Winter Olympics...' };
+        default: return { name: 'Who played?', placeholder: 'Team vs Team...' };
+      }
+    }
     switch (eventType) {
       case 'concert': return { name: 'Who did you see?', placeholder: 'Taylor Swift, The Weeknd...' };
-      case 'sports': return { name: 'Who played?', placeholder: '49ers vs Chiefs...' };
       case 'theater': return { name: 'What was the show?', placeholder: 'Hamilton, Wicked...' };
       case 'comedy': return { name: 'Who was the comedian?', placeholder: 'Dave Chappelle...' };
       case 'landmark': return { name: 'What was the landmark?', placeholder: 'Eiffel Tower...' };
