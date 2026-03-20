@@ -357,9 +357,9 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
       <View style={styles.typeGrid}>
         {EVENT_TYPES.map((type) => (
           <TouchableOpacity key={type.value} style={styles.typeCard} onPress={() => handleSelectType(type.value)}>
-            <Text style={styles.typeEmoji}>{type.emoji}</Text>
+            <View style={styles.typeCardInner}><Text style={styles.typeEmoji}>{type.emoji}</Text>
             <Text style={styles.typeLabel}>{type.label}</Text>
-            <Text style={styles.typeSubtitleText}>{type.subtitle}</Text>
+            <Text style={styles.typeSubtitleText}>{type.subtitle}</Text></View>
           </TouchableOpacity>
         ))}
       </View>
@@ -374,8 +374,8 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
       <View style={styles.sportGrid}>
         {SPORT_TYPES.map((type) => (
           <TouchableOpacity key={type.value} style={styles.sportCard} onPress={() => handleSelectSportType(type.value)}>
-            <Text style={styles.sportEmoji}>{type.emoji}</Text>
-            <Text style={styles.sportLabel}>{type.label}</Text>
+            <View style={styles.sportCardInner}><Text style={styles.sportEmoji}>{type.emoji}</Text>
+            <Text style={styles.sportLabel}>{type.label}</Text></View>
           </TouchableOpacity>
         ))}
       </View>
@@ -502,12 +502,12 @@ const styles = StyleSheet.create({
   backButton: { marginBottom: SPACING.md },
   backText: { fontFamily: FONTS.medium, fontSize: FONT_SIZES.md, color: COLORS.navy },
   typeGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
-  typeCard: { width: '50%', padding: 6 },
+  typeCard: { width: '50%', padding: 6 }, typeCardInner: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, padding: SPACING.md },
   typeEmoji: { fontSize: 32, marginBottom: 8 },
   typeLabel: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.md, color: COLORS.navy, marginBottom: 2 },
   typeSubtitleText: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.sm, color: COLORS.gray },
   sportGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
-  sportCard: { width: '33.33%', padding: 6, alignItems: 'center' },
+  sportCard: { width: '33.33%', padding: 6 }, sportCardInner: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, padding: SPACING.md, alignItems: 'center' },
   sportEmoji: { fontSize: 36, marginBottom: 6 },
   sportLabel: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.sm, color: COLORS.navy },
   inputGroup: { marginBottom: SPACING.md },
