@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Modal, TextInput,
   ScrollView, Platform, Alert, ActivityIndicator, Image, Animated,
-  PanResponder, Dimensions, TouchableWithoutFeedback, Keyboard,
+  PanResponder, Dimensions, TouchableWithoutFeedback, Keyboard, Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -68,11 +68,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   const [cityQuery, setCityQuery] = useState('');
   const [showCityDropdown, setShowCityDropdown] = useState(false);
 
-  const homeInputRef = useRef<TextInput>(null);
-  const awayInputRef = useRef<TextInput>(null);
-  const cityInputRef = useRef<TextInput>(null);
   const scrollViewRef = useRef<ScrollView>(null);
-
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const modalOffsetAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
@@ -153,6 +149,16 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
       setVenue(selectedCity.displayName);
     }
     setStep('photos'); 
+  };
+
+  const handleDatePress = () => {
+    console.log('Date button pressed!');
+    Keyboard.dismiss();
+    setCityInputFocused(false);
+    setShowCityDropdown(false);
+    setShowHomeDropdown(false);
+    setShowAwayDropdown(false);
+    setShowDatePicker(true);
   };
 
   const onDateChange = (event: any, selectedDate?: Date) => {
@@ -286,12 +292,6 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     else { setCityInputFocused(false); setShowCityDropdown(false); Keyboard.dismiss(); }
   };
 
-  const openDatePicker = () => {
-    Keyboard.dismiss();
-    setCityInputFocused(false);
-    setShowDatePicker(true);
-  };
-
   const renderTeamDropdown = (teams: SportTeam[], onSelect: (team: SportTeam) => void, show: boolean) => {
     if (!show || teams.length === 0) return null;
     return (
@@ -332,7 +332,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
           <View style={styles.teamColumn}>
             <Text style={styles.teamLabel}>Home Team</Text>
             <View style={styles.inputWithDropdown}>
-              <TextInput ref={homeInputRef} style={styles.teamInput} placeholder="Search teams.." placeholderTextColor={COLORS.grayLight} value={homeTeamQuery}
+              <TextInput style={styles.teamInput} placeholder="Search teams.." placeholderTextColor={COLORS.grayLight} value={homeTeamQuery}
                 onChangeText={(t) => { setHomeTeamQuery(t); setShowHomeDropdown(true); if (homeTeam && t !== homeTeam.fullName) setHomeTeam(null); }}
                 onFocus={() => { setShowHomeDropdown(true); setShowAwayDropdown(false); }} />
               {renderTeamDropdown(homeFiltered, selectHomeTeam, showHomeDropdown)}
@@ -342,7 +342,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
           <View style={styles.teamColumn}>
             <Text style={styles.teamLabel}>Away Team</Text>
             <View style={styles.inputWithDropdown}>
-              <TextInput ref={awayInputRef} style={styles.teamInput} placeholder="Search teams.." placeholderTextColor={COLORS.grayLight} value={awayTeamQuery}
+              <TextInput style={styles.teamInput} placeholder="Search teams.." placeholderTextColor={COLORS.grayLight} value={awayTeamQuery}
                 onChangeText={(t) => { setAwayTeamQuery(t); setShowAwayDropdown(true); if (awayTeam && t !== awayTeam.fullName) setAwayTeam(null); }}
                 onFocus={() => { setShowAwayDropdown(true); setShowHomeDropdown(false); }} />
               {renderTeamDropdown(awayFiltered, selectAwayTeam, showAwayDropdown)}
@@ -357,7 +357,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     <View style={[styles.inputGroup, { zIndex: 10 }]}>
       <Text style={styles.label}>Location (City/State)</Text>
       <View style={styles.inputWithDropdown}>
-        <TextInput ref={cityInputRef} style={styles.input} placeholder="Search cities..." placeholderTextColor={COLORS.grayLight} value={cityQuery}
+        <TextInput style={styles.input} placeholder="Search cities..." placeholderTextColor={COLORS.grayLight} value={cityQuery}
           onChangeText={(t) => { setCityQuery(t); setShowCityDropdown(true); if (selectedCity && t !== selectedCity.displayName) setSelectedCity(null); }}
           onFocus={handleCityInputFocus} onSubmitEditing={handleCitySubmit} returnKeyType="done" />
         {renderCityDropdown()}
@@ -406,34 +406,58 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     const isTeamSport = sportType === 'nfl' || sportType === 'mlb';
     const isNonSportsEvent = eventType !== 'sports';
     return (
-      <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); setShowHomeDropdown(false); setShowAwayDropdown(false); setShowCityDropdown(false); setCityInputFocused(false); }}>
-        <View style={styles.stepContent}>
-          <TouchableOpacity onPress={() => setStep(eventType === 'sports' ? 'sport-type' : 'type')} style={styles.backButton}><Text style={styles.backText}>← Back</Text></TouchableOpacity>
-          <Text style={styles.stepTitle}>The Details</Text>
-          <Text style={styles.stepSubtitle}>Tell us about your experience</Text>
-          {isTeamSport ? renderTeamSelection() : (
-            <View style={[styles.inputGroup, isNonSportsEvent && { zIndex: -1 }]}>
-              <Text style={styles.label}>{prompts.name}</Text>
-              <TextInput style={styles.input} placeholder={prompts.placeholder} placeholderTextColor={COLORS.grayLight} value={eventName} onChangeText={setEventName} returnKeyType="next" blurOnSubmit
-                onFocus={() => { setShowCityDropdown(false); setCityInputFocused(false); }} />
-            </View>
-          )}
-          {isNonSportsEvent ? renderCitySelection() : (
-            <View style={[styles.inputGroup, isTeamSport && { zIndex: -1 }]}>
-              <Text style={styles.label}>Where was it?</Text>
-              <TextInput style={styles.input} placeholder="Venue, City" placeholderTextColor={COLORS.grayLight} value={venue} onChangeText={setVenue} returnKeyType="done" blurOnSubmit />
-            </View>
-          )}
+      <View style={styles.stepContent}>
+        <TouchableOpacity onPress={() => setStep(eventType === 'sports' ? 'sport-type' : 'type')} style={styles.backButton}>
+          <Text style={styles.backText}>← Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.stepTitle}>The Details</Text>
+        <Text style={styles.stepSubtitle}>Tell us about your experience</Text>
+        
+        {isTeamSport ? renderTeamSelection() : (
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>When was it?</Text>
-            <TouchableOpacity style={styles.dateButton} onPress={openDatePicker} activeOpacity={0.7}>
-              <Text style={[styles.dateButtonText, !dateSelected && styles.dateButtonPlaceholder]}>{dateSelected ? formatDisplayDate(eventDate) : 'Select a date'}</Text>
-              <Text style={styles.calendarIcon}>📅</Text>
-            </TouchableOpacity>
+            <Text style={styles.label}>{prompts.name}</Text>
+            <TextInput 
+              style={styles.input} 
+              placeholder={prompts.placeholder} 
+              placeholderTextColor={COLORS.grayLight} 
+              value={eventName} 
+              onChangeText={setEventName} 
+              returnKeyType="next" 
+              blurOnSubmit
+              onFocus={() => { setShowCityDropdown(false); setCityInputFocused(false); }} 
+            />
           </View>
-          <TouchableOpacity style={styles.nextButton} onPress={handleDetailsNext} activeOpacity={0.7}><Text style={styles.nextButtonText}>Next</Text></TouchableOpacity>
+        )}
+        
+        {isNonSportsEvent ? renderCitySelection() : (
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Where was it?</Text>
+            <TextInput 
+              style={styles.input} 
+              placeholder="Venue, City" 
+              placeholderTextColor={COLORS.grayLight} 
+              value={venue} 
+              onChangeText={setVenue} 
+              returnKeyType="done" 
+              blurOnSubmit 
+            />
+          </View>
+        )}
+        
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>When was it?</Text>
+          <Pressable style={styles.dateButton} onPress={handleDatePress}>
+            <Text style={[styles.dateButtonText, !dateSelected && styles.dateButtonPlaceholder]}>
+              {dateSelected ? formatDisplayDate(eventDate) : 'Select a date'}
+            </Text>
+            <Text style={styles.calendarIcon}>📅</Text>
+          </Pressable>
         </View>
-      </TouchableWithoutFeedback>
+        
+        <Pressable style={styles.nextButton} onPress={handleDetailsNext}>
+          <Text style={styles.nextButtonText}>Next</Text>
+        </Pressable>
+      </View>
     );
   };
 
@@ -484,11 +508,11 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
       )}
 
       {/* Main Add Event Modal */}
-      <Modal visible={modalVisible} animationType="none" transparent presentationStyle="overFullScreen" onRequestClose={handleClose}>
+      <Modal visible={modalVisible} animationType="none" transparent onRequestClose={handleClose}>
         <View style={styles.modalOverlay}>
           <Animated.View style={[styles.modalContainer, { transform: [{ translateY: Animated.add(slideAnim, Animated.add(translateY, modalOffsetAnim)) }] }]}>
             <View {...panResponder.panHandlers}><View style={styles.dragHandle} /></View>
-            <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={styles.scrollContent}>
+            <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
               {step === 'type' && renderTypeSelection()}
               {step === 'sport-type' && renderSportTypeSelection()}
               {step === 'details' && renderDetails()}
@@ -500,28 +524,24 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
 
       {/* Date Picker Modal */}
       <Modal visible={showDatePicker} animationType="fade" transparent onRequestClose={() => setShowDatePicker(false)}>
-        <TouchableWithoutFeedback onPress={() => setShowDatePicker(false)}>
-          <View style={styles.datePickerOverlay}>
-            <TouchableWithoutFeedback onPress={() => {}}>
-              <View style={styles.datePickerModal}>
-                <Text style={styles.datePickerTitle}>Select Date</Text>
-                <DateTimePicker 
-                  value={eventDate} 
-                  mode="date" 
-                  display="spinner"
-                  onChange={onDateChange} 
-                  maximumDate={new Date(2030, 11, 31)} 
-                  minimumDate={new Date(1950, 0, 1)} 
-                  themeVariant="light"
-                  style={styles.datePicker}
-                />
-                <TouchableOpacity style={styles.dateConfirmButton} onPress={confirmDateSelection}>
-                  <Text style={styles.dateConfirmText}>Confirm Date</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
+        <Pressable style={styles.datePickerOverlay} onPress={() => setShowDatePicker(false)}>
+          <Pressable style={styles.datePickerModal} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.datePickerTitle}>Select Date</Text>
+            <DateTimePicker 
+              value={eventDate} 
+              mode="date" 
+              display="spinner"
+              onChange={onDateChange} 
+              maximumDate={new Date(2030, 11, 31)} 
+              minimumDate={new Date(1950, 0, 1)} 
+              themeVariant="light"
+              style={styles.datePicker}
+            />
+            <Pressable style={styles.dateConfirmButton} onPress={confirmDateSelection}>
+              <Text style={styles.dateConfirmText}>Confirm Date</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
       </Modal>
     </>
   );
