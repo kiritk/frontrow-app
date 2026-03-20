@@ -528,7 +528,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
       </Animated.View>
 
       {/* Back Side */}
-      <TouchableOpacity onPress={handleCardPress} activeOpacity={0.95} style={[styles.cardBackWrapper, { width: CARD_WIDTH }]}>
+      <TouchableOpacity onPress={handleCardPress} activeOpacity={0.95} style={[styles.cardBackWrapper, { width: CARD_WIDTH }]} pointerEvents={isFlipped ? "auto" : "none"}>
         {renderBackSide()}
       </TouchableOpacity>
 
