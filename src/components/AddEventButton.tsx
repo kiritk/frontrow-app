@@ -168,7 +168,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   const pickImages = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') { Alert.alert('Permission needed', 'Please allow access to your photos'); return; }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsMultipleSelection: true, selectionLimit: 6 - photos.length, quality: 0.8 });
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: 6 - photos.length, quality: 0.8 });
     if (!result.canceled) setPhotos([...photos, ...result.assets.map(a => a.uri)].slice(0, 6));
   };
 
