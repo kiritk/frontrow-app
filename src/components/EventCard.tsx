@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   card: {
-    borderRadius: 16,
+    borderRadius: 8,
     overflow: 'hidden',
     position: 'relative',
     backgroundColor: '#1a1a2e',
