@@ -311,7 +311,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
       <Text style={styles.stepSubtitle}>Choose a category</Text>
       <View style={styles.typeGrid}>
         {EVENT_TYPES.map((type) => (
-          <TouchableOpacity key={type.value} style={styles.typeCard} onPress={() => handleSelectType(type.value)}>
+          <TouchableOpacity key={type.value} style={styles.typeCard} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handleSelectType(type.value); }}>
             <Text style={styles.typeEmoji}>{type.emoji}</Text>
             <Text style={styles.typeLabel}>{type.label}</Text>
             <Text style={styles.typeSubtitleText}>{type.subtitle}</Text>
@@ -328,7 +328,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
       <Text style={styles.stepSubtitle}>Choose a league</Text>
       <View style={styles.sportGrid}>
         {SPORT_TYPES.map((type) => (
-          <TouchableOpacity key={type.value} style={styles.sportCard} onPress={() => handleSelectSportType(type.value)}>
+          <TouchableOpacity key={type.value} style={styles.sportCard} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handleSelectSportType(type.value); }}>
             <Text style={styles.sportEmoji}>{type.emoji}</Text>
             <Text style={styles.sportLabel}>{type.label}</Text>
           </TouchableOpacity>
@@ -411,7 +411,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
 
   return (
     <>
-      <TouchableOpacity style={[styles.fab, { bottom: fabBottom }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setModalVisible(true); }}>
+      <TouchableOpacity style={[styles.fab, { bottom: fabBottom }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); setModalVisible(true); }}>
         <Text style={styles.fabIcon}>+</Text>
       </TouchableOpacity>
       
