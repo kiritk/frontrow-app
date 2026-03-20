@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import ConfettiCannon from 'react-native-confetti-cannon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
@@ -53,6 +54,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   const [dateSelected, setDateSelected] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
   const [cityInputFocused, setCityInputFocused] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   
   const [homeTeam, setHomeTeam] = useState<SportTeam | null>(null);
   const [awayTeam, setAwayTeam] = useState<SportTeam | null>(null);
@@ -69,6 +71,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   const awayInputRef = useRef<TextInput>(null);
   const cityInputRef = useRef<TextInput>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+  const confettiRef = useRef<any>(null);
 
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const modalOffsetAnim = useRef(new Animated.Value(0)).current;
@@ -126,8 +129,17 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     });
   };
 
-  const handleSelectType = (type: string) => { setEventType(type); setStep(type === 'sports' ? 'sport-type' : 'details'); };
-  const handleSelectSportType = (type: string) => { setSportType(type); setStep('details'); };
+  const handleSelectType = (type: string) => { 
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setEventType(type); 
+    setStep(type === 'sports' ? 'sport-type' : 'details'); 
+  };
+  
+  const handleSelectSportType = (type: string) => { 
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSportType(type); 
+    setStep('details'); 
+  };
   
   const handleDetailsNext = () => { 
     const isTeamSport = sportType === 'nfl' || sportType === 'mlb';
@@ -162,6 +174,12 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
 
   const removePhoto = (index: number) => setPhotos(photos.filter((_, i) => i !== index));
 
+  const triggerConfetti = () => {
+    setShowConfetti(true);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setTimeout(() => setShowConfetti(false), 3000);
+  };
+
   const handleSubmit = async () => {
     if (!user) { Alert.alert('Error', 'You must be logged in'); return; }
     setLoading(true);
@@ -186,8 +204,17 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
       }
       const { error } = await supabase.from('events').insert([eventData]).select();
       if (error) throw error;
-      handleClose();
-      await onEventAdded();
+      
+      // Close modal first, then trigger confetti
+      Keyboard.dismiss();
+      setCityInputFocused(false);
+      Animated.timing(slideAnim, { toValue: SCREEN_HEIGHT, duration: 250, useNativeDriver: true }).start(() => {
+        setModalVisible(false);
+        resetForm();
+        triggerConfetti();
+        onEventAdded();
+      });
+      
     } catch (e: any) {
       Alert.alert('Error', e.message || 'Failed to create event');
     } finally {
@@ -311,7 +338,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
       <Text style={styles.stepSubtitle}>Choose a category</Text>
       <View style={styles.typeGrid}>
         {EVENT_TYPES.map((type) => (
-          <TouchableOpacity key={type.value} style={styles.typeCard} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handleSelectType(type.value); }}>
+          <TouchableOpacity key={type.value} style={styles.typeCard} onPress={() => handleSelectType(type.value)}>
             <Text style={styles.typeEmoji}>{type.emoji}</Text>
             <Text style={styles.typeLabel}>{type.label}</Text>
             <Text style={styles.typeSubtitleText}>{type.subtitle}</Text>
@@ -328,7 +355,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
       <Text style={styles.stepSubtitle}>Choose a league</Text>
       <View style={styles.sportGrid}>
         {SPORT_TYPES.map((type) => (
-          <TouchableOpacity key={type.value} style={styles.sportCard} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handleSelectSportType(type.value); }}>
+          <TouchableOpacity key={type.value} style={styles.sportCard} onPress={() => handleSelectSportType(type.value)}>
             <Text style={styles.sportEmoji}>{type.emoji}</Text>
             <Text style={styles.sportLabel}>{type.label}</Text>
           </TouchableOpacity>
@@ -407,13 +434,28 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     );
   };
 
-  const fabBottom = Math.max(insets.bottom, 20);
+  const fabBottom = Math.max(insets.bottom, 20) + 4;
 
   return (
     <>
-      <TouchableOpacity style={[styles.fab, { bottom: 24 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); setModalVisible(true); }}>
+      <TouchableOpacity style={[styles.fab, { bottom: fabBottom }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); setModalVisible(true); }}>
         <Text style={styles.fabIcon}>+</Text>
       </TouchableOpacity>
+
+      {/* Confetti Overlay */}
+      {showConfetti && (
+        <View style={styles.confettiContainer} pointerEvents="none">
+          <ConfettiCannon
+            count={150}
+            origin={{ x: Dimensions.get('window').width / 2, y: -20 }}
+            autoStart={true}
+            fadeOut={true}
+            fallSpeed={2500}
+            explosionSpeed={350}
+            colors={[COLORS.navy, COLORS.gold, '#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3']}
+          />
+        </View>
+      )}
       
       <Modal visible={modalVisible} animationType="fade" transparent onRequestClose={handleClose}>
         <View style={styles.overlay}>
@@ -453,8 +495,9 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
 }
 
 const styles = StyleSheet.create({
-  fab: { position: 'absolute', right: 20, width: 64, height: 64, borderRadius: 32, backgroundColor: COLORS.navy, justifyContent: 'center', alignItems: 'center', shadowColor: COLORS.navy, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8, zIndex: 999 },
-  fabIcon: { fontSize: 32, color: COLORS.cream, fontWeight: '300' },
+  fab: { position: 'absolute', right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: COLORS.navy, justifyContent: 'center', alignItems: 'center', shadowColor: COLORS.navy, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8, zIndex: 999 },
+  fabIcon: { fontSize: 28, color: COLORS.cream, fontWeight: '300' },
+  confettiContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999 },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   overlayTouchable: { flex: 1 },
   modal: { backgroundColor: COLORS.cream, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '92%', minHeight: '70%' },
