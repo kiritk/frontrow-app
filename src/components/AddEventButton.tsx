@@ -356,10 +356,12 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
       <Text style={styles.stepSubtitle}>Choose a category</Text>
       <View style={styles.typeGrid}>
         {EVENT_TYPES.map((type) => (
-          <TouchableOpacity key={type.value} style={styles.typeCard} onPress={() => handleSelectType(type.value)}>
-            <View style={styles.typeCardInner}><Text style={styles.typeEmoji}>{type.emoji}</Text>
-            <Text style={styles.typeLabel}>{type.label}</Text>
-            <Text style={styles.typeSubtitleText}>{type.subtitle}</Text></View>
+          <TouchableOpacity key={type.value} style={styles.typeCardWrapper} onPress={() => handleSelectType(type.value)}>
+            <View style={styles.typeCard}>
+              <Text style={styles.typeEmoji}>{type.emoji}</Text>
+              <Text style={styles.typeLabel}>{type.label}</Text>
+              <Text style={styles.typeSubtitleText}>{type.subtitle}</Text>
+            </View>
           </TouchableOpacity>
         ))}
       </View>
@@ -373,9 +375,11 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
       <Text style={styles.stepSubtitle}>Choose a league</Text>
       <View style={styles.sportGrid}>
         {SPORT_TYPES.map((type) => (
-          <TouchableOpacity key={type.value} style={styles.sportCard} onPress={() => handleSelectSportType(type.value)}>
-            <View style={styles.sportCardInner}><Text style={styles.sportEmoji}>{type.emoji}</Text>
-            <Text style={styles.sportLabel}>{type.label}</Text></View>
+          <TouchableOpacity key={type.value} style={styles.sportCardWrapper} onPress={() => handleSelectSportType(type.value)}>
+            <View style={styles.sportCard}>
+              <Text style={styles.sportEmoji}>{type.emoji}</Text>
+              <Text style={styles.sportLabel}>{type.label}</Text>
+            </View>
           </TouchableOpacity>
         ))}
       </View>
@@ -502,12 +506,14 @@ const styles = StyleSheet.create({
   backButton: { marginBottom: SPACING.md },
   backText: { fontFamily: FONTS.medium, fontSize: FONT_SIZES.md, color: COLORS.navy },
   typeGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
-  typeCard: { width: '50%', padding: 6 }, typeCardInner: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, padding: SPACING.md },
+  typeCardWrapper: { width: '50%', padding: 6 },
+  typeCard: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, padding: SPACING.md },
   typeEmoji: { fontSize: 32, marginBottom: 8 },
   typeLabel: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.md, color: COLORS.navy, marginBottom: 2 },
   typeSubtitleText: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.sm, color: COLORS.gray },
   sportGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
-  sportCard: { width: '33.33%', padding: 6 }, sportCardInner: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, padding: SPACING.md, alignItems: 'center' },
+  sportCardWrapper: { width: '33.33%', padding: 6 },
+  sportCard: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, padding: SPACING.md, alignItems: 'center' },
   sportEmoji: { fontSize: 36, marginBottom: 6 },
   sportLabel: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.sm, color: COLORS.navy },
   inputGroup: { marginBottom: SPACING.md },
@@ -544,7 +550,7 @@ const styles = StyleSheet.create({
   photoImage: { width: '100%', height: '100%', borderRadius: BORDER_RADIUS.md },
   photoRemove: { position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 12, width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
   photoRemoveText: { color: COLORS.white, fontSize: 14, fontWeight: 'bold' },
-  addPhotoBtn: { width: '33.33%', aspectRatio: 1, padding: 4 },
+  addPhotoBtn: { width: '33.33%', aspectRatio: 1, padding: 4, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.md, borderWidth: 2, borderColor: COLORS.grayLight, borderStyle: 'dashed' },
   addPhotoIcon: { fontSize: 32, color: COLORS.navy },
   addPhotoText: { fontFamily: FONTS.medium, fontSize: FONT_SIZES.xs, color: COLORS.navy, marginTop: 4 },
   submitButton: { backgroundColor: COLORS.navy, borderRadius: BORDER_RADIUS.lg, padding: SPACING.md, alignItems: 'center' },
