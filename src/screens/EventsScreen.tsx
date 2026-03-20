@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { getLocalEvents, deleteLocalEvent } from '../lib/localStorage';
 import EventCard from '../components/EventCard';
 import EventsMap from '../components/EventsMap';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
@@ -34,7 +35,7 @@ const CATEGORIES = [
 ];
 
 export default function EventsScreen() {
-  const { user } = useAuth();
+  const { user, isGuest } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -43,20 +44,26 @@ export default function EventsScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const fetchEvents = useCallback(async () => {
-    if (!user) return;
     try {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false });
+      if (isGuest) {
+        // Load from local storage
+        const localEvents = await getLocalEvents();
+        setEvents(localEvents);
+      } else if (user) {
+        // Load from Supabase
+        const { data, error } = await supabase
+          .from('events')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false });
 
-      if (error) throw error;
-      setEvents(data || []);
+        if (error) throw error;
+        setEvents(data || []);
+      }
     } catch (error) {
       console.error('Error fetching events:', error);
     }
-  }, [user]);
+  }, [user, isGuest]);
 
   useEffect(() => {
     fetchEvents();
@@ -88,8 +95,14 @@ export default function EventsScreen() {
 
   const handleDeleteEvent = async (eventId: string) => {
     try {
-      const { error } = await supabase.from('events').delete().eq('id', eventId);
-      if (error) throw error;
+      if (isGuest) {
+        // Delete from local storage
+        await deleteLocalEvent(eventId);
+      } else {
+        // Delete from Supabase
+        const { error } = await supabase.from('events').delete().eq('id', eventId);
+        if (error) throw error;
+      }
       setEvents(events.filter(e => e.id !== eventId));
     } catch (error) {
       console.error('Error deleting event:', error);
@@ -108,7 +121,7 @@ export default function EventsScreen() {
   const years = getYears();
 
   const renderEventCard = ({ item }: { item: Event }) => (
-    <EventCard event={item} onDelete={() => handleDeleteEvent(item.id)} />
+    <EventCard event={item} onDelete={() => handleDeleteEvent(item.id)} onUpdate={fetchEvents} />
   );
 
   return (

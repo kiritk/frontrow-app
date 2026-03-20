@@ -12,10 +12,9 @@ import { Modak_400Regular } from '@expo-google-fonts/modak';
 import { Iceland_400Regular } from '@expo-google-fonts/iceland';
 import { Zain_400Regular } from '@expo-google-fonts/zain';
 import { VT323_400Regular } from '@expo-google-fonts/vt323';
-import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { AuthProvider } from './src/context/AuthContext';
 import { COLORS, FONTS } from './src/theme/colors';
 
-import AuthScreen from './src/screens/AuthScreen';
 import EventsScreen from './src/screens/EventsScreen';
 import StatsScreen from './src/screens/StatsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
@@ -26,7 +25,6 @@ const Tab = createBottomTabNavigator();
 function CustomTabBar({ state, descriptors, navigation }: any) {
   return (
     <View style={styles.tabBarWrapper}>
-      {/* Tab Pills Container */}
       <View style={styles.tabBarContainer}>
         {state.routes.map((route: any, index: number) => {
           const { options } = descriptors[route.key];
@@ -82,7 +80,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
   );
 }
 
-function TabNavigatorWithFAB() {
+function MainApp() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleEventAdded = () => {
@@ -106,24 +104,6 @@ function TabNavigatorWithFAB() {
       <AddEventButton onEventAdded={handleEventAdded} />
     </View>
   );
-}
-
-function AppContent() {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.navy} />
-      </View>
-    );
-  }
-
-  if (!user) {
-    return <AuthScreen />;
-  }
-
-  return <TabNavigatorWithFAB />;
 }
 
 export default function App() {
@@ -153,7 +133,7 @@ export default function App() {
       <AuthProvider>
         <NavigationContainer>
           <StatusBar style="dark" />
-          <AppContent />
+          <MainApp />
         </NavigationContainer>
       </AuthProvider>
     </SafeAreaProvider>

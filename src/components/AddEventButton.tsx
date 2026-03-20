@@ -11,12 +11,13 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { saveLocalEvent } from '../lib/localStorage';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 import { NFL_TEAMS, NFLTeam } from '../data/nflTeams';
 import { MLB_TEAMS, MLBTeam } from '../data/mlbTeams';
 import { SORTED_CITIES, USCity } from '../data/usCities';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const EVENT_TYPES = [
   { value: 'concert', label: 'Concerts', subtitle: 'Live music', emoji: '🎸' },
@@ -40,7 +41,7 @@ type Step = 'type' | 'sport-type' | 'details' | 'photos';
 type SportTeam = NFLTeam | MLBTeam;
 
 export default function AddEventButton({ onEventAdded }: { onEventAdded: () => void }) {
-  const { user } = useAuth();
+  const { user, isGuest } = useAuth();
   const insets = useSafeAreaInsets();
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -71,7 +72,6 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   const awayInputRef = useRef<TextInput>(null);
   const cityInputRef = useRef<TextInput>(null);
   const scrollViewRef = useRef<ScrollView>(null);
-  const confettiRef = useRef<any>(null);
 
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const modalOffsetAnim = useRef(new Animated.Value(0)).current;
@@ -181,31 +181,38 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   };
 
   const handleSubmit = async () => {
-    if (!user) { Alert.alert('Error', 'You must be logged in'); return; }
     setLoading(true);
     try {
       const isTeamSport = sportType === 'nfl' || sportType === 'mlb';
       const finalEventName = isTeamSport && homeTeam && awayTeam ? `${homeTeam.name} vs ${awayTeam.name}` : eventName;
+      
       const eventData: any = {
-        user_id: user.id, title: finalEventName, type: eventType,
+        title: finalEventName,
+        type: eventType,
         sport: eventType === 'sports' ? sportType : null,
         venue: isTeamSport ? venue : (selectedCity?.displayName || venue),
         venue_location: selectedCity?.displayName || null,
         date: formatDateForDB(eventDate),
         photos: photos.length > 0 ? photos : [],
       };
+
       if (selectedCity && !isTeamSport) {
         eventData.latitude = selectedCity.latitude;
         eventData.longitude = selectedCity.longitude;
       }
+
       if (isTeamSport && homeTeam && awayTeam) {
         eventData.home_team = { name: homeTeam.name, city: homeTeam.city, fullName: homeTeam.fullName };
         eventData.away_team = { name: awayTeam.name, city: awayTeam.city, fullName: awayTeam.fullName };
       }
-      const { error } = await supabase.from('events').insert([eventData]).select();
-      if (error) throw error;
+
+      if (isGuest) {
+        await saveLocalEvent(eventData);
+      } else if (user) {
+        const { error } = await supabase.from('events').insert([{ ...eventData, user_id: user.id }]).select();
+        if (error) throw error;
+      }
       
-      // Close modal first, then trigger confetti
       Keyboard.dismiss();
       setCityInputFocused(false);
       Animated.timing(slideAnim, { toValue: SCREEN_HEIGHT, duration: 250, useNativeDriver: true }).start(() => {
@@ -223,6 +230,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   };
 
   const getEventEmoji = () => eventType === 'sports' ? (SPORT_TYPES.find(s => s.value === sportType)?.emoji || '🏆') : (EVENT_TYPES.find(e => e.value === eventType)?.emoji || '🎫');
+  
   const getPrompts = () => {
     if (eventType === 'sports') {
       switch (sportType) {
@@ -452,126 +460,94 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
         <Text style={styles.fabIcon}>+</Text>
       </TouchableOpacity>
 
-      {/* Confetti Overlay */}
       {showConfetti && (
-        <View style={styles.confettiContainer} pointerEvents="none">
-          <ConfettiCannon
-            count={150}
-            origin={{ x: Dimensions.get('window').width / 2, y: -20 }}
-            autoStart={true}
-            fadeOut={true}
-            fallSpeed={2500}
-            explosionSpeed={350}
-            colors={[COLORS.navy, COLORS.gold, '#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3']}
-          />
-        </View>
+        <ConfettiCannon count={150} origin={{ x: SCREEN_WIDTH / 2, y: -20 }} fadeOut explosionSpeed={400} fallSpeed={2500} colors={[COLORS.navy, '#FFD700', '#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3']} autoStart />
       )}
-      
-      <Modal visible={modalVisible} animationType="fade" transparent onRequestClose={handleClose}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback onPress={handleClose}><View style={styles.overlayTouchable} /></TouchableWithoutFeedback>
-          <Animated.View style={[styles.modal, { transform: [{ translateY: Animated.add(Animated.add(slideAnim, translateY), modalOffsetAnim) }] }]}>
-            <View {...panResponder.panHandlers} style={styles.modalHeader}><View style={styles.handle} /></View>
-            <TouchableOpacity onPress={handleClose} style={styles.closeBtn}><Text style={styles.closeBtnText}>✕</Text></TouchableOpacity>
-            <ScrollView ref={scrollViewRef} style={styles.scrollView} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+
+      <Modal visible={modalVisible} animationType="none" transparent presentationStyle="overFullScreen" onRequestClose={handleClose}>
+        <View style={styles.modalOverlay}>
+          <Animated.View style={[styles.modalContainer, { transform: [{ translateY: Animated.add(slideAnim, Animated.add(translateY, modalOffsetAnim)) }] }]}>
+            <View {...panResponder.panHandlers}><View style={styles.dragHandle} /></View>
+            <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always" contentContainerStyle={styles.scrollContent}>
               {step === 'type' && renderTypeSelection()}
               {step === 'sport-type' && renderSportTypeSelection()}
               {step === 'details' && renderDetails()}
               {step === 'photos' && renderPhotos()}
+              {showDatePicker && (
+                <View style={styles.datePickerContainer}>
+                  <DateTimePicker value={eventDate} mode="date" display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={onDateChange} maximumDate={new Date(2030, 11, 31)} minimumDate={new Date(1950, 0, 1)} themeVariant="light" />
+                  {Platform.OS === 'ios' && (
+                    <TouchableOpacity style={styles.dateConfirmButton} onPress={confirmDateSelection}><Text style={styles.dateConfirmText}>Confirm Date</Text></TouchableOpacity>
+                  )}
+                </View>
+              )}
             </ScrollView>
           </Animated.View>
         </View>
-
-        {showDatePicker && (
-          <Modal visible={showDatePicker} transparent animationType="fade" onRequestClose={() => setShowDatePicker(false)}>
-            <TouchableWithoutFeedback onPress={() => setShowDatePicker(false)}>
-              <View style={styles.datePickerOverlay}>
-                <TouchableWithoutFeedback>
-                  <View style={styles.datePickerModal}>
-                    <View style={styles.datePickerHeader}>
-                      <TouchableOpacity onPress={() => setShowDatePicker(false)}><Text style={styles.datePickerCancel}>Cancel</Text></TouchableOpacity>
-                      <TouchableOpacity onPress={confirmDateSelection}><Text style={styles.datePickerDone}>Done</Text></TouchableOpacity>
-                    </View>
-                    <DateTimePicker themeVariant="light" accentColor={COLORS.navy} value={eventDate} mode="date" display="inline" onChange={onDateChange} maximumDate={new Date()} style={styles.datePicker} />
-                  </View>
-                </TouchableWithoutFeedback>
-              </View>
-            </TouchableWithoutFeedback>
-          </Modal>
-        )}
       </Modal>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  fab: { position: 'absolute', right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: COLORS.navy, justifyContent: 'center', alignItems: 'center', shadowColor: COLORS.navy, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8, zIndex: 999 },
-  fabIcon: { fontSize: 28, color: COLORS.cream, fontWeight: '300' },
-  confettiContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999 },
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  overlayTouchable: { flex: 1 },
-  modal: { backgroundColor: COLORS.cream, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '92%', minHeight: '70%' },
-  modalHeader: { alignItems: 'center', paddingTop: 12, paddingBottom: 8 },
-  handle: { width: 40, height: 5, backgroundColor: COLORS.grayLight, borderRadius: 3 },
-  closeBtn: { position: 'absolute', right: 20, top: 12, width: 32, height: 32, borderRadius: 16, backgroundColor: COLORS.creamDark, justifyContent: 'center', alignItems: 'center', zIndex: 10 },
-  closeBtnText: { fontSize: 16, color: COLORS.gray },
-  scrollView: { flex: 1 },
+  fab: { position: 'absolute', right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: COLORS.navy, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8, zIndex: 100 },
+  fabIcon: { color: COLORS.white, fontSize: 32, fontWeight: '300', marginTop: -2 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  modalContainer: { backgroundColor: COLORS.cream, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '94%' },
   scrollContent: { paddingBottom: 40 },
-  stepContent: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.md },
+  dragHandle: { width: 40, height: 4, backgroundColor: COLORS.grayLight, borderRadius: 2, alignSelf: 'center', marginTop: 8, marginBottom: 8 },
+  stepContent: { padding: SPACING.lg },
+  stepTitle: { fontFamily: FONTS.bold, fontSize: 28, color: COLORS.navy, marginBottom: 4 },
+  stepSubtitle: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.gray, marginBottom: SPACING.lg },
   backButton: { marginBottom: SPACING.md },
   backText: { fontFamily: FONTS.medium, fontSize: FONT_SIZES.md, color: COLORS.navy },
-  stepTitle: { fontFamily: FONTS.bold, fontSize: 28, color: COLORS.navy, marginBottom: SPACING.xs },
-  stepSubtitle: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.gray, marginBottom: SPACING.xl },
-  typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.md },
-  typeCard: { width: '47%', backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.xl, padding: SPACING.lg, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 2 },
-  typeEmoji: { fontSize: 40, marginBottom: SPACING.sm },
-  typeLabel: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.lg, color: COLORS.navy, marginBottom: 4 },
+  typeGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
+  typeCard: { width: '50%', padding: 6 },
+  typeEmoji: { fontSize: 32, marginBottom: 8 },
+  typeLabel: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.md, color: COLORS.navy, marginBottom: 2 },
   typeSubtitleText: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.sm, color: COLORS.gray },
-  sportGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.md },
-  sportCard: { width: '30%', backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.xl, padding: SPACING.md, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 2 },
-  sportEmoji: { fontSize: 32, marginBottom: SPACING.xs },
-  sportLabel: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.md, color: COLORS.navy },
-  inputGroup: { marginBottom: SPACING.lg },
-  label: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.md, color: COLORS.navy, marginBottom: SPACING.sm },
-  input: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, padding: SPACING.md, fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.navy },
-  dateButton: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, padding: SPACING.md, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  sportGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
+  sportCard: { width: '33.33%', padding: 6, alignItems: 'center' },
+  sportEmoji: { fontSize: 36, marginBottom: 6 },
+  sportLabel: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.sm, color: COLORS.navy },
+  inputGroup: { marginBottom: SPACING.md },
+  label: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.sm, color: COLORS.navy, marginBottom: SPACING.xs },
+  input: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.navy, backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.md, padding: SPACING.md, borderWidth: 1, borderColor: COLORS.grayLight },
+  inputWithDropdown: { position: 'relative', zIndex: 10 },
+  dropdown: { position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.md, borderWidth: 1, borderColor: COLORS.grayLight, marginTop: 4, maxHeight: 200, zIndex: 1000, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
+  dropdownScroll: { maxHeight: 200 },
+  dropdownItem: { padding: SPACING.md, borderTopWidth: 1, borderTopColor: COLORS.grayLight },
+  dropdownItemFirst: { borderTopWidth: 0 },
+  dropdownItemText: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.navy },
+  teamContainer: { marginBottom: SPACING.md, zIndex: 20 },
+  teamRow: { flexDirection: 'row', alignItems: 'flex-start' },
+  teamColumn: { flex: 1 },
+  teamLabel: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.sm, color: COLORS.navy, marginBottom: SPACING.xs },
+  teamInput: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.sm, color: COLORS.navy, backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.md, padding: SPACING.sm, borderWidth: 1, borderColor: COLORS.grayLight },
+  vsText: { fontFamily: FONTS.bold, fontSize: FONT_SIZES.lg, color: COLORS.navy, marginHorizontal: SPACING.sm, marginTop: 28 },
+  dateButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.md, padding: SPACING.md, borderWidth: 1, borderColor: COLORS.grayLight },
   dateButtonText: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.navy },
   dateButtonPlaceholder: { color: COLORS.grayLight },
   calendarIcon: { fontSize: 20 },
+  datePickerContainer: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, marginHorizontal: SPACING.lg, marginTop: SPACING.md, padding: SPACING.md },
+  dateConfirmButton: { backgroundColor: COLORS.navy, borderRadius: BORDER_RADIUS.md, padding: SPACING.md, alignItems: 'center', marginTop: SPACING.sm },
+  dateConfirmText: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.md, color: COLORS.white },
   nextButton: { backgroundColor: COLORS.navy, borderRadius: BORDER_RADIUS.lg, padding: SPACING.md, alignItems: 'center', marginTop: SPACING.md },
-  nextButtonText: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.md, color: COLORS.cream },
+  nextButtonText: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.md, color: COLORS.white },
   photoHeader: { alignItems: 'center', marginBottom: SPACING.lg },
   photoEmoji: { fontSize: 48, marginBottom: SPACING.sm },
   photoEventName: { fontFamily: FONTS.bold, fontSize: FONT_SIZES.xl, color: COLORS.navy, textAlign: 'center' },
   photoEventLocation: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.gray },
-  photoPrompt: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.gray, textAlign: 'center', marginBottom: SPACING.lg },
-  photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
-  photoThumb: { width: '31%', aspectRatio: 1, borderRadius: BORDER_RADIUS.md, overflow: 'hidden' },
-  photoImage: { width: '100%', height: '100%' },
-  photoRemove: { position: 'absolute', top: 4, right: 4, width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center' },
-  photoRemoveText: { color: COLORS.white, fontSize: 12, fontWeight: 'bold' },
-  addPhotoBtn: { width: '31%', aspectRatio: 1, borderRadius: BORDER_RADIUS.md, backgroundColor: COLORS.white, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: COLORS.creamDark, borderStyle: 'dashed' },
-  addPhotoIcon: { fontSize: 32, color: COLORS.gray },
-  addPhotoText: { fontFamily: FONTS.medium, fontSize: FONT_SIZES.xs, color: COLORS.gray, marginTop: 4 },
-  submitButton: { backgroundColor: COLORS.navy, borderRadius: BORDER_RADIUS.lg, padding: SPACING.md, alignItems: 'center', marginTop: SPACING.xl },
-  submitDisabled: { opacity: 0.7 },
-  submitButtonText: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.md, color: COLORS.cream },
-  datePickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  datePickerModal: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.xl, padding: SPACING.md, width: '90%' },
-  datePickerHeader: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: SPACING.sm, paddingBottom: SPACING.md },
-  datePickerCancel: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.gray },
-  datePickerDone: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.md, color: COLORS.navy },
-  datePicker: { backgroundColor: COLORS.white },
-  teamContainer: { marginBottom: SPACING.lg },
-  teamRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
-  teamColumn: { flex: 1 },
-  teamLabel: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.sm, color: COLORS.navy, marginBottom: SPACING.xs },
-  teamInput: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, padding: SPACING.md, fontFamily: FONTS.regular, fontSize: FONT_SIZES.sm, color: COLORS.navy },
-  vsText: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.md, color: COLORS.gray, marginHorizontal: SPACING.sm, marginTop: 32 },
-  inputWithDropdown: { position: 'relative', zIndex: 10 },
-  dropdown: { position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, marginTop: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 8, zIndex: 1000, maxHeight: 200 },
-  dropdownScroll: { maxHeight: 200 },
-  dropdownItem: { padding: SPACING.md, borderTopWidth: 1, borderTopColor: COLORS.creamDark },
-  dropdownItemFirst: { borderTopWidth: 0 },
-  dropdownItemText: { fontFamily: FONTS.medium, fontSize: FONT_SIZES.sm, color: COLORS.navy },
+  photoPrompt: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.sm, color: COLORS.gray, textAlign: 'center', marginBottom: SPACING.lg },
+  photoGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4, marginBottom: SPACING.lg },
+  photoThumb: { width: '33.33%', aspectRatio: 1, padding: 4 },
+  photoImage: { width: '100%', height: '100%', borderRadius: BORDER_RADIUS.md },
+  photoRemove: { position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 12, width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
+  photoRemoveText: { color: COLORS.white, fontSize: 14, fontWeight: 'bold' },
+  addPhotoBtn: { width: '33.33%', aspectRatio: 1, padding: 4 },
+  addPhotoIcon: { fontSize: 32, color: COLORS.navy },
+  addPhotoText: { fontFamily: FONTS.medium, fontSize: FONT_SIZES.xs, color: COLORS.navy, marginTop: 4 },
+  submitButton: { backgroundColor: COLORS.navy, borderRadius: BORDER_RADIUS.lg, padding: SPACING.md, alignItems: 'center' },
+  submitDisabled: { opacity: 0.6 },
+  submitButtonText: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.md, color: COLORS.white },
 });
