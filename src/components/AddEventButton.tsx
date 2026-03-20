@@ -497,7 +497,7 @@ const styles = StyleSheet.create({
   fab: { position: 'absolute', right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: COLORS.navy, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8, zIndex: 100 },
   fabIcon: { color: COLORS.white, fontSize: 32, fontWeight: '300', marginTop: -2 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  modalContainer: { backgroundColor: COLORS.cream, borderTopLeftRadius: 24, borderTopRightRadius: 24, minHeight: '85%', maxHeight: '94%' },
+  modalContainer: { backgroundColor: COLORS.cream, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '70%' },
   scrollContent: { paddingBottom: 40 },
   dragHandle: { width: 40, height: 4, backgroundColor: COLORS.grayLight, borderRadius: 2, alignSelf: 'center', marginTop: 8, marginBottom: 8 },
   stepContent: { padding: SPACING.lg, paddingTop: SPACING.md },
