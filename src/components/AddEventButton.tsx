@@ -523,26 +523,28 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
       </Modal>
 
       {/* Date Picker Modal */}
-      <Modal visible={showDatePicker} animationType="fade" transparent onRequestClose={() => setShowDatePicker(false)}>
-        <Pressable style={styles.datePickerOverlay} onPress={() => setShowDatePicker(false)}>
-          <Pressable style={styles.datePickerModal} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.datePickerTitle}>Select Date</Text>
-            <DateTimePicker 
-              value={eventDate} 
-              mode="date" 
-              display="spinner"
-              onChange={onDateChange} 
-              maximumDate={new Date(2030, 11, 31)} 
-              minimumDate={new Date(1950, 0, 1)} 
-              themeVariant="light"
-              style={styles.datePicker}
-            />
-            <Pressable style={styles.dateConfirmButton} onPress={confirmDateSelection}>
-              <Text style={styles.dateConfirmText}>Confirm Date</Text>
-            </Pressable>
-          </Pressable>
-        </Pressable>
-      </Modal>
+      {showDatePicker && (
+        <Modal visible={true} animationType="fade" transparent onRequestClose={() => setShowDatePicker(false)}>
+          <View style={styles.datePickerOverlay}>
+            <View style={styles.datePickerModal}>
+              <Text style={styles.datePickerTitle}>Select Date</Text>
+              <DateTimePicker 
+                value={eventDate} 
+                mode="date" 
+                display="spinner"
+                onChange={onDateChange} 
+                maximumDate={new Date(2030, 11, 31)} 
+                minimumDate={new Date(1950, 0, 1)} 
+                themeVariant="light"
+                style={styles.datePicker}
+              />
+              <Pressable style={styles.dateConfirmButton} onPress={confirmDateSelection}>
+                <Text style={styles.dateConfirmText}>Confirm Date</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+      )}
     </>
   );
 }
