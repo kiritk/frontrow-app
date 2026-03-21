@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, ImageBackground, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../lib/supabase';
@@ -7,7 +7,9 @@ import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 import { getTeamByName } from '../data/nflTeams';
 import { getMLBTeamByName } from '../data/mlbTeams';
-import Svg, { Circle, G, Path } from 'react-native-svg';
+import Svg, { Circle, G, Path, Defs, Pattern, Rect, Line } from 'react-native-svg';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface Event {
   id: string;
@@ -19,6 +21,32 @@ interface Event {
   home_team?: { name: string; city: string; fullName: string };
   away_team?: { name: string; city: string; fullName: string };
 }
+
+const TextureBackground = () => (
+  <View style={styles.textureContainer} pointerEvents="none">
+    <Svg width={SCREEN_WIDTH} height={SCREEN_HEIGHT * 2} style={styles.textureSvg}>
+      <Defs>
+        <Pattern id="paperTexture" patternUnits="userSpaceOnUse" width="60" height="60">
+          {/* Subtle fiber lines */}
+          <Line x1="5" y1="12" x2="15" y2="13" stroke="#E0DAD0" strokeWidth="0.5" opacity="0.4" />
+          <Line x1="35" y1="8" x2="42" y2="9" stroke="#DDD7CB" strokeWidth="0.4" opacity="0.3" />
+          <Line x1="48" y1="25" x2="56" y2="26" stroke="#E0DAD0" strokeWidth="0.5" opacity="0.35" />
+          <Line x1="12" y1="38" x2="22" y2="39" stroke="#DDD7CB" strokeWidth="0.4" opacity="0.4" />
+          <Line x1="40" y1="45" x2="50" y2="46" stroke="#E0DAD0" strokeWidth="0.5" opacity="0.3" />
+          <Line x1="8" y1="52" x2="18" y2="53" stroke="#DDD7CB" strokeWidth="0.4" opacity="0.35" />
+          {/* Tiny specks */}
+          <Circle cx="10" cy="20" r="0.6" fill="#D5CFC3" opacity="0.3" />
+          <Circle cx="45" cy="15" r="0.5" fill="#DBD5C9" opacity="0.25" />
+          <Circle cx="25" cy="42" r="0.6" fill="#D5CFC3" opacity="0.35" />
+          <Circle cx="52" cy="48" r="0.5" fill="#DBD5C9" opacity="0.3" />
+          <Circle cx="18" cy="55" r="0.6" fill="#D5CFC3" opacity="0.25" />
+          <Circle cx="38" cy="32" r="0.5" fill="#DBD5C9" opacity="0.35" />
+        </Pattern>
+      </Defs>
+      <Rect x="0" y="0" width="100%" height="100%" fill="url(#paperTexture)" />
+    </Svg>
+  </View>
+);
 
 export default function StatsScreen() {
   const { user } = useAuth();
@@ -201,6 +229,7 @@ export default function StatsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <TextureBackground />
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
@@ -346,6 +375,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.cream,
+  },
+  textureContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 0,
+  },
+  textureSvg: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
   },
   content: {
     padding: SPACING.lg,
