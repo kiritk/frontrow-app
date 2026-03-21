@@ -55,7 +55,7 @@ const OTHER_COLORS = {
 export default function EventCard({ event, onDelete, onUpdate }: EventCardProps) {
   const { width } = useWindowDimensions();
   const CARD_WIDTH = (width - 48 - 12) / 2;
-  const CARD_HEIGHT = CARD_WIDTH * 1.4;
+  const CARD_HEIGHT = CARD_WIDTH * 1.2;
   const PERFORATION_TOP = CARD_HEIGHT * 0.2;
 
   const [isFlipped, setIsFlipped] = useState(false);
