@@ -655,7 +655,7 @@ const styles = StyleSheet.create({
   imageBackground: { flex: 1 },
   imageStyle: { resizeMode: 'cover' },
   imageOverlay: { ...StyleSheet.absoluteFillObject },
-  bottomSection: { flex: 1, backgroundColor: CONCERT_COLORS.gradientStart, paddingHorizontal: 12, paddingVertical: 10, justifyContent: 'space-between' },
+  bottomSection: { flex: 1, backgroundColor: CONCERT_COLORS.gradientStart, paddingHorizontal: 12, paddingVertical: 6, justifyContent: 'center', gap: 8 },
   concertTitle: { fontFamily: FONTS.audiowide, fontSize: 22.5, color: '#FFFFFF', textAlign: 'center', letterSpacing: 1.5 },
   infoRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   concertDatePill: { borderWidth: 1, borderColor: CONCERT_COLORS.accent, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, alignItems: 'center' },
