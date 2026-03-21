@@ -40,6 +40,9 @@ const typeColors: Record<string, string> = {
   sports: '#6366F1',
 };
 
+// Offset distance in degrees (roughly 0.003 degrees ≈ 300-400 meters)
+const OFFSET_DISTANCE = 0.003;
+
 export default function EventsMap({ events }: EventsMapProps) {
   // Get coordinates for an event
   const getEventCoordinates = (event: Event) => {
@@ -82,6 +85,25 @@ export default function EventsMap({ events }: EventsMapProps) {
     return null;
   };
 
+  // Calculate offset position in a circular pattern
+  const getOffsetPosition = (
+    baseLat: number, 
+    baseLng: number, 
+    index: number, 
+    totalAtLocation: number
+  ) => {
+    if (totalAtLocation === 1) {
+      return { latitude: baseLat, longitude: baseLng };
+    }
+
+    // Arrange markers in a circle around the center point
+    const angle = (2 * Math.PI * index) / totalAtLocation;
+    const offsetLat = baseLat + OFFSET_DISTANCE * Math.cos(angle);
+    const offsetLng = baseLng + OFFSET_DISTANCE * Math.sin(angle);
+
+    return { latitude: offsetLat, longitude: offsetLng };
+  };
+
   // Filter events that have coordinates
   const eventsWithCoords = events
     .map(event => {
@@ -92,6 +114,46 @@ export default function EventsMap({ events }: EventsMapProps) {
       return null;
     })
     .filter(Boolean) as { event: Event; latitude: number; longitude: number; team: any; isTeamSport: boolean }[];
+
+  // Group events by location (using a key of lat,lng rounded to 4 decimal places)
+  const groupByLocation = (eventsList: typeof eventsWithCoords) => {
+    const groups: Record<string, typeof eventsWithCoords> = {};
+    
+    eventsList.forEach(item => {
+      // Round to 4 decimal places to group nearby locations
+      const key = `${item.latitude.toFixed(4)},${item.longitude.toFixed(4)}`;
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+      groups[key].push(item);
+    });
+    
+    return groups;
+  };
+
+  // Apply offsets to events at the same location
+  const eventsWithOffsets = (() => {
+    const groups = groupByLocation(eventsWithCoords);
+    const result: Array<typeof eventsWithCoords[0] & { displayLat: number; displayLng: number }> = [];
+
+    Object.values(groups).forEach(group => {
+      group.forEach((item, index) => {
+        const offset = getOffsetPosition(
+          item.latitude,
+          item.longitude,
+          index,
+          group.length
+        );
+        result.push({
+          ...item,
+          displayLat: offset.latitude,
+          displayLng: offset.longitude,
+        });
+      });
+    });
+
+    return result;
+  })();
 
   // Calculate initial region to fit all markers
   const getInitialRegion = () => {
@@ -157,10 +219,10 @@ export default function EventsMap({ events }: EventsMapProps) {
       showsUserLocation={true}
       showsCompass={true}
     >
-      {eventsWithCoords.map(({ event, latitude, longitude, team, isTeamSport }) => (
+      {eventsWithOffsets.map(({ event, displayLat, displayLng, team, isTeamSport }) => (
         <Marker
           key={event.id}
-          coordinate={{ latitude, longitude }}
+          coordinate={{ latitude: displayLat, longitude: displayLng }}
           title={event.title}
           description={event.venue}
         >
