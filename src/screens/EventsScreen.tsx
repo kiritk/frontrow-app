@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { getLocalEvents, deleteLocalEvent } from '../lib/localStorage';
 import EventCard from '../components/EventCard';
 import EventsMap from '../components/EventsMap';
+import * as Haptics from 'expo-haptics';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
 interface Event {
@@ -139,12 +140,12 @@ export default function EventsScreen() {
         <View style={styles.viewToggle}>
           <TouchableOpacity
             style={[styles.viewToggleButton, viewMode === 'list' && styles.viewToggleButtonActive]}
-            onPress={() => setViewMode('list')}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setViewMode('list'); }}
           >
-            <Ionicons 
-              name="list" 
-              size={18} 
-              color={viewMode === 'list' ? COLORS.white : COLORS.navy} 
+            <Ionicons
+              name="list"
+              size={18}
+              color={viewMode === 'list' ? COLORS.white : COLORS.navy}
             />
             <Text style={[styles.viewToggleText, viewMode === 'list' && styles.viewToggleTextActive]}>
               List
@@ -152,7 +153,7 @@ export default function EventsScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.viewToggleButton, viewMode === 'map' && styles.viewToggleButtonActive]}
-            onPress={() => setViewMode('map')}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setViewMode('map'); }}
           >
             <Ionicons 
               name="map-outline" 
