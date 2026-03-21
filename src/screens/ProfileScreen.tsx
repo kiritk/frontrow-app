@@ -7,10 +7,18 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../lib/supabase';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
+
+const PROFILE_STORAGE_KEY = 'frontrow_user_profile';
+
+interface UserProfile {
+  firstName: string;
+  lastName: string;
+  profileImage: string | null;
+}
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
@@ -23,27 +31,28 @@ export default function ProfileScreen() {
   const [editProfileImage, setEditProfileImage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user) {
-      fetchProfile();
-    }
-  }, [user]);
+    loadProfile();
+  }, []);
 
-  const fetchProfile = async () => {
-    if (!user) return;
+  const loadProfile = async () => {
     try {
-      const { data } = await supabase
-        .from('profiles')
-        .select('first_name, last_name, profile_image')
-        .eq('id', user.id)
-        .single();
-      
-      if (data) {
-        setFirstName(data.first_name || '');
-        setLastName(data.last_name || '');
-        setProfileImage(data.profile_image || null);
+      const stored = await AsyncStorage.getItem(PROFILE_STORAGE_KEY);
+      if (stored) {
+        const profile: UserProfile = JSON.parse(stored);
+        setFirstName(profile.firstName || '');
+        setLastName(profile.lastName || '');
+        setProfileImage(profile.profileImage || null);
       }
     } catch (error) {
-      console.log('Profile not found, using defaults');
+      console.log('Error loading profile:', error);
+    }
+  };
+
+  const saveProfileToStorage = async (profile: UserProfile) => {
+    try {
+      await AsyncStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+    } catch (error) {
+      console.log('Error saving profile:', error);
     }
   };
 
@@ -81,28 +90,18 @@ export default function ProfileScreen() {
   };
 
   const saveProfile = async () => {
-    if (!user) return;
+    const newProfile: UserProfile = {
+      firstName: editFirstName,
+      lastName: editLastName,
+      profileImage: editProfileImage,
+    };
     
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          first_name: editFirstName,
-          last_name: editLastName,
-          profile_image: editProfileImage,
-          updated_at: new Date().toISOString(),
-        });
-      
-      if (error) throw error;
-      
-      setFirstName(editFirstName);
-      setLastName(editLastName);
-      setProfileImage(editProfileImage);
-      setEditModalVisible(false);
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to save profile');
-    }
+    await saveProfileToStorage(newProfile);
+    
+    setFirstName(editFirstName);
+    setLastName(editLastName);
+    setProfileImage(editProfileImage);
+    setEditModalVisible(false);
   };
 
   const getDisplayName = () => {
