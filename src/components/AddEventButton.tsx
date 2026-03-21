@@ -521,33 +521,31 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
               {step === 'details' && renderDetails()}
               {step === 'photos' && renderPhotos()}
             </ScrollView>
+            {showDatePicker && (
+              <View style={styles.datePickerOverlayInner}>
+                <View style={styles.datePickerModal}>
+                  <Text style={styles.datePickerTitle}>Select Date</Text>
+                  <DateTimePicker 
+                    value={eventDate} 
+                    mode="date" 
+                    display="spinner"
+                    onChange={onDateChange} 
+                    maximumDate={new Date(2030, 11, 31)} 
+                    minimumDate={new Date(1950, 0, 1)} 
+                    themeVariant="light"
+                    style={styles.datePicker}
+                  />
+                  <Pressable style={styles.dateConfirmButton} onPress={confirmDateSelection}>
+                    <Text style={styles.dateConfirmText}>Confirm Date</Text>
+                  </Pressable>
+                </View>
+              </View>
+            )}
           </Animated.View>
         </View>
       </Modal>
 
-      {/* Date Picker Modal */}
-      {showDatePicker && (
-        <Modal visible={true} animationType="fade" transparent onRequestClose={() => setShowDatePicker(false)}>
-          <View style={styles.datePickerOverlay}>
-            <View style={styles.datePickerModal}>
-              <Text style={styles.datePickerTitle}>Select Date</Text>
-              <DateTimePicker 
-                value={eventDate} 
-                mode="date" 
-                display="spinner"
-                onChange={onDateChange} 
-                maximumDate={new Date(2030, 11, 31)} 
-                minimumDate={new Date(1950, 0, 1)} 
-                themeVariant="light"
-                style={styles.datePicker}
-              />
-              <Pressable style={styles.dateConfirmButton} onPress={confirmDateSelection}>
-                <Text style={styles.dateConfirmText}>Confirm Date</Text>
-              </Pressable>
-            </View>
-          </View>
-        </Modal>
-      )}
+      
     </>
   );
 }
@@ -595,6 +593,7 @@ const styles = StyleSheet.create({
   dateButtonPlaceholder: { color: COLORS.grayLight },
   calendarIcon: { fontSize: 20 },
   datePickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  datePickerOverlayInner: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', zIndex: 1000 },
   datePickerModal: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, padding: SPACING.lg, width: '85%', alignItems: 'center' },
   datePickerTitle: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.lg, color: COLORS.navy, marginBottom: SPACING.md },
   datePicker: { height: 200, width: '100%' },
