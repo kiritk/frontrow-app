@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, 
+  View, Text, StyleSheet, TouchableOpacity, ScrollView, 
   ImageBackground, Image, Modal, TextInput, Keyboard, TouchableWithoutFeedback,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView, Platform, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,7 +21,7 @@ interface UserProfile {
 }
 
 export default function ProfileScreen() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -56,14 +56,7 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleSignOut = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign Out', style: 'destructive', onPress: signOut },
-    ]);
-  };
-
-  const openEditModal = () => {
+    const openEditModal = () => {
     setEditFirstName(firstName);
     setEditLastName(lastName);
     setEditProfileImage(profileImage);
@@ -160,13 +153,6 @@ export default function ProfileScreen() {
         {/* Rest of profile content - blank for now */}
         <View style={styles.contentArea}>
           {/* Future content goes here */}
-        </View>
-
-        {/* Sign Out Button */}
-        <View style={styles.bottomSection}>
-          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-            <Text style={styles.signOutText}>Sign Out</Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
 
@@ -330,22 +316,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.lg,
   },
-  bottomSection: {
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xxl,
-    paddingTop: SPACING.lg,
-  },
-  signOutButton: {
-    backgroundColor: COLORS.navy,
-    borderRadius: BORDER_RADIUS.lg,
-    paddingVertical: SPACING.md,
-    alignItems: 'center',
-  },
-  signOutText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: FONT_SIZES.md,
-    color: COLORS.white,
-  },
+  
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
