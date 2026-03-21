@@ -5,7 +5,6 @@ import {
   PanResponder, Dimensions, TouchableWithoutFeedback, Keyboard, Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BlurView } from 'expo-blur';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -499,17 +498,13 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     );
   };
 
-  const fabBottom = Math.max(insets.bottom, 20) + 4;
+  // FAB is positioned at bottom: 24 to align with tab bar
 
   return (
     <>
-      <View style={[styles.fabContainer, { bottom: fabBottom }]}>
-        <BlurView intensity={80} tint="dark" style={styles.fabBlur}>
-          <TouchableOpacity style={styles.fab} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); setModalVisible(true); }}>
-            <Text style={styles.fabIcon}>+</Text>
-          </TouchableOpacity>
-        </BlurView>
-      </View>
+      <TouchableOpacity style={[styles.fab, { bottom: 24 }]} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); setModalVisible(true); }}>
+        <Text style={styles.fabIcon}>+</Text>
+      </TouchableOpacity>
 
       {showConfetti && (
         <ConfettiCannon count={150} origin={{ x: SCREEN_WIDTH / 2, y: -20 }} fadeOut explosionSpeed={400} fallSpeed={2500} colors={[COLORS.navy, '#FFD700', '#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3']} autoStart />
@@ -556,9 +551,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
 }
 
 const styles = StyleSheet.create({
-  fabContainer: { position: 'absolute', right: 20, width: 56, height: 56, borderRadius: 28, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 8, zIndex: 100 },
-  fabBlur: { flex: 1, borderRadius: 28, overflow: 'hidden', backgroundColor: 'rgba(30, 58, 95, 0.75)', borderWidth: 0.5, borderColor: 'rgba(255, 255, 255, 0.2)' },
-  fab: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  fab: { position: 'absolute', right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: COLORS.navy, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 8, zIndex: 100 },
   fabIcon: { color: COLORS.white, fontSize: 32, fontWeight: '300', marginTop: -2 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   modalContainer: { backgroundColor: COLORS.cream, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '70%' },

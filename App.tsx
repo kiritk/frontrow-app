@@ -5,7 +5,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { useFonts, Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold, Outfit_700Bold } from '@expo-google-fonts/outfit';
 import { Audiowide_400Regular } from '@expo-google-fonts/audiowide';
 import { Limelight_400Regular } from '@expo-google-fonts/limelight';
@@ -14,35 +13,31 @@ import { Iceland_400Regular } from '@expo-google-fonts/iceland';
 import { Zain_400Regular } from '@expo-google-fonts/zain';
 import { VT323_400Regular } from '@expo-google-fonts/vt323';
 import { AuthProvider } from './src/context/AuthContext';
-import { COLORS, FONTS } from './src/theme/colors';
-
 import EventsScreen from './src/screens/EventsScreen';
 import StatsScreen from './src/screens/StatsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import AddEventButton from './src/components/AddEventButton';
+import { COLORS, FONTS } from './src/theme/colors';
 
 const Tab = createBottomTabNavigator();
 
 function CustomTabBar({ state, descriptors, navigation }: any) {
   return (
     <View style={styles.tabBarWrapper}>
-      <BlurView intensity={100} tint="systemChromeMaterialLight" style={styles.tabBarContainer}>
+      <View style={styles.tabBarContainer}>
         {state.routes.map((route: any, index: number) => {
           const { options } = descriptors[route.key];
           const isFocused = state.index === index;
-
           const onPress = () => {
             const event = navigation.emit({
               type: 'tabPress',
               target: route.key,
               canPreventDefault: true,
             });
-
             if (!isFocused && !event.defaultPrevented) {
               navigation.navigate(route.name);
             }
           };
-
           let iconName: keyof typeof Ionicons.glyphMap = 'ellipse';
           if (route.name === 'Events') {
             iconName = isFocused ? 'ticket' : 'ticket-outline';
@@ -51,7 +46,6 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
           } else if (route.name === 'Profile') {
             iconName = isFocused ? 'person' : 'person-outline';
           }
-
           return (
             <TouchableOpacity
               key={route.key}
@@ -76,14 +70,13 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
             </TouchableOpacity>
           );
         })}
-      </BlurView>
+      </View>
     </View>
   );
 }
 
 function MainApp() {
   const [refreshKey, setRefreshKey] = useState(0);
-
   const handleEventAdded = () => {
     setRefreshKey(prev => prev + 1);
   };
@@ -97,7 +90,7 @@ function MainApp() {
         }}
       >
         <Tab.Screen name="Events">
-          {() => <EventsScreen key={refreshKey} />}
+          {() => <EventsScreen refreshKey={refreshKey} />}
         </Tab.Screen>
         <Tab.Screen name="Stats" component={StatsScreen} />
         <Tab.Screen name="Profile" component={ProfileScreen} />
@@ -123,7 +116,7 @@ export default function App() {
 
   if (!fontsLoaded) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.cream }}>
         <ActivityIndicator size="large" color={COLORS.navy} />
       </View>
     );
@@ -147,23 +140,22 @@ const styles = StyleSheet.create({
     bottom: 24,
     left: 20,
     right: 88,
-    height: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tabBarContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: COLORS.white,
     borderRadius: 28,
-    overflow: 'hidden',
+    height: 56,
+    paddingHorizontal: 16,
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 8,
-  },
-  tabBarContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
   },
   tabButton: {
     flex: 1,
