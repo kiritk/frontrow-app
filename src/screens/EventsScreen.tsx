@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   viewToggle: {
     flexDirection: 'row',
     backgroundColor: COLORS.white,
-    borderRadius: BORDER_RADIUS.xl,
+    borderRadius: BORDER_RADIUS.lg,
     padding: 4,
   },
   viewToggleButton: {
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: BORDER_RADIUS.md,
     gap: 6,
   },
   viewToggleButtonActive: {
