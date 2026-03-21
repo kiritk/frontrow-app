@@ -651,7 +651,7 @@ const styles = StyleSheet.create({
   teamDateYear: { fontFamily: FONTS.regular, fontSize: 10, color: '#666666' },
   teamVenueSection: { flexDirection: 'row', alignItems: 'center', flex: 1, justifyContent: 'flex-end', marginLeft: 8, gap: 3 },
   teamVenueText: { fontFamily: FONTS.medium, fontSize: 11, color: '#FFFFFF', textAlign: 'right', flexShrink: 1 },
-  topSection: { height: '50%', overflow: 'hidden' },
+  topSection: { height: '42%', overflow: 'hidden' },
   imageBackground: { flex: 1 },
   imageStyle: { resizeMode: 'cover' },
   imageOverlay: { ...StyleSheet.absoluteFillObject },
