@@ -578,6 +578,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: COLORS.cream,
     zIndex: 10,
+    shadowColor: '#A89880',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.6,
+    shadowRadius: 3,
+    elevation: 4,
   },
   perforationRight: {
     position: 'absolute',
@@ -587,6 +592,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: COLORS.cream,
     zIndex: 10,
+    shadowColor: '#A89880',
+    shadowOffset: { width: -2, height: 2 },
+    shadowOpacity: 0.6,
+    shadowRadius: 3,
+    elevation: 4,
   },
   photoViewerOverlay: {
     flex: 1,
