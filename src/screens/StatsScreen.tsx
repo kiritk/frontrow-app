@@ -80,11 +80,13 @@ export default function StatsScreen() {
     return types;
   };
 
-  // Get most visited venue with team info
+  // Get most visited venue with team info (NFL/MLB only)
   const getMostVisitedVenue = () => {
     const venueCounts: Record<string, { count: number; event: Event }> = {};
+    
+    // Only consider NFL and MLB events
     events.forEach(e => {
-      if (e.venue) {
+      if (e.venue && (e.sport === 'nfl' || e.sport === 'mlb') && e.home_team) {
         if (!venueCounts[e.venue]) {
           venueCounts[e.venue] = { count: 0, event: e };
         }
@@ -306,8 +308,8 @@ export default function StatsScreen() {
           </View>
         </View>
 
-        {/* Favorite Venue Card */}
-        {mostVisitedVenue && (
+        {/* Favorite Venue Card - Only shown for NFL/MLB events */}
+        {mostVisitedVenue && venueTeam && (
           <View style={styles.venueCardWrapper}>
             <ImageBackground
               source={venueTeam?.stadiumImage}
