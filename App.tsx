@@ -5,6 +5,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { useFonts, Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold, Outfit_700Bold } from '@expo-google-fonts/outfit';
 import { Audiowide_400Regular } from '@expo-google-fonts/audiowide';
 import { Limelight_400Regular } from '@expo-google-fonts/limelight';
@@ -25,7 +26,7 @@ const Tab = createBottomTabNavigator();
 function CustomTabBar({ state, descriptors, navigation }: any) {
   return (
     <View style={styles.tabBarWrapper}>
-      <View style={styles.tabBarContainer}>
+      <BlurView intensity={60} tint="light" style={styles.tabBarContainer}>
         {state.routes.map((route: any, index: number) => {
           const { options } = descriptors[route.key];
           const isFocused = state.index === index;
@@ -75,7 +76,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
             </TouchableOpacity>
           );
         })}
-      </View>
+      </BlurView>
     </View>
   );
 }
@@ -158,7 +159,8 @@ const styles = StyleSheet.create({
   tabBarContainer: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: COLORS.white,
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    overflow: 'hidden',
     borderRadius: 50,
     paddingVertical: 12,
     paddingHorizontal: 16,
