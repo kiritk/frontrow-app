@@ -26,7 +26,7 @@ const Tab = createBottomTabNavigator();
 function CustomTabBar({ state, descriptors, navigation }: any) {
   return (
     <View style={styles.tabBarWrapper}>
-      <BlurView intensity={60} tint="light" style={styles.tabBarContainer}>
+      <BlurView intensity={100} tint="systemChromeMaterialLight" style={styles.tabBarContainer}>
         {state.routes.map((route: any, index: number) => {
           const { options } = descriptors[route.key];
           const isFocused = state.index === index;
@@ -162,13 +162,18 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
   tabBarContainer: {
     flex: 1,
     flexDirection: 'row',
     paddingVertical: 12,
     paddingHorizontal: 16,
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
   },
     shadowOpacity: 0.15,
     shadowRadius: 12,
