@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 import { getTeamByName } from '../data/nflTeams';
 import { getMLBTeamByName } from '../data/mlbTeams';
-import Svg, { Circle, G, Path, Defs, Pattern, Rect, Line } from 'react-native-svg';
+import Svg, { Circle, G, Path, Rect, Line } from 'react-native-svg';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -81,37 +81,45 @@ const TextureBackground = () => {
     return lines;
   };
 
+  // Generate grid lines directly (Pattern fills don't render in react-native-svg)
+  const gridSpacing = 50;
+  const verticalGridLines = Array.from({ length: Math.ceil(mapW / gridSpacing) + 1 }).map((_, i) => i * gridSpacing);
+  const horizontalGridLines = Array.from({ length: Math.ceil(mapH / gridSpacing) + 1 }).map((_, i) => i * gridSpacing);
+
+  // Generate paper fiber texture marks directly
+  const fiberRows = Math.ceil(mapH / 60);
+  const fiberCols = Math.ceil(mapW / 60);
+
   return (
     <View style={styles.textureContainer} pointerEvents="none">
       <Svg width={mapW} height={mapH} style={styles.textureSvg}>
-        <Defs>
-          {/* Paper fiber texture pattern */}
-          <Pattern id="paperTexture" patternUnits="userSpaceOnUse" width="60" height="60">
-            <Line x1="5" y1="12" x2="15" y2="13" stroke="#E0DAD0" strokeWidth="0.5" opacity="0.4" />
-            <Line x1="35" y1="8" x2="42" y2="9" stroke="#DDD7CB" strokeWidth="0.4" opacity="0.3" />
-            <Line x1="48" y1="25" x2="56" y2="26" stroke="#E0DAD0" strokeWidth="0.5" opacity="0.35" />
-            <Line x1="12" y1="38" x2="22" y2="39" stroke="#DDD7CB" strokeWidth="0.4" opacity="0.4" />
-            <Line x1="40" y1="45" x2="50" y2="46" stroke="#E0DAD0" strokeWidth="0.5" opacity="0.3" />
-            <Line x1="8" y1="52" x2="18" y2="53" stroke="#DDD7CB" strokeWidth="0.4" opacity="0.35" />
-            <Circle cx="10" cy="20" r="0.6" fill="#D5CFC3" opacity="0.3" />
-            <Circle cx="45" cy="15" r="0.5" fill="#DBD5C9" opacity="0.25" />
-            <Circle cx="25" cy="42" r="0.6" fill="#D5CFC3" opacity="0.35" />
-            <Circle cx="52" cy="48" r="0.5" fill="#DBD5C9" opacity="0.3" />
-            <Circle cx="18" cy="55" r="0.6" fill="#D5CFC3" opacity="0.25" />
-            <Circle cx="38" cy="32" r="0.5" fill="#DBD5C9" opacity="0.35" />
-          </Pattern>
-          {/* Grid pattern for the map */}
-          <Pattern id="mapGrid" patternUnits="userSpaceOnUse" width="50" height="50">
-            <Line x1="0" y1="0" x2="0" y2="50" stroke={stroke} strokeWidth="0.5" opacity={opacity * 0.7} />
-            <Line x1="0" y1="0" x2="50" y2="0" stroke={stroke} strokeWidth="0.5" opacity={opacity * 0.7} />
-          </Pattern>
-        </Defs>
 
-        {/* Base paper texture */}
-        <Rect x="0" y="0" width="100%" height="100%" fill="url(#paperTexture)" />
+        {/* Paper fiber texture - rendered directly instead of via Pattern */}
+        {Array.from({ length: fiberRows }).map((_, row) =>
+          Array.from({ length: fiberCols }).map((_, col) => {
+            const ox = col * 60;
+            const oy = row * 60;
+            return (
+              <G key={`fiber-${row}-${col}`}>
+                <Line x1={ox + 5} y1={oy + 12} x2={ox + 15} y2={oy + 13} stroke="#E0DAD0" strokeWidth="0.5" opacity="0.4" />
+                <Line x1={ox + 35} y1={oy + 8} x2={ox + 42} y2={oy + 9} stroke="#DDD7CB" strokeWidth="0.4" opacity="0.3" />
+                <Line x1={ox + 48} y1={oy + 25} x2={ox + 56} y2={oy + 26} stroke="#E0DAD0" strokeWidth="0.5" opacity="0.35" />
+                <Line x1={ox + 12} y1={oy + 38} x2={ox + 22} y2={oy + 39} stroke="#DDD7CB" strokeWidth="0.4" opacity="0.4" />
+                <Circle cx={ox + 10} cy={oy + 20} r={0.6} fill="#D5CFC3" opacity="0.3" />
+                <Circle cx={ox + 45} cy={oy + 15} r={0.5} fill="#DBD5C9" opacity="0.25" />
+                <Circle cx={ox + 25} cy={oy + 42} r={0.6} fill="#D5CFC3" opacity="0.35" />
+              </G>
+            );
+          })
+        )}
 
-        {/* Map grid overlay */}
-        <Rect x="0" y="0" width="100%" height="100%" fill="url(#mapGrid)" />
+        {/* Map grid overlay - rendered as direct lines */}
+        {verticalGridLines.map((x, i) => (
+          <Line key={`gv-${i}`} x1={x} y1={0} x2={x} y2={mapH} stroke={stroke} strokeWidth="0.5" opacity={0.045} />
+        ))}
+        {horizontalGridLines.map((y, i) => (
+          <Line key={`gh-${i}`} x1={0} y1={y} x2={mapW} y2={y} stroke={stroke} strokeWidth="0.5" opacity={0.045} />
+        ))}
 
         {/* Rhumb lines from bottom-left compass */}
         {rhumbLines(cx1, cy1, 32, Math.max(mapW, mapH)).map((l, i) => (
@@ -197,11 +205,11 @@ const TextureBackground = () => {
           })}
         </G>
 
-        {/* Decorative border dashes (top and bottom) */}
+        {/* Decorative border dashes (top) */}
         {Array.from({ length: Math.ceil(mapW / 20) }).map((_, i) => (
           <React.Fragment key={`border-${i}`}>
-            <Rect x={i * 20} y={0} width={10} height={6} fill={stroke} opacity={opacity * 1.5} />
-            <Rect x={i * 20 + 10} y={0} width={10} height={6} fill={stroke} opacity={opacity * 0.5} />
+            <Rect x={i * 20} y={0} width={10} height={6} fill={stroke} opacity={0.12} />
+            <Rect x={i * 20 + 10} y={0} width={10} height={6} fill={stroke} opacity={0.04} />
           </React.Fragment>
         ))}
       </Svg>
