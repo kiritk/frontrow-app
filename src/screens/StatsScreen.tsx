@@ -8,7 +8,6 @@ import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colo
 import { getTeamByName } from '../data/nflTeams';
 import { getMLBTeamByName } from '../data/mlbTeams';
 import Svg, { Circle, G, Path } from 'react-native-svg';
-import TextureBackground from '../components/TextureBackground';
 
 interface Event {
   id: string;
@@ -202,7 +201,6 @@ export default function StatsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <TextureBackground />
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
