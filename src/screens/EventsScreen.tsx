@@ -70,15 +70,33 @@ export default function EventsScreen() {
     fetchEvents();
   }, [fetchEvents]);
 
-  useEffect(() => {
+  // Events filtered by year only (used for determining visible categories)
+  const yearFilteredEvents = React.useMemo(() => {
     let filtered = [...events];
-
-    // Filter by year
     if (selectedYear !== 'All' && selectedYear !== 'Upcoming') {
       filtered = filtered.filter(e => new Date(e.date).getFullYear().toString() === selectedYear);
     } else if (selectedYear === 'Upcoming') {
       filtered = filtered.filter(e => new Date(e.date) >= new Date());
     }
+    return filtered;
+  }, [events, selectedYear]);
+
+  // Categories that have at least one event in the current year filter
+  const visibleCategories = React.useMemo(() => {
+    if (yearFilteredEvents.length === 0) return [];
+    const eventTypes = new Set(yearFilteredEvents.map(e => e.type));
+    return CATEGORIES.filter(cat => cat.key === 'all' || eventTypes.has(cat.key));
+  }, [yearFilteredEvents]);
+
+  // Reset category selection when it becomes unavailable
+  useEffect(() => {
+    if (selectedCategory !== 'all' && !visibleCategories.some(c => c.key === selectedCategory)) {
+      setSelectedCategory('all');
+    }
+  }, [visibleCategories, selectedCategory]);
+
+  useEffect(() => {
+    let filtered = yearFilteredEvents;
 
     // Filter by category
     if (selectedCategory !== 'all') {
@@ -86,7 +104,7 @@ export default function EventsScreen() {
     }
 
     setFilteredEvents(filtered);
-  }, [events, selectedYear, selectedCategory]);
+  }, [yearFilteredEvents, selectedCategory]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -194,32 +212,34 @@ export default function EventsScreen() {
           </View>
 
           {/* Category Pills */}
-          <View style={styles.categoryPillsContainer}>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false} 
-              contentContainerStyle={styles.categoryPillsContent}
-            >
-              {CATEGORIES.map(cat => (
-                <TouchableOpacity
-                  key={cat.key}
-                  style={[styles.categoryPill, selectedCategory === cat.key && styles.categoryPillActive]}
-                  onPress={() => setSelectedCategory(cat.key)}
-                >
-                  {cat.icon && (
-                    <Ionicons 
-                      name={cat.icon as any} 
-                      size={16} 
-                      color={selectedCategory === cat.key ? COLORS.white : COLORS.navy} 
-                    />
-                  )}
-                  <Text style={[styles.categoryPillText, selectedCategory === cat.key && styles.categoryPillTextActive]}>
-                    {cat.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
+          {visibleCategories.length > 0 && (
+            <View style={styles.categoryPillsContainer}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.categoryPillsContent}
+              >
+                {visibleCategories.map(cat => (
+                  <TouchableOpacity
+                    key={cat.key}
+                    style={[styles.categoryPill, selectedCategory === cat.key && styles.categoryPillActive]}
+                    onPress={() => setSelectedCategory(cat.key)}
+                  >
+                    {cat.icon && (
+                      <Ionicons
+                        name={cat.icon as any}
+                        size={16}
+                        color={selectedCategory === cat.key ? COLORS.white : COLORS.navy}
+                      />
+                    )}
+                    <Text style={[styles.categoryPillText, selectedCategory === cat.key && styles.categoryPillTextActive]}>
+                      {cat.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
 
           {/* Events Grid */}
           <FlatList
