@@ -8,6 +8,7 @@ import { getLocalEvents, deleteLocalEvent } from '../lib/localStorage';
 import EventCard from '../components/EventCard';
 import EventsMap from '../components/EventsMap';
 import * as Haptics from 'expo-haptics';
+import TextureBackground from '../components/TextureBackground';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
 interface Event {
@@ -127,6 +128,7 @@ export default function EventsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <TextureBackground />
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.logoText}>Front Row</Text>
