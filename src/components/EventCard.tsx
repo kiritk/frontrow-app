@@ -1,13 +1,16 @@
-import React, { useState, useRef } from 'react';
-import { 
-  View, Text, StyleSheet, TouchableOpacity, Alert, useWindowDimensions, 
-  ImageBackground, Image, Animated, Modal, FlatList, Dimensions 
+import React, { useState } from 'react';
+import {
+  View, Text, StyleSheet, TouchableOpacity, Alert, useWindowDimensions,
+  ImageBackground, Image, Modal, FlatList, Dimensions, TextInput, Platform,
+  KeyboardAvoidingView, TouchableWithoutFeedback
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
+import { updateLocalEvent } from '../lib/localStorage';
 import { COLORS, FONTS, SPACING, FONT_SIZES, BORDER_RADIUS } from '../theme/colors';
 import { getTeamByName } from '../data/nflTeams';
 import { getMLBTeamByName } from '../data/mlbTeams';
@@ -54,65 +57,80 @@ const OTHER_COLORS = {
 
 export default function EventCard({ event, onDelete, onUpdate }: EventCardProps) {
   const { width } = useWindowDimensions();
+  const { isGuest } = useAuth();
   const CARD_WIDTH = (width - 48 - 12) / 2;
   const CARD_HEIGHT = CARD_WIDTH * 1.2;
   const PERFORATION_TOP = CARD_HEIGHT * 0.2;
 
-  const [isFlipped, setIsFlipped] = useState(false);
+  const [showActionModal, setShowActionModal] = useState(false);
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
+  const [showEditModal, setShowEditModal] = useState<'title' | 'date' | 'location' | null>(null);
+  const [editValue, setEditValue] = useState('');
   const [photos, setPhotos] = useState<string[]>(event.photos || []);
-  const flipAnimation = useRef(new Animated.Value(0)).current;
+  const [title, setTitle] = useState(event.title);
+  const [date, setDate] = useState(event.date);
+  const [venue, setVenue] = useState(event.venue);
 
   const photoCount = photos.length;
 
-  const flipToBack = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setIsFlipped(true);
-    Animated.spring(flipAnimation, {
-      toValue: 1,
-      friction: 8,
-      tension: 10,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const flipToFront = () => {
-    setIsFlipped(false);
-    Animated.spring(flipAnimation, {
-      toValue: 0,
-      friction: 8,
-      tension: 10,
-      useNativeDriver: true,
-    }).start();
-  };
-
   const handleCardPress = () => {
-    if (isFlipped) {
-      flipToFront();
-    } else {
-      flipToBack();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setShowActionModal(true);
+  };
+
+  const updateEvent = async (updates: Record<string, any>) => {
+    try {
+      if (isGuest) {
+        await updateLocalEvent(event.id, updates);
+      } else {
+        await supabase.from('events').update(updates).eq('id', event.id);
+      }
+      onUpdate?.();
+    } catch (error) {
+      console.error('Error updating event:', error);
     }
   };
 
-  const frontInterpolate = flipAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '180deg'],
-  });
-
-  const backInterpolate = flipAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['180deg', '360deg'],
-  });
-
-  const frontAnimatedStyle = {
-    transform: [{ rotateY: frontInterpolate }],
+  const openEditModal = (field: 'title' | 'date' | 'location') => {
+    setShowActionModal(false);
+    if (field === 'title') setEditValue(title);
+    else if (field === 'date') setEditValue(date);
+    else setEditValue(venue);
+    setShowEditModal(field);
   };
 
-  const backAnimatedStyle = {
-    transform: [{ rotateY: backInterpolate }],
+  const saveEdit = async () => {
+    if (!editValue.trim()) return;
+    if (showEditModal === 'title') {
+      setTitle(editValue.trim());
+      await updateEvent({ title: editValue.trim() });
+    } else if (showEditModal === 'date') {
+      setDate(editValue.trim());
+      await updateEvent({ date: editValue.trim() });
+    } else if (showEditModal === 'location') {
+      setVenue(editValue.trim());
+      await updateEvent({ venue: editValue.trim() });
+    }
+    setShowEditModal(null);
+  };
+
+  const removePhotos = async () => {
+    Alert.alert('Remove Photos', 'Remove all photos from this event?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: async () => {
+          setPhotos([]);
+          await updateEvent({ photos: [] });
+          setShowActionModal(false);
+        },
+      },
+    ]);
   };
 
   const pickImages = async () => {
+    setShowActionModal(false);
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission needed', 'Please allow access to your photos');
@@ -135,18 +153,13 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
     if (!result.canceled) {
       const newPhotos = [...photos, ...result.assets.map(a => a.uri)].slice(0, 6);
       setPhotos(newPhotos);
-      
-      try {
-        await supabase.from('events').update({ photos: newPhotos }).eq('id', event.id);
-        onUpdate?.();
-      } catch (error) {
-        console.error('Error updating photos:', error);
-      }
+      await updateEvent({ photos: newPhotos });
     }
   };
 
   const confirmDelete = () => {
-    Alert.alert('Delete Event', `Delete "${event.title}"?`, [
+    setShowActionModal(false);
+    Alert.alert('Delete Event', `Delete "${title}"?`, [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: onDelete },
     ]);
@@ -178,7 +191,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
     return { month, day, year };
   };
 
-  const { month, day, year } = formatDate(event.date);
+  const { month, day, year } = formatDate(date);
   const cardStyle = getCardStyle();
 
   const isNFLGame = event.sport === 'nfl' && event.home_team && event.away_team;
@@ -219,49 +232,106 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
     </Modal>
   );
 
-  const renderBackSide = () => (
-    <View style={[styles.cardBack, { height: CARD_HEIGHT }]}>
-      {/* Delete button */}
-      <TouchableOpacity style={styles.deleteButton} onPress={confirmDelete}>
-        <Ionicons name="trash-outline" size={18} color={COLORS.white} />
-      </TouchableOpacity>
+  const renderActionModal = () => (
+    <Modal visible={showActionModal} transparent animationType="fade" onRequestClose={() => setShowActionModal(false)}>
+      <TouchableWithoutFeedback onPress={() => setShowActionModal(false)}>
+        <View style={styles.modalOverlay}>
+          <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+            <View style={styles.actionModalContent}>
+              {/* Close button */}
+              <TouchableOpacity style={styles.modalCloseButton} onPress={() => setShowActionModal(false)}>
+                <Ionicons name="close" size={22} color={COLORS.navy} />
+              </TouchableOpacity>
 
-      <View style={styles.backContent}>
-        <Text style={styles.backPhotoCount}>{photoCount} Photo{photoCount !== 1 ? 's' : ''}</Text>
-        
-        <View style={styles.backButtonsContainer}>
-          {photoCount === 0 && (
-            <TouchableOpacity style={styles.backButton} onPress={pickImages}>
-              <Ionicons name="camera-outline" size={20} color={COLORS.navy} />
-              <Text style={styles.backButtonText}>Add Photos</Text>
-            </TouchableOpacity>
-          )}
-          
-          {photoCount > 0 && photoCount < 6 && (
-            <>
-              <TouchableOpacity style={styles.backButton} onPress={pickImages}>
-                <Ionicons name="camera-outline" size={20} color={COLORS.navy} />
-                <Text style={styles.backButtonText}>Add Photos</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.backButton, styles.backButtonSecondary]} onPress={() => setShowPhotoViewer(true)}>
-                <Ionicons name="images-outline" size={20} color={COLORS.white} />
-                <Text style={styles.backButtonTextSecondary}>View Photos</Text>
-              </TouchableOpacity>
-            </>
-          )}
-          
-          {photoCount >= 6 && (
-            <TouchableOpacity style={[styles.backButton, styles.backButtonSecondary]} onPress={() => setShowPhotoViewer(true)}>
-              <Ionicons name="images-outline" size={20} color={COLORS.white} />
-              <Text style={styles.backButtonTextSecondary}>View Photos</Text>
-            </TouchableOpacity>
-          )}
+              <Text style={styles.actionModalTitle}>{title}</Text>
+
+              <View style={styles.actionModalOptions}>
+                <TouchableOpacity style={styles.actionOption} onPress={() => openEditModal('title')}>
+                  <Ionicons name="pencil-outline" size={20} color={COLORS.navy} />
+                  <Text style={styles.actionOptionText}>Edit Event Title</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.actionOption} onPress={() => openEditModal('date')}>
+                  <Ionicons name="calendar-outline" size={20} color={COLORS.navy} />
+                  <Text style={styles.actionOptionText}>Edit Event Date</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.actionOption} onPress={() => openEditModal('location')}>
+                  <Ionicons name="location-outline" size={20} color={COLORS.navy} />
+                  <Text style={styles.actionOptionText}>Edit Event Location</Text>
+                </TouchableOpacity>
+
+                <View style={styles.actionDivider} />
+
+                <TouchableOpacity style={styles.actionOption} onPress={pickImages}>
+                  <Ionicons name="cloud-upload-outline" size={20} color={COLORS.navy} />
+                  <Text style={styles.actionOptionText}>Upload Photos</Text>
+                </TouchableOpacity>
+
+                {photoCount > 0 && (
+                  <TouchableOpacity style={styles.actionOption} onPress={() => { setShowActionModal(false); setShowPhotoViewer(true); }}>
+                    <Ionicons name="images-outline" size={20} color={COLORS.navy} />
+                    <Text style={styles.actionOptionText}>View Uploaded Photos</Text>
+                  </TouchableOpacity>
+                )}
+
+                {photoCount > 0 && (
+                  <TouchableOpacity style={styles.actionOption} onPress={removePhotos}>
+                    <Ionicons name="trash-outline" size={20} color="#E53935" />
+                    <Text style={[styles.actionOptionText, { color: '#E53935' }]}>Remove Uploaded Photos</Text>
+                  </TouchableOpacity>
+                )}
+
+                <View style={styles.actionDivider} />
+
+                <TouchableOpacity style={styles.actionOption} onPress={confirmDelete}>
+                  <Ionicons name="close-circle-outline" size={20} color="#E53935" />
+                  <Text style={[styles.actionOptionText, { color: '#E53935' }]}>Delete Event</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
         </View>
-
-        <Text style={styles.backTapHint}>Tap to flip back</Text>
-      </View>
-    </View>
+      </TouchableWithoutFeedback>
+    </Modal>
   );
+
+  const renderEditModal = () => {
+    const fieldLabel = showEditModal === 'title' ? 'Title' : showEditModal === 'date' ? 'Date' : 'Location';
+    return (
+      <Modal visible={showEditModal !== null} transparent animationType="fade" onRequestClose={() => setShowEditModal(null)}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+          <TouchableWithoutFeedback onPress={() => setShowEditModal(null)}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+                <View style={styles.editModalContent}>
+                  <Text style={styles.editModalTitle}>Edit {fieldLabel}</Text>
+                  <TextInput
+                    style={styles.editModalInput}
+                    value={editValue}
+                    onChangeText={setEditValue}
+                    autoFocus
+                    placeholder={`Enter ${fieldLabel.toLowerCase()}`}
+                    placeholderTextColor={COLORS.gray}
+                    returnKeyType="done"
+                    onSubmitEditing={saveEdit}
+                  />
+                  <View style={styles.editModalButtons}>
+                    <TouchableOpacity style={styles.editModalCancelButton} onPress={() => setShowEditModal(null)}>
+                      <Text style={styles.editModalCancelText}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.editModalSaveButton} onPress={saveEdit}>
+                      <Text style={styles.editModalSaveText}>Save</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </Modal>
+    );
+  };
 
   const renderTeamSportCard = () => {
     const homeColor = homeTeam?.primaryColor || '#2a1a3a';
@@ -288,7 +358,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
             </View>
             <View style={styles.teamVenueSection}>
               <Ionicons name="location-outline" size={12} color="#FFFFFF" />
-              <Text style={styles.teamVenueText} numberOfLines={2}>{event.venue}</Text>
+              <Text style={styles.teamVenueText} numberOfLines={2}>{venue}</Text>
             </View>
           </View>
         </View>
@@ -306,7 +376,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
         </ImageBackground>
       </View>
       <View style={styles.bottomSection}>
-        <Text style={styles.concertTitle} numberOfLines={2}>{event.title.toUpperCase()}</Text>
+        <Text style={styles.concertTitle} numberOfLines={2}>{title.toUpperCase()}</Text>
         <View style={styles.infoRow}>
           <View style={styles.concertDatePill}>
             <Text style={styles.concertDatePillMonth}>{month} {day}</Text>
@@ -314,7 +384,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
           </View>
           <View style={styles.venueSection}>
             <Ionicons name="location-outline" size={12} color={CONCERT_COLORS.accentLight} />
-            <Text style={styles.concertVenueText} numberOfLines={2}>{event.venue}</Text>
+            <Text style={styles.concertVenueText} numberOfLines={2}>{venue}</Text>
           </View>
         </View>
       </View>
@@ -331,7 +401,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
         </ImageBackground>
       </View>
       <View style={[styles.bottomSection, { backgroundColor: THEATER_COLORS.gradientStart }]}>
-        <Text style={styles.theaterTitle} numberOfLines={2}>{event.title.toUpperCase()}</Text>
+        <Text style={styles.theaterTitle} numberOfLines={2}>{title.toUpperCase()}</Text>
         <View style={styles.infoRow}>
           <View style={styles.theaterDatePill}>
             <Text style={styles.theaterDatePillMonth}>{month} {day}</Text>
@@ -339,7 +409,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
           </View>
           <View style={styles.venueSection}>
             <Ionicons name="location-outline" size={12} color={THEATER_COLORS.accentLight} />
-            <Text style={styles.theaterVenueText} numberOfLines={2}>{event.venue}</Text>
+            <Text style={styles.theaterVenueText} numberOfLines={2}>{venue}</Text>
           </View>
         </View>
       </View>
@@ -356,7 +426,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
         </ImageBackground>
       </View>
       <View style={[styles.bottomSection, { backgroundColor: COMEDY_COLORS.gradientStart }]}>
-        <Text style={styles.comedyTitle} numberOfLines={2}>{event.title}</Text>
+        <Text style={styles.comedyTitle} numberOfLines={2}>{title}</Text>
         <View style={styles.infoRow}>
           <View style={styles.comedyDatePill}>
             <Text style={styles.comedyDatePillMonth}>{month} {day}</Text>
@@ -364,7 +434,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
           </View>
           <View style={styles.venueSection}>
             <Ionicons name="location-outline" size={12} color={COMEDY_COLORS.accentLight} />
-            <Text style={styles.comedyVenueText} numberOfLines={2}>{event.venue}</Text>
+            <Text style={styles.comedyVenueText} numberOfLines={2}>{venue}</Text>
           </View>
         </View>
       </View>
@@ -381,7 +451,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
         </ImageBackground>
       </View>
       <View style={[styles.bottomSection, { backgroundColor: LANDMARK_COLORS.gradientStart }]}>
-        <Text style={styles.landmarkTitle} numberOfLines={2}>{event.title.toUpperCase()}</Text>
+        <Text style={styles.landmarkTitle} numberOfLines={2}>{title.toUpperCase()}</Text>
         <View style={styles.infoRow}>
           <View style={styles.landmarkDatePill}>
             <Text style={styles.landmarkDatePillMonth}>{month} {day}</Text>
@@ -389,7 +459,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
           </View>
           <View style={styles.venueSection}>
             <Ionicons name="location-outline" size={12} color={LANDMARK_COLORS.accentLight} />
-            <Text style={styles.landmarkVenueText} numberOfLines={2}>{event.venue}</Text>
+            <Text style={styles.landmarkVenueText} numberOfLines={2}>{venue}</Text>
           </View>
         </View>
       </View>
@@ -406,7 +476,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
         </ImageBackground>
       </View>
       <View style={[styles.bottomSection, { backgroundColor: OTHER_COLORS.gradientStart }]}>
-        <Text style={styles.otherTitle} numberOfLines={2}>{event.title}</Text>
+        <Text style={styles.otherTitle} numberOfLines={2}>{title}</Text>
         <View style={styles.infoRow}>
           <View style={styles.otherDatePill}>
             <Text style={styles.otherDatePillMonth}>{month} {day}</Text>
@@ -414,7 +484,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
           </View>
           <View style={styles.venueSection}>
             <Ionicons name="location-outline" size={12} color={OTHER_COLORS.accentLight} />
-            <Text style={styles.otherVenueText} numberOfLines={2}>{event.venue}</Text>
+            <Text style={styles.otherVenueText} numberOfLines={2}>{venue}</Text>
           </View>
         </View>
       </View>
@@ -432,10 +502,10 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
               <LinearGradient colors={['transparent', cardStyle.gradientColors[0] + 'CC']} style={StyleSheet.absoluteFill} />
             </ImageBackground>
           ) : (
-            <Text style={styles.defaultTitle} numberOfLines={2}>{event.title.toUpperCase()}</Text>
+            <Text style={styles.defaultTitle} numberOfLines={2}>{title.toUpperCase()}</Text>
           )}
         </View>
-        {photos?.length > 0 && <Text style={styles.defaultTitleWithPhoto} numberOfLines={2}>{event.title.toUpperCase()}</Text>}
+        {photos?.length > 0 && <Text style={styles.defaultTitleWithPhoto} numberOfLines={2}>{title.toUpperCase()}</Text>}
         <View style={styles.defaultInfoSection}>
           <View style={[styles.defaultDateBadge, { backgroundColor: cardStyle.accentColor + '20', borderColor: cardStyle.accentColor }]}>
             <Text style={[styles.defaultDateText, { color: cardStyle.accentColor }]}>{month} {day}</Text>
@@ -443,7 +513,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
           </View>
           <View style={styles.defaultVenueContainer}>
             <Ionicons name="location-outline" size={10} color="#fff" />
-            <Text style={styles.defaultVenueText} numberOfLines={2}>{event.venue}</Text>
+            <Text style={styles.defaultVenueText} numberOfLines={2}>{venue}</Text>
           </View>
         </View>
       </LinearGradient>
@@ -462,24 +532,12 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
 
   return (
     <View style={[styles.cardWrapper, { width: CARD_WIDTH, height: CARD_HEIGHT }]}>
-      {/* Front Side */}
-      {!isFlipped && (
-        <Animated.View style={[styles.cardFace, { height: CARD_HEIGHT }, frontAnimatedStyle]}>
-          <TouchableOpacity onPress={handleCardPress} activeOpacity={0.95} style={{ flex: 1 }}>
-            {renderFrontCard()}
-          </TouchableOpacity>
-        </Animated.View>
-      )}
+      <TouchableOpacity onPress={handleCardPress} activeOpacity={0.95} style={{ flex: 1 }}>
+        {renderFrontCard()}
+      </TouchableOpacity>
 
-      {/* Back Side */}
-      {isFlipped && (
-        <Animated.View style={[styles.cardFace, { height: CARD_HEIGHT }, backAnimatedStyle]}>
-          <TouchableOpacity onPress={handleCardPress} activeOpacity={0.95} style={{ flex: 1 }}>
-            {renderBackSide()}
-          </TouchableOpacity>
-        </Animated.View>
-      )}
-
+      {renderActionModal()}
+      {renderEditModal()}
       {renderPhotoViewer()}
     </View>
   );
@@ -494,75 +552,109 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 8,
   },
-  cardFace: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    backfaceVisibility: 'hidden',
-  },
-  cardBack: {
-    backgroundColor: COLORS.white,
-    borderRadius: 8,
-    overflow: 'hidden',
+  modalOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  deleteButton: {
+  actionModalContent: {
+    backgroundColor: COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    width: SCREEN_WIDTH - 64,
+    maxWidth: 340,
+    position: 'relative',
+  },
+  modalCloseButton: {
     position: 'absolute',
-    top: 8,
-    right: 8,
+    top: 12,
+    right: 12,
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#E53935',
+    backgroundColor: COLORS.cream,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
   },
-  backContent: {
-    flex: 1,
-    padding: SPACING.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backPhotoCount: {
+  actionModalTitle: {
     fontFamily: FONTS.bold,
-    fontSize: FONT_SIZES.xl,
+    fontSize: FONT_SIZES.lg,
     color: COLORS.navy,
     marginBottom: SPACING.lg,
+    paddingRight: 36,
   },
-  backButtonsContainer: {
-    width: '100%',
-    gap: SPACING.sm,
+  actionModalOptions: {
+    gap: 4,
   },
-  backButton: {
+  actionOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    gap: 12,
+  },
+  actionOptionText: {
+    fontFamily: FONTS.medium,
+    fontSize: FONT_SIZES.md,
+    color: COLORS.navy,
+  },
+  actionDivider: {
+    height: 1,
     backgroundColor: COLORS.cream,
+    marginVertical: 4,
+  },
+  editModalContent: {
+    backgroundColor: COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    width: SCREEN_WIDTH - 64,
+    maxWidth: 340,
+  },
+  editModalTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: FONT_SIZES.lg,
+    color: COLORS.navy,
+    marginBottom: SPACING.md,
+  },
+  editModalInput: {
+    fontFamily: FONTS.regular,
+    fontSize: FONT_SIZES.md,
+    color: COLORS.navy,
+    borderWidth: 1,
+    borderColor: COLORS.cream,
+    borderRadius: BORDER_RADIUS.md,
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
-    borderRadius: BORDER_RADIUS.lg,
-    gap: SPACING.xs,
+    marginBottom: SPACING.lg,
   },
-  backButtonSecondary: {
-    backgroundColor: COLORS.navy,
+  editModalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: SPACING.sm,
   },
-  backButtonText: {
-    fontFamily: FONTS.semiBold,
+  editModalCancelButton: {
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: COLORS.cream,
+  },
+  editModalCancelText: {
+    fontFamily: FONTS.medium,
     fontSize: FONT_SIZES.sm,
     color: COLORS.navy,
   },
-  backButtonTextSecondary: {
-    fontFamily: FONTS.semiBold,
+  editModalSaveButton: {
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: COLORS.navy,
+  },
+  editModalSaveText: {
+    fontFamily: FONTS.medium,
     fontSize: FONT_SIZES.sm,
     color: COLORS.white,
-  },
-  backTapHint: {
-    fontFamily: FONTS.regular,
-    fontSize: FONT_SIZES.xs,
-    color: COLORS.gray,
-    marginTop: SPACING.lg,
   },
   card: {
     borderRadius: 8,
