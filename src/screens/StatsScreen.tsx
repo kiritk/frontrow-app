@@ -25,7 +25,7 @@ interface Event {
 const TextureBackground = () => {
   const mapW = SCREEN_WIDTH;
   const mapH = SCREEN_HEIGHT * 2;
-  const opacity = 0.06;
+  const opacity = 0.15;
   const stroke = '#8B7355';
 
   // Compass rose center (bottom-left area, like the reference image)
