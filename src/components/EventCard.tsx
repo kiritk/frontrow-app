@@ -92,7 +92,6 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
   };
 
   const openEditModal = (field: 'title' | 'date' | 'location') => {
-    setShowActionModal(false);
     if (field === 'title') setEditValue(title);
     else if (field === 'date') setEditValue(date);
     else setEditValue(venue);
@@ -114,23 +113,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
     setShowEditModal(null);
   };
 
-  const removePhotos = async () => {
-    Alert.alert('Remove Photos', 'Remove all photos from this event?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: async () => {
-          setPhotos([]);
-          await updateEvent({ photos: [] });
-          setShowActionModal(false);
-        },
-      },
-    ]);
-  };
-
   const pickImages = async () => {
-    setShowActionModal(false);
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission needed', 'Please allow access to your photos');
@@ -232,77 +215,95 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
     </Modal>
   );
 
-  const renderActionModal = () => (
-    <Modal visible={showActionModal} transparent animationType="fade" onRequestClose={() => setShowActionModal(false)}>
-      <TouchableWithoutFeedback onPress={() => setShowActionModal(false)}>
-        <View style={styles.modalOverlay}>
-          <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-            <View style={styles.actionModalContent}>
-              {/* Close button */}
-              <TouchableOpacity style={styles.modalCloseButton} onPress={() => setShowActionModal(false)}>
-                <Ionicons name="close" size={22} color={COLORS.navy} />
-              </TouchableOpacity>
+  const removePhoto = async (index: number) => {
+    const newPhotos = photos.filter((_, i) => i !== index);
+    setPhotos(newPhotos);
+    await updateEvent({ photos: newPhotos });
+  };
 
-              <Text style={styles.actionModalTitle}>{title}</Text>
+  const PHOTO_GRID_SIZE = (SCREEN_WIDTH - 64 - SPACING.lg * 2 - 8 * 2) / 3;
 
-              <View style={styles.actionModalOptions}>
-                <TouchableOpacity style={styles.actionOption} onPress={() => openEditModal('title')}>
-                  <Ionicons name="pencil-outline" size={20} color={COLORS.navy} />
-                  <Text style={styles.actionOptionText}>Edit Event Title</Text>
+  const renderActionModal = () => {
+    const displayDate = formatDate(date);
+    return (
+      <Modal visible={showActionModal} transparent animationType="fade" onRequestClose={() => setShowActionModal(false)}>
+        <TouchableWithoutFeedback onPress={() => setShowActionModal(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+              <View style={styles.detailModalContent}>
+                {/* Close button */}
+                <TouchableOpacity style={styles.modalCloseButton} onPress={() => setShowActionModal(false)}>
+                  <Ionicons name="close" size={22} color={COLORS.navy} />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.actionOption} onPress={() => openEditModal('date')}>
-                  <Ionicons name="calendar-outline" size={20} color={COLORS.navy} />
-                  <Text style={styles.actionOptionText}>Edit Event Date</Text>
+                {/* Tappable Title */}
+                <TouchableOpacity onPress={() => openEditModal('title')} style={styles.detailFieldRow}>
+                  <Text style={styles.detailTitle} numberOfLines={2}>{title}</Text>
+                  <Ionicons name="pencil-outline" size={16} color={COLORS.gray} />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.actionOption} onPress={() => openEditModal('location')}>
-                  <Ionicons name="location-outline" size={20} color={COLORS.navy} />
-                  <Text style={styles.actionOptionText}>Edit Event Location</Text>
-                </TouchableOpacity>
-
-                <View style={styles.actionDivider} />
-
-                <TouchableOpacity style={styles.actionOption} onPress={pickImages}>
-                  <Ionicons name="cloud-upload-outline" size={20} color={COLORS.navy} />
-                  <Text style={styles.actionOptionText}>Upload Photos</Text>
-                </TouchableOpacity>
-
-                {photoCount > 0 && (
-                  <TouchableOpacity style={styles.actionOption} onPress={() => { setShowActionModal(false); setShowPhotoViewer(true); }}>
-                    <Ionicons name="images-outline" size={20} color={COLORS.navy} />
-                    <Text style={styles.actionOptionText}>View Uploaded Photos</Text>
+                {/* Date & Location row */}
+                <View style={styles.detailMetaRow}>
+                  <TouchableOpacity onPress={() => openEditModal('date')} style={styles.detailMetaField}>
+                    <Ionicons name="calendar-outline" size={16} color={COLORS.navy} />
+                    <Text style={styles.detailMetaText}>{displayDate.month} {displayDate.day}, {displayDate.year}</Text>
+                    <Ionicons name="pencil-outline" size={12} color={COLORS.gray} />
                   </TouchableOpacity>
-                )}
 
-                {photoCount > 0 && (
-                  <TouchableOpacity style={styles.actionOption} onPress={removePhotos}>
-                    <Ionicons name="trash-outline" size={20} color="#E53935" />
-                    <Text style={[styles.actionOptionText, { color: '#E53935' }]}>Remove Uploaded Photos</Text>
+                  <TouchableOpacity onPress={() => openEditModal('location')} style={[styles.detailMetaField, { flex: 1 }]}>
+                    <Ionicons name="location-outline" size={16} color={COLORS.navy} />
+                    <Text style={styles.detailMetaText} numberOfLines={1}>{venue}</Text>
+                    <Ionicons name="pencil-outline" size={12} color={COLORS.gray} />
                   </TouchableOpacity>
-                )}
+                </View>
 
-                <View style={styles.actionDivider} />
+                {/* Photo Grid */}
+                <View style={styles.detailPhotoGrid}>
+                  {photos.map((photo, index) => (
+                    <View key={index} style={[styles.detailPhotoWrapper, { width: PHOTO_GRID_SIZE, height: PHOTO_GRID_SIZE }]}>
+                      <TouchableOpacity
+                        onPress={() => { setShowActionModal(false); setShowPhotoViewer(true); }}
+                        activeOpacity={0.85}
+                      >
+                        <Image source={{ uri: photo }} style={[styles.detailPhoto, { width: PHOTO_GRID_SIZE, height: PHOTO_GRID_SIZE }]} />
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.detailPhotoRemove} onPress={() => removePhoto(index)}>
+                        <Ionicons name="close-circle" size={20} color="#E53935" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
 
-                <TouchableOpacity style={styles.actionOption} onPress={confirmDelete}>
-                  <Ionicons name="close-circle-outline" size={20} color="#E53935" />
-                  <Text style={[styles.actionOptionText, { color: '#E53935' }]}>Delete Event</Text>
+                  {photoCount < 6 && (
+                    <TouchableOpacity
+                      style={[styles.detailAddPhotoButton, { width: PHOTO_GRID_SIZE, height: PHOTO_GRID_SIZE }]}
+                      onPress={pickImages}
+                    >
+                      <Ionicons name="add" size={28} color={COLORS.gray} />
+                      <Text style={styles.detailAddPhotoText}>Add</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                {/* Delete button */}
+                <TouchableOpacity style={styles.detailDeleteButton} onPress={confirmDelete}>
+                  <Ionicons name="trash-outline" size={18} color="#E53935" />
+                  <Text style={styles.detailDeleteText}>Delete Event</Text>
                 </TouchableOpacity>
               </View>
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
-    </Modal>
-  );
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+    );
+  };
 
   const renderEditModal = () => {
     const fieldLabel = showEditModal === 'title' ? 'Title' : showEditModal === 'date' ? 'Date' : 'Location';
     return (
       <Modal visible={showEditModal !== null} transparent animationType="fade" onRequestClose={() => setShowEditModal(null)}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
           <TouchableWithoutFeedback onPress={() => setShowEditModal(null)}>
-            <View style={styles.modalOverlay}>
+            <View style={styles.editModalOverlay}>
               <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
                 <View style={styles.editModalContent}>
                   <Text style={styles.editModalTitle}>Edit {fieldLabel}</Text>
@@ -554,16 +555,16 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  actionModalContent: {
+  detailModalContent: {
     backgroundColor: COLORS.white,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: 16,
     padding: SPACING.lg,
-    width: SCREEN_WIDTH - 64,
-    maxWidth: 340,
+    width: SCREEN_WIDTH - 48,
+    maxWidth: 380,
     position: 'relative',
   },
   modalCloseButton: {
@@ -578,32 +579,97 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 10,
   },
-  actionModalTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: FONT_SIZES.lg,
-    color: COLORS.navy,
-    marginBottom: SPACING.lg,
-    paddingRight: 36,
-  },
-  actionModalOptions: {
-    gap: 4,
-  },
-  actionOption: {
+  detailFieldRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 4,
-    gap: 12,
+    marginBottom: SPACING.md,
+    paddingRight: 36,
+    gap: 8,
   },
-  actionOptionText: {
+  detailTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 22,
+    color: COLORS.navy,
+    flex: 1,
+  },
+  detailMetaRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: SPACING.lg,
+  },
+  detailMetaField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.cream,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: BORDER_RADIUS.md,
+    gap: 6,
+  },
+  detailMetaText: {
+    fontFamily: FONTS.medium,
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.navy,
+    flexShrink: 1,
+  },
+  detailPhotoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: SPACING.lg,
+  },
+  detailPhotoWrapper: {
+    position: 'relative',
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  detailPhoto: {
+    borderRadius: 10,
+  },
+  detailPhotoRemove: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  detailAddPhotoButton: {
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: COLORS.cream,
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 2,
+  },
+  detailAddPhotoText: {
+    fontFamily: FONTS.medium,
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.gray,
+  },
+  detailDeleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.cream,
+  },
+  detailDeleteText: {
     fontFamily: FONTS.medium,
     fontSize: FONT_SIZES.md,
-    color: COLORS.navy,
+    color: '#E53935',
   },
-  actionDivider: {
-    height: 1,
-    backgroundColor: COLORS.cream,
-    marginVertical: 4,
+  editModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   editModalContent: {
     backgroundColor: COLORS.white,
