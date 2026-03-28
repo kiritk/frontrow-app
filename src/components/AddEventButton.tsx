@@ -419,15 +419,16 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
         {isTeamSport ? renderTeamSelection() : (
           <View style={styles.inputGroup}>
             <Text style={styles.label}>{prompts.name}</Text>
-            <TextInput 
-              style={styles.input} 
-              placeholder={prompts.placeholder} 
-              placeholderTextColor={COLORS.grayLight} 
-              value={eventName} 
-              onChangeText={setEventName} 
-              returnKeyType="next" 
+            <TextInput
+              style={styles.input}
+              placeholder={prompts.placeholder}
+              placeholderTextColor={COLORS.grayLight}
+              value={eventName}
+              onChangeText={setEventName}
+              returnKeyType="next"
               blurOnSubmit
-              onFocus={() => { setShowCityDropdown(false); setCityInputFocused(false); }} 
+              onFocus={() => { setShowCityDropdown(false); setCityInputFocused(true); }}
+              onBlur={() => setCityInputFocused(false)}
             />
           </View>
         )}
