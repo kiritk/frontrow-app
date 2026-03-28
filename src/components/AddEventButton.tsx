@@ -433,22 +433,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
           </View>
         )}
         
-        {isNonSportsEvent ? renderCitySelection() : (
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Where was it?</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Venue, City"
-              placeholderTextColor={COLORS.grayLight}
-              value={venue}
-              onChangeText={setVenue}
-              onFocus={() => setCityInputFocused(true)}
-              onBlur={() => setCityInputFocused(false)}
-              returnKeyType="done"
-              blurOnSubmit
-            />
-          </View>
-        )}
+        {isTeamSport ? null : renderCitySelection()}
         
         <View style={styles.inputGroup}>
           <Text style={styles.label}>When was it?</Text>
