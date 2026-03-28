@@ -419,35 +419,21 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
         {isTeamSport ? renderTeamSelection() : (
           <View style={styles.inputGroup}>
             <Text style={styles.label}>{prompts.name}</Text>
-            <TextInput 
-              style={styles.input} 
-              placeholder={prompts.placeholder} 
-              placeholderTextColor={COLORS.grayLight} 
-              value={eventName} 
-              onChangeText={setEventName} 
-              returnKeyType="next" 
+            <TextInput
+              style={styles.input}
+              placeholder={prompts.placeholder}
+              placeholderTextColor={COLORS.grayLight}
+              value={eventName}
+              onChangeText={setEventName}
+              returnKeyType="next"
               blurOnSubmit
-              onFocus={() => { setShowCityDropdown(false); setCityInputFocused(false); }} 
+              onFocus={() => { setShowCityDropdown(false); setCityInputFocused(true); }}
+              onBlur={() => setCityInputFocused(false)}
             />
           </View>
         )}
         
-        {isNonSportsEvent ? renderCitySelection() : (
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Where was it?</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Venue, City"
-              placeholderTextColor={COLORS.grayLight}
-              value={venue}
-              onChangeText={setVenue}
-              onFocus={() => setCityInputFocused(true)}
-              onBlur={() => setCityInputFocused(false)}
-              returnKeyType="done"
-              blurOnSubmit
-            />
-          </View>
-        )}
+        {isTeamSport ? null : renderCitySelection()}
         
         <View style={styles.inputGroup}>
           <Text style={styles.label}>When was it?</Text>
@@ -571,10 +557,10 @@ const styles = StyleSheet.create({
   typeLabel: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.lg, color: COLORS.navy, marginBottom: SPACING.xs, textAlign: 'center' },
   typeSubtitleText: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.sm, color: COLORS.gray, textAlign: 'center' },
   sportGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
-  sportCardWrapper: { width: '33.33%', padding: 6 },
-  sportCard: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, padding: SPACING.md, alignItems: 'center' },
-  sportEmoji: { fontSize: 36, marginBottom: 6 },
-  sportLabel: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.sm, color: COLORS.navy },
+  sportCardWrapper: { width: '50%', padding: 6 },
+  sportCard: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, padding: SPACING.lg, alignItems: 'center' },
+  sportEmoji: { fontSize: 48, marginBottom: SPACING.md },
+  sportLabel: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.lg, color: COLORS.navy, textAlign: 'center' },
   inputGroup: { marginBottom: SPACING.lg },
   label: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.md, color: COLORS.navy, marginBottom: SPACING.sm },
   input: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.navy, backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.md, padding: SPACING.md, paddingVertical: SPACING.lg, borderWidth: 1, borderColor: COLORS.grayLight },

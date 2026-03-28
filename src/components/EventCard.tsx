@@ -158,10 +158,10 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
       case 'sports':
         if (event.sport === 'nfl') return { gradientColors: ['#2a1a3a', '#4a2a5a', '#6a3a7a'] as [string, string, string], accentColor: '#c9a0dc' };
         if (event.sport === 'mlb') return { gradientColors: ['#1a3a1a', '#2a5a2a', '#3a7a3a'] as [string, string, string], accentColor: '#90EE90' };
-        if (event.sport === 'nba') return { gradientColors: ['#8b1538', '#a01d42', '#c0294f'] as [string, string, string], accentColor: '#ff4d6d' };
-        if (event.sport === 'soccer') return { gradientColors: ['#1a5f3c', '#228b4c', '#2ecc71'] as [string, string, string], accentColor: '#5ddb8d' };
+        if (event.sport === 'nba') return { gradientColors: ['#7a3000', '#c04e1a', '#f0622d'] as [string, string, string], accentColor: '#ffaa80' };
+        if (event.sport === 'soccer') return { gradientColors: ['#003d5c', '#005a8a', '#0077B6'] as [string, string, string], accentColor: '#66b8de' };
         if (event.sport === 'tennis') return { gradientColors: ['#3d5c00', '#4e7a00', '#6b9a00'] as [string, string, string], accentColor: '#a0c300' };
-        return { gradientColors: ['#1e3a5f', '#2d4a6f', '#3498db'] as [string, string, string], accentColor: '#5dade2' };
+        return { gradientColors: ['#5c0008', '#900010', '#c30010'] as [string, string, string], accentColor: '#ff6670' };
       default: return { gradientColors: ['#2c3e50', '#3a4f63', '#4a6278'] as [string, string, string], accentColor: '#85929e' };
     }
   };
@@ -184,11 +184,11 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
   const homeTeam = isNFLGame ? getTeamByName(event.home_team!.name) : isMLBGame ? getMLBTeamByName(event.home_team!.name) : null;
   const awayTeam = isNFLGame ? getTeamByName(event.away_team!.name) : isMLBGame ? getMLBTeamByName(event.away_team!.name) : null;
 
-  const getConcertBackground = () => photos?.length > 0 ? { uri: photos[0] } : require('../../assets/images/concert_bg.png');
-  const getTheaterBackground = () => photos?.length > 0 ? { uri: photos[0] } : require('../../assets/images/theater_bg.jpg');
-  const getComedyBackground = () => photos?.length > 0 ? { uri: photos[0] } : require('../../assets/images/comedy_bg.jpg');
-  const getLandmarkBackground = () => photos?.length > 0 ? { uri: photos[0] } : require('../../assets/images/landmark_bg.jpg');
-  const getOtherBackground = () => photos?.length > 0 ? { uri: photos[0] } : require('../../assets/images/other_bg.jpg');
+  const getConcertBackground = () => require('../../assets/images/concert_bg.png');
+  const getTheaterBackground = () => require('../../assets/images/theater_bg.jpg');
+  const getComedyBackground = () => require('../../assets/images/comedy_bg.jpg');
+  const getLandmarkBackground = () => require('../../assets/images/landmark_bg.jpg');
+  const getOtherBackground = () => require('../../assets/images/other_bg.jpg');
 
   const renderPhotoViewer = () => (
     <Modal visible={showPhotoViewer} transparent animationType="fade" onRequestClose={() => setShowPhotoViewer(false)}>
@@ -221,7 +221,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
     await updateEvent({ photos: newPhotos });
   };
 
-  const PHOTO_GRID_SIZE = (SCREEN_WIDTH - 64 - SPACING.lg * 2 - 8 * 2) / 3;
+  const PHOTO_GRID_SIZE = (SCREEN_WIDTH - 40 - SPACING.xl * 2 - 10 * 2) / 3;
 
   const renderActionModal = () => {
     const displayDate = formatDate(date);
@@ -498,15 +498,8 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
       <View style={[styles.perforationRight, { top: PERFORATION_TOP }]} />
       <LinearGradient colors={cardStyle.gradientColors} style={styles.defaultGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
         <View style={styles.defaultImageArea}>
-          {photos?.length > 0 ? (
-            <ImageBackground source={{ uri: photos[0] }} style={styles.defaultImageBg} imageStyle={{ borderRadius: 8 }}>
-              <LinearGradient colors={['transparent', cardStyle.gradientColors[0] + 'CC']} style={StyleSheet.absoluteFill} />
-            </ImageBackground>
-          ) : (
-            <Text style={styles.defaultTitle} numberOfLines={2}>{title.toUpperCase()}</Text>
-          )}
+          <Text style={styles.defaultTitle} numberOfLines={2}>{title.toUpperCase()}</Text>
         </View>
-        {photos?.length > 0 && <Text style={styles.defaultTitleWithPhoto} numberOfLines={2}>{title.toUpperCase()}</Text>}
         <View style={styles.defaultInfoSection}>
           <View style={[styles.defaultDateBadge, { backgroundColor: cardStyle.accentColor + '20', borderColor: cardStyle.accentColor }]}>
             <Text style={[styles.defaultDateText, { color: cardStyle.accentColor }]}>{month} {day}</Text>
@@ -562,9 +555,11 @@ const styles = StyleSheet.create({
   detailModalContent: {
     backgroundColor: COLORS.white,
     borderRadius: 16,
-    padding: SPACING.lg,
-    width: SCREEN_WIDTH - 48,
-    maxWidth: 380,
+    paddingHorizontal: SPACING.xl,
+    paddingTop: 28,
+    paddingBottom: SPACING.lg,
+    width: SCREEN_WIDTH - 40,
+    maxWidth: 400,
     position: 'relative',
   },
   modalCloseButton: {
@@ -582,8 +577,8 @@ const styles = StyleSheet.create({
   detailFieldRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SPACING.md,
-    paddingRight: 36,
+    marginBottom: SPACING.lg,
+    paddingRight: 40,
     gap: 8,
   },
   detailTitle: {
@@ -595,14 +590,14 @@ const styles = StyleSheet.create({
   detailMetaRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.xl,
   },
   detailMetaField: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.cream,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     borderRadius: BORDER_RADIUS.md,
     gap: 6,
   },
@@ -615,8 +610,8 @@ const styles = StyleSheet.create({
   detailPhotoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: SPACING.lg,
+    gap: 10,
+    marginBottom: SPACING.xl,
   },
   detailPhotoWrapper: {
     position: 'relative',
@@ -655,10 +650,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
     gap: 8,
     borderTopWidth: 1,
     borderTopColor: COLORS.cream,
+    marginTop: SPACING.sm,
   },
   detailDeleteText: {
     fontFamily: FONTS.medium,
