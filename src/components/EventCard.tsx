@@ -184,11 +184,11 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
   const homeTeam = isNFLGame ? getTeamByName(event.home_team!.name) : isMLBGame ? getMLBTeamByName(event.home_team!.name) : null;
   const awayTeam = isNFLGame ? getTeamByName(event.away_team!.name) : isMLBGame ? getMLBTeamByName(event.away_team!.name) : null;
 
-  const getConcertBackground = () => photos?.length > 0 ? { uri: photos[0] } : require('../../assets/images/concert_bg.png');
-  const getTheaterBackground = () => photos?.length > 0 ? { uri: photos[0] } : require('../../assets/images/theater_bg.jpg');
-  const getComedyBackground = () => photos?.length > 0 ? { uri: photos[0] } : require('../../assets/images/comedy_bg.jpg');
-  const getLandmarkBackground = () => photos?.length > 0 ? { uri: photos[0] } : require('../../assets/images/landmark_bg.jpg');
-  const getOtherBackground = () => photos?.length > 0 ? { uri: photos[0] } : require('../../assets/images/other_bg.jpg');
+  const getConcertBackground = () => require('../../assets/images/concert_bg.png');
+  const getTheaterBackground = () => require('../../assets/images/theater_bg.jpg');
+  const getComedyBackground = () => require('../../assets/images/comedy_bg.jpg');
+  const getLandmarkBackground = () => require('../../assets/images/landmark_bg.jpg');
+  const getOtherBackground = () => require('../../assets/images/other_bg.jpg');
 
   const renderPhotoViewer = () => (
     <Modal visible={showPhotoViewer} transparent animationType="fade" onRequestClose={() => setShowPhotoViewer(false)}>
@@ -498,15 +498,8 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
       <View style={[styles.perforationRight, { top: PERFORATION_TOP }]} />
       <LinearGradient colors={cardStyle.gradientColors} style={styles.defaultGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
         <View style={styles.defaultImageArea}>
-          {photos?.length > 0 ? (
-            <ImageBackground source={{ uri: photos[0] }} style={styles.defaultImageBg} imageStyle={{ borderRadius: 8 }}>
-              <LinearGradient colors={['transparent', cardStyle.gradientColors[0] + 'CC']} style={StyleSheet.absoluteFill} />
-            </ImageBackground>
-          ) : (
-            <Text style={styles.defaultTitle} numberOfLines={2}>{title.toUpperCase()}</Text>
-          )}
+          <Text style={styles.defaultTitle} numberOfLines={2}>{title.toUpperCase()}</Text>
         </View>
-        {photos?.length > 0 && <Text style={styles.defaultTitleWithPhoto} numberOfLines={2}>{title.toUpperCase()}</Text>}
         <View style={styles.defaultInfoSection}>
           <View style={[styles.defaultDateBadge, { backgroundColor: cardStyle.accentColor + '20', borderColor: cardStyle.accentColor }]}>
             <Text style={[styles.defaultDateText, { color: cardStyle.accentColor }]}>{month} {day}</Text>
