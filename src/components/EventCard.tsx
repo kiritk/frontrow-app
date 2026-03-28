@@ -221,7 +221,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
     await updateEvent({ photos: newPhotos });
   };
 
-  const PHOTO_GRID_SIZE = (SCREEN_WIDTH - 64 - SPACING.lg * 2 - 8 * 2) / 3;
+  const PHOTO_GRID_SIZE = (SCREEN_WIDTH - 40 - SPACING.xl * 2 - 10 * 2) / 3;
 
   const renderActionModal = () => {
     const displayDate = formatDate(date);
@@ -562,9 +562,11 @@ const styles = StyleSheet.create({
   detailModalContent: {
     backgroundColor: COLORS.white,
     borderRadius: 16,
-    padding: SPACING.lg,
-    width: SCREEN_WIDTH - 48,
-    maxWidth: 380,
+    paddingHorizontal: SPACING.xl,
+    paddingTop: 28,
+    paddingBottom: SPACING.lg,
+    width: SCREEN_WIDTH - 40,
+    maxWidth: 400,
     position: 'relative',
   },
   modalCloseButton: {
@@ -582,8 +584,8 @@ const styles = StyleSheet.create({
   detailFieldRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SPACING.md,
-    paddingRight: 36,
+    marginBottom: SPACING.lg,
+    paddingRight: 40,
     gap: 8,
   },
   detailTitle: {
@@ -595,14 +597,14 @@ const styles = StyleSheet.create({
   detailMetaRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.xl,
   },
   detailMetaField: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.cream,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     borderRadius: BORDER_RADIUS.md,
     gap: 6,
   },
@@ -615,8 +617,8 @@ const styles = StyleSheet.create({
   detailPhotoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: SPACING.lg,
+    gap: 10,
+    marginBottom: SPACING.xl,
   },
   detailPhotoWrapper: {
     position: 'relative',
@@ -655,10 +657,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
     gap: 8,
     borderTopWidth: 1,
     borderTopColor: COLORS.cream,
+    marginTop: SPACING.sm,
   },
   detailDeleteText: {
     fontFamily: FONTS.medium,
