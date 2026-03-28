@@ -101,6 +101,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
   };
 
   const openEditModal = (field: 'title' | 'date' | 'location') => {
+    setShowActionModal(false);
     if (field === 'title') {
       setEditValue(title);
     } else if (field === 'date') {
@@ -109,14 +110,20 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
       setCityQuery(venue);
       setShowCityDropdown(false);
     }
-    setShowEditModal(field);
+    // Small delay to let the action modal fully dismiss before opening edit modal
+    setTimeout(() => setShowEditModal(field), 300);
+  };
+
+  const closeEditModal = () => {
+    setShowEditModal(null);
+    setTimeout(() => setShowActionModal(true), 300);
   };
 
   const saveTitle = async () => {
     if (!editValue.trim()) return;
     setTitle(editValue.trim());
     await updateEvent({ title: editValue.trim() });
-    setShowEditModal(null);
+    closeEditModal();
   };
 
   const saveDate = async (selectedDate: Date) => {
@@ -127,7 +134,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
   };
 
   const confirmDateEdit = () => {
-    setShowEditModal(null);
+    closeEditModal();
   };
 
   const getFilteredCities = (query: string) => {
@@ -145,7 +152,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
     setShowCityDropdown(false);
     await updateEvent({ venue: city.displayName });
     Keyboard.dismiss();
-    setShowEditModal(null);
+    closeEditModal();
   };
 
   const pickImages = async () => {
@@ -337,9 +344,9 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
   };
 
   const renderEditTitleModal = () => (
-    <Modal visible={showEditModal === 'title'} transparent animationType="fade" onRequestClose={() => setShowEditModal(null)}>
+    <Modal visible={showEditModal === 'title'} transparent animationType="fade" onRequestClose={closeEditModal}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <TouchableWithoutFeedback onPress={() => setShowEditModal(null)}>
+        <TouchableWithoutFeedback onPress={closeEditModal}>
           <View style={styles.editModalOverlay}>
             <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
               <View style={styles.editModalContent}>
@@ -355,7 +362,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
                   onSubmitEditing={saveTitle}
                 />
                 <View style={styles.editModalButtons}>
-                  <TouchableOpacity style={styles.editModalCancelButton} onPress={() => setShowEditModal(null)}>
+                  <TouchableOpacity style={styles.editModalCancelButton} onPress={closeEditModal}>
                     <Text style={styles.editModalCancelText}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.editModalSaveButton} onPress={saveTitle}>
@@ -371,8 +378,8 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
   );
 
   const renderEditDateModal = () => (
-    <Modal visible={showEditModal === 'date'} transparent animationType="fade" onRequestClose={() => setShowEditModal(null)}>
-      <TouchableWithoutFeedback onPress={() => setShowEditModal(null)}>
+    <Modal visible={showEditModal === 'date'} transparent animationType="fade" onRequestClose={closeEditModal}>
+      <TouchableWithoutFeedback onPress={closeEditModal}>
         <View style={styles.editModalOverlay}>
           <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
             <View style={styles.editModalContent}>
@@ -400,9 +407,9 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
   const renderEditLocationModal = () => {
     const filteredCities = getFilteredCities(cityQuery);
     return (
-      <Modal visible={showEditModal === 'location'} transparent animationType="fade" onRequestClose={() => setShowEditModal(null)}>
+      <Modal visible={showEditModal === 'location'} transparent animationType="fade" onRequestClose={closeEditModal}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-          <TouchableWithoutFeedback onPress={() => setShowEditModal(null)}>
+          <TouchableWithoutFeedback onPress={closeEditModal}>
             <View style={styles.editModalOverlay}>
               <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
                 <View style={styles.editModalContent}>
@@ -438,7 +445,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
                     )}
                   </View>
                   <View style={styles.editModalButtons}>
-                    <TouchableOpacity style={styles.editModalCancelButton} onPress={() => setShowEditModal(null)}>
+                    <TouchableOpacity style={styles.editModalCancelButton} onPress={closeEditModal}>
                       <Text style={styles.editModalCancelText}>Cancel</Text>
                     </TouchableOpacity>
                   </View>
