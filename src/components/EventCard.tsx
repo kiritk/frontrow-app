@@ -189,6 +189,10 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
   const getComedyBackground = () => require('../../assets/images/comedy_bg.jpg');
   const getLandmarkBackground = () => require('../../assets/images/landmark_bg.jpg');
   const getOtherBackground = () => require('../../assets/images/other_bg.jpg');
+  const getBasketballBackground = () => require('../../assets/images/basketball_bg.jpg');
+  const getSoccerBackground = () => require('../../assets/images/soccer_bg.jpg');
+  const getTennisBackground = () => require('../../assets/images/tennis_bg.jpg');
+  const getOtherSportsBackground = () => require('../../assets/images/other_sports_bg.jpg');
 
   const renderPhotoViewer = () => (
     <Modal visible={showPhotoViewer} transparent animationType="fade" onRequestClose={() => setShowPhotoViewer(false)}>
@@ -492,6 +496,31 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
     </View>
   );
 
+  const renderSportCard = (bgSource: any, gradientFade: string) => (
+    <View style={[styles.card, { height: CARD_HEIGHT }]}>
+      <View style={[styles.perforationLeft, { top: PERFORATION_TOP }]} />
+      <View style={[styles.perforationRight, { top: PERFORATION_TOP }]} />
+      <View style={styles.topSection}>
+        <ImageBackground source={bgSource} style={styles.imageBackground} imageStyle={styles.imageStyle}>
+          <LinearGradient colors={['transparent', gradientFade + '99', gradientFade]} style={styles.imageOverlay} />
+        </ImageBackground>
+      </View>
+      <View style={[styles.bottomSection, { backgroundColor: gradientFade }]}>
+        <Text style={styles.sportCardTitle} numberOfLines={2}>{title.toUpperCase()}</Text>
+        <View style={styles.infoRow}>
+          <View style={[styles.defaultDateBadge, { backgroundColor: cardStyle.accentColor + '20', borderColor: cardStyle.accentColor }]}>
+            <Text style={[styles.defaultDateText, { color: cardStyle.accentColor }]}>{month} {day}</Text>
+            <Text style={[styles.defaultYearText, { color: cardStyle.accentColor + 'CC' }]}>{year}</Text>
+          </View>
+          <View style={styles.venueSection}>
+            <Ionicons name="location-outline" size={12} color={cardStyle.accentColor} />
+            <Text style={[styles.defaultVenueText, { textAlign: 'right', flexShrink: 1 }]} numberOfLines={2}>{venue}</Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+
   const renderDefaultCard = () => (
     <View style={[styles.card, { height: CARD_HEIGHT }]}>
       <View style={[styles.perforationLeft, { top: PERFORATION_TOP }]} />
@@ -521,6 +550,10 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
     if (event.type === 'landmark') return renderLandmarkCard();
     if (event.type === 'other') return renderOtherCard();
     if (isTeamSport && homeTeam && awayTeam) return renderTeamSportCard();
+    if (event.sport === 'nba') return renderSportCard(getBasketballBackground(), '#7a3000');
+    if (event.sport === 'soccer') return renderSportCard(getSoccerBackground(), '#003d5c');
+    if (event.sport === 'tennis') return renderSportCard(getTennisBackground(), '#3d5c00');
+    if (event.type === 'sports') return renderSportCard(getOtherSportsBackground(), '#5c0008');
     return renderDefaultCard();
   };
 
@@ -810,6 +843,7 @@ const styles = StyleSheet.create({
   imageStyle: { resizeMode: 'cover' },
   imageOverlay: { ...StyleSheet.absoluteFillObject },
   bottomSection: { flex: 1, backgroundColor: CONCERT_COLORS.gradientStart, paddingHorizontal: 12, paddingTop: 12, paddingBottom: 8, justifyContent: 'space-between' },
+  sportCardTitle: { fontFamily: FONTS.bold, fontSize: 16, color: '#FFFFFF', textAlign: 'center', letterSpacing: 0.5 },
   concertTitle: { fontFamily: FONTS.audiowide, fontSize: 22.5, color: '#FFFFFF', textAlign: 'center', letterSpacing: 1.5 },
   infoRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   concertDatePill: { borderWidth: 1, borderColor: CONCERT_COLORS.accent, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, alignItems: 'center' },
