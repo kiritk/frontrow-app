@@ -2,15 +2,17 @@ import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Alert, useWindowDimensions,
   ImageBackground, Image, Modal, FlatList, Dimensions, TextInput, Platform,
-  KeyboardAvoidingView, TouchableWithoutFeedback
+  KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, Keyboard, Pressable
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { updateLocalEvent } from '../lib/localStorage';
+import { SORTED_CITIES, USCity } from '../data/usCities';
 import { COLORS, FONTS, SPACING, FONT_SIZES, BORDER_RADIUS } from '../theme/colors';
 import { getTeamByName } from '../data/nflTeams';
 import { getMLBTeamByName } from '../data/mlbTeams';
@@ -71,6 +73,13 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
   const [date, setDate] = useState(event.date);
   const [venue, setVenue] = useState(event.venue);
 
+  // Date picker state
+  const [editDate, setEditDate] = useState(new Date());
+
+  // Location search state
+  const [cityQuery, setCityQuery] = useState('');
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
+
   const photoCount = photos.length;
 
   const handleCardPress = () => {
@@ -92,24 +101,50 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
   };
 
   const openEditModal = (field: 'title' | 'date' | 'location') => {
-    if (field === 'title') setEditValue(title);
-    else if (field === 'date') setEditValue(date);
-    else setEditValue(venue);
+    if (field === 'title') {
+      setEditValue(title);
+    } else if (field === 'date') {
+      setEditDate(new Date(date));
+    } else {
+      setCityQuery(venue);
+      setShowCityDropdown(false);
+    }
     setShowEditModal(field);
   };
 
-  const saveEdit = async () => {
+  const saveTitle = async () => {
     if (!editValue.trim()) return;
-    if (showEditModal === 'title') {
-      setTitle(editValue.trim());
-      await updateEvent({ title: editValue.trim() });
-    } else if (showEditModal === 'date') {
-      setDate(editValue.trim());
-      await updateEvent({ date: editValue.trim() });
-    } else if (showEditModal === 'location') {
-      setVenue(editValue.trim());
-      await updateEvent({ venue: editValue.trim() });
-    }
+    setTitle(editValue.trim());
+    await updateEvent({ title: editValue.trim() });
+    setShowEditModal(null);
+  };
+
+  const saveDate = async (selectedDate: Date) => {
+    const isoDate = selectedDate.toISOString();
+    setEditDate(selectedDate);
+    setDate(isoDate);
+    await updateEvent({ date: isoDate });
+  };
+
+  const confirmDateEdit = () => {
+    setShowEditModal(null);
+  };
+
+  const getFilteredCities = (query: string) => {
+    if (!query) return SORTED_CITIES.slice(0, 5);
+    return SORTED_CITIES.filter(city =>
+      city.displayName.toLowerCase().includes(query.toLowerCase()) ||
+      city.city.toLowerCase().includes(query.toLowerCase()) ||
+      city.state.toLowerCase().includes(query.toLowerCase())
+    ).slice(0, 5);
+  };
+
+  const selectCity = async (city: USCity) => {
+    setVenue(city.displayName);
+    setCityQuery(city.displayName);
+    setShowCityDropdown(false);
+    await updateEvent({ venue: city.displayName });
+    Keyboard.dismiss();
     setShowEditModal(null);
   };
 
@@ -301,32 +336,110 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
     );
   };
 
-  const renderEditModal = () => {
-    const fieldLabel = showEditModal === 'title' ? 'Title' : showEditModal === 'date' ? 'Date' : 'Location';
+  const renderEditTitleModal = () => (
+    <Modal visible={showEditModal === 'title'} transparent animationType="fade" onRequestClose={() => setShowEditModal(null)}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+        <TouchableWithoutFeedback onPress={() => setShowEditModal(null)}>
+          <View style={styles.editModalOverlay}>
+            <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+              <View style={styles.editModalContent}>
+                <Text style={styles.editModalTitle}>Edit Title</Text>
+                <TextInput
+                  style={[styles.editModalInput, { marginBottom: SPACING.lg }]}
+                  value={editValue}
+                  onChangeText={setEditValue}
+                  autoFocus
+                  placeholder="Enter title"
+                  placeholderTextColor={COLORS.gray}
+                  returnKeyType="done"
+                  onSubmitEditing={saveTitle}
+                />
+                <View style={styles.editModalButtons}>
+                  <TouchableOpacity style={styles.editModalCancelButton} onPress={() => setShowEditModal(null)}>
+                    <Text style={styles.editModalCancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.editModalSaveButton} onPress={saveTitle}>
+                    <Text style={styles.editModalSaveText}>Save</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+
+  const renderEditDateModal = () => (
+    <Modal visible={showEditModal === 'date'} transparent animationType="fade" onRequestClose={() => setShowEditModal(null)}>
+      <TouchableWithoutFeedback onPress={() => setShowEditModal(null)}>
+        <View style={styles.editModalOverlay}>
+          <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+            <View style={styles.editModalContent}>
+              <Text style={styles.editModalTitle}>Edit Date</Text>
+              <DateTimePicker
+                value={editDate}
+                mode="date"
+                display="spinner"
+                onChange={(_, selectedDate) => { if (selectedDate) saveDate(selectedDate); }}
+                maximumDate={new Date(2030, 11, 31)}
+                minimumDate={new Date(1950, 0, 1)}
+                themeVariant="light"
+                style={{ height: 150, marginBottom: SPACING.md }}
+              />
+              <Pressable style={styles.editModalSaveButton} onPress={confirmDateEdit}>
+                <Text style={styles.editModalSaveText}>Done</Text>
+              </Pressable>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
+  );
+
+  const renderEditLocationModal = () => {
+    const filteredCities = getFilteredCities(cityQuery);
     return (
-      <Modal visible={showEditModal !== null} transparent animationType="fade" onRequestClose={() => setShowEditModal(null)}>
+      <Modal visible={showEditModal === 'location'} transparent animationType="fade" onRequestClose={() => setShowEditModal(null)}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
           <TouchableWithoutFeedback onPress={() => setShowEditModal(null)}>
             <View style={styles.editModalOverlay}>
               <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
                 <View style={styles.editModalContent}>
-                  <Text style={styles.editModalTitle}>Edit {fieldLabel}</Text>
-                  <TextInput
-                    style={styles.editModalInput}
-                    value={editValue}
-                    onChangeText={setEditValue}
-                    autoFocus
-                    placeholder={`Enter ${fieldLabel.toLowerCase()}`}
-                    placeholderTextColor={COLORS.gray}
-                    returnKeyType="done"
-                    onSubmitEditing={saveEdit}
-                  />
+                  <Text style={styles.editModalTitle}>Edit Location</Text>
+                  <View style={styles.editLocationInputWrapper}>
+                    <TextInput
+                      style={styles.editModalInput}
+                      value={cityQuery}
+                      onChangeText={(t) => { setCityQuery(t); setShowCityDropdown(true); }}
+                      autoFocus
+                      placeholder="Search cities..."
+                      placeholderTextColor={COLORS.gray}
+                      onFocus={() => setShowCityDropdown(true)}
+                      returnKeyType="done"
+                      onSubmitEditing={() => {
+                        if (filteredCities.length > 0) selectCity(filteredCities[0]);
+                      }}
+                    />
+                    {showCityDropdown && filteredCities.length > 0 && (
+                      <View style={styles.editCityDropdown}>
+                        <ScrollView keyboardShouldPersistTaps="always" nestedScrollEnabled style={{ maxHeight: 200 }}>
+                          {filteredCities.map((city, index) => (
+                            <TouchableOpacity
+                              key={`${city.city}-${city.stateCode}`}
+                              style={[styles.editCityDropdownItem, index === 0 && styles.editCityDropdownItemFirst]}
+                              onPress={() => selectCity(city)}
+                            >
+                              <Text style={styles.editCityDropdownText}>{city.displayName}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </ScrollView>
+                      </View>
+                    )}
+                  </View>
                   <View style={styles.editModalButtons}>
                     <TouchableOpacity style={styles.editModalCancelButton} onPress={() => setShowEditModal(null)}>
                       <Text style={styles.editModalCancelText}>Cancel</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.editModalSaveButton} onPress={saveEdit}>
-                      <Text style={styles.editModalSaveText}>Save</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -564,7 +677,9 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
       </TouchableOpacity>
 
       {renderActionModal()}
-      {renderEditModal()}
+      {renderEditTitleModal()}
+      {renderEditDateModal()}
+      {renderEditLocationModal()}
       {renderPhotoViewer()}
     </View>
   );
@@ -722,7 +837,6 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.md,
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
-    marginBottom: SPACING.lg,
   },
   editModalButtons: {
     flexDirection: 'row',
@@ -750,6 +864,34 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     fontSize: FONT_SIZES.sm,
     color: COLORS.white,
+    textAlign: 'center',
+  },
+  editLocationInputWrapper: {
+    position: 'relative',
+    zIndex: 10,
+    marginBottom: SPACING.lg,
+  },
+  editCityDropdown: {
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.cream,
+    borderRadius: BORDER_RADIUS.md,
+    marginTop: 4,
+    overflow: 'hidden',
+  },
+  editCityDropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.cream,
+  },
+  editCityDropdownItemFirst: {
+    borderTopWidth: 0,
+  },
+  editCityDropdownText: {
+    fontFamily: FONTS.medium,
+    fontSize: FONT_SIZES.md,
+    color: COLORS.navy,
   },
   card: {
     borderRadius: 8,
