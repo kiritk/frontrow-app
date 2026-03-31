@@ -138,7 +138,7 @@ export default function ProfileScreen() {
     if (firstName || lastName) {
       return `${firstName} ${lastName}`.trim();
     }
-    return '<First Name> <Last Name>';
+    return 'Welcome!';
   };
 
   return (
