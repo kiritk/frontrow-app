@@ -128,16 +128,31 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     });
   };
 
-  const handleSelectType = (type: string) => { 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setEventType(type); 
-    setStep(type === 'sports' ? 'sport-type' : 'details'); 
+  const resetDetails = () => {
+    setEventName(''); setVenue(''); setEventDate(new Date()); setDateSelected(false);
+    setShowDatePicker(false); setPhotos([]);
+    setHomeTeam(null); setAwayTeam(null); setHomeTeamQuery(''); setAwayTeamQuery('');
+    setShowHomeDropdown(false); setShowAwayDropdown(false);
+    setSelectedCity(null); setCityQuery(''); setShowCityDropdown(false); setCityInputFocused(false);
+    setSportType('');
   };
-  
-  const handleSelectSportType = (type: string) => { 
+
+  const handleSelectType = (type: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSportType(type); 
-    setStep('details'); 
+    resetDetails();
+    setEventType(type);
+    setStep(type === 'sports' ? 'sport-type' : 'details');
+  };
+
+  const handleSelectSportType = (type: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setEventName(''); setVenue(''); setEventDate(new Date()); setDateSelected(false);
+    setShowDatePicker(false); setPhotos([]);
+    setHomeTeam(null); setAwayTeam(null); setHomeTeamQuery(''); setAwayTeamQuery('');
+    setShowHomeDropdown(false); setShowAwayDropdown(false);
+    setSelectedCity(null); setCityQuery(''); setShowCityDropdown(false); setCityInputFocused(false);
+    setSportType(type);
+    setStep('details');
   };
   
   const handleDetailsNext = () => { 
