@@ -179,9 +179,6 @@ export default function ProfileScreen() {
 
                 {/* Name */}
                 <Text style={styles.userName}>{getDisplayName()}</Text>
-
-                {/* Email */}
-                <Text style={styles.userEmail}>{user?.email || '<email>'}</Text>
               </View>
             </LinearGradient>
           </ImageBackground>
