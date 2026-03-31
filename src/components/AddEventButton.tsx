@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import CalendarPicker from './CalendarPicker';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -513,15 +514,11 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
               <View style={styles.datePickerOverlayInner}>
                 <View style={styles.datePickerModal}>
                   <Text style={styles.datePickerTitle}>Select Date</Text>
-                  <DateTimePicker 
-                    value={eventDate} 
-                    mode="date" 
-                    display="spinner"
-                    onChange={onDateChange} 
-                    maximumDate={new Date(2030, 11, 31)} 
-                    minimumDate={new Date(1950, 0, 1)} 
-                    themeVariant="light"
-                    style={styles.datePicker}
+                  <CalendarPicker
+                    selectedDate={eventDate}
+                    onDateChange={(d) => { setEventDate(d); setDateSelected(true); }}
+                    maximumDate={new Date(2030, 11, 31)}
+                    minimumDate={new Date(1950, 0, 1)}
                   />
                   <Pressable style={styles.dateConfirmButton} onPress={confirmDateSelection}>
                     <Text style={styles.dateConfirmText}>Confirm Date</Text>
