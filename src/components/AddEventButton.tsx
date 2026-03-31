@@ -449,7 +449,16 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
           </View>
         )}
         
-        {isTeamSport ? null : renderCitySelection()}
+        {isTeamSport ? (
+          venue ? (
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Location</Text>
+              <View style={[styles.input, { justifyContent: 'center' }]}>
+                <Text style={{ fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.navy }}>{venue}</Text>
+              </View>
+            </View>
+          ) : null
+        ) : renderCitySelection()}
         
         <View style={styles.inputGroup}>
           <Text style={styles.label}>When was it?</Text>
