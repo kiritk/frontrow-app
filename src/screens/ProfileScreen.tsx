@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.white,
   },
   userName: {
-    fontFamily: FONTS.bold,
+    fontFamily: 'GeistMono_700Bold',
     fontSize: 24,
     color: COLORS.navy,
     marginBottom: SPACING.xs,
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   fanLevelTitle: {
-    fontFamily: FONTS.bold,
+    fontFamily: 'GeistMono_700Bold',
     fontSize: FONT_SIZES.xl,
     color: COLORS.navy,
     marginBottom: 4,
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.md,
   },
   fanLevelBadgeText: {
-    fontFamily: FONTS.bold,
+    fontFamily: 'GeistMono_700Bold',
     fontSize: FONT_SIZES.md,
     color: COLORS.white,
   },
