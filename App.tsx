@@ -116,9 +116,9 @@ export default function App() {
     Iceland_400Regular,
     Zain_400Regular,
     VT323_400Regular,
-    GeistMono_400Regular: require('@expo-google-fonts/geist-mono/400Regular/GeistMono_400Regular.ttf'),
-    GeistMono_500Medium: require('@expo-google-fonts/geist-mono/500Medium/GeistMono_500Medium.ttf'),
-    GeistMono_700Bold: require('@expo-google-fonts/geist-mono/700Bold/GeistMono_700Bold.ttf'),
+    GeistMono_400Regular: require('./assets/fonts/GeistMono_400Regular.ttf'),
+    GeistMono_500Medium: require('./assets/fonts/GeistMono_500Medium.ttf'),
+    GeistMono_700Bold: require('./assets/fonts/GeistMono_700Bold.ttf'),
   });
 
   const [showSplash, setShowSplash] = useState<boolean | null>(null);
