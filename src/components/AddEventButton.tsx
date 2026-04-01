@@ -450,14 +450,14 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
         )}
         
         {isTeamSport ? (
-          venue ? (
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Location</Text>
-              <View style={[styles.input, { justifyContent: 'center' }]}>
-                <Text style={{ fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.navy }}>{venue}</Text>
-              </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Location</Text>
+            <View style={[styles.input, { justifyContent: 'center' }]}>
+              <Text style={{ fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: venue ? COLORS.navy : COLORS.grayLight }}>
+                {venue || 'Auto-filled from home team'}
+              </Text>
             </View>
-          ) : null
+          </View>
         ) : renderCitySelection()}
         
         <View style={styles.inputGroup}>

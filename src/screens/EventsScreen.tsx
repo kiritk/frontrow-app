@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { getLocalEvents, deleteLocalEvent } from '../lib/localStorage';
@@ -9,6 +11,8 @@ import EventCard from '../components/EventCard';
 import EventsMap from '../components/EventsMap';
 import * as Haptics from 'expo-haptics';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
+
+const PROFILE_STORAGE_KEY = 'frontrow_user_profile';
 
 interface Event {
   id: string;
@@ -37,12 +41,32 @@ const CATEGORIES = [
 
 export default function EventsScreen() {
   const { user, isGuest } = useAuth();
+  const navigation = useNavigation();
   const [events, setEvents] = useState<Event[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [selectedYear, setSelectedYear] = useState<string>('All');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+
+  const loadProfileImage = useCallback(async () => {
+    try {
+      const stored = await AsyncStorage.getItem(PROFILE_STORAGE_KEY);
+      if (stored) {
+        const profile = JSON.parse(stored);
+        setProfileImage(profile.profileImage || null);
+      }
+    } catch (error) {
+      console.log('Error loading profile image:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadProfileImage();
+    const unsubscribe = navigation.addListener('focus', loadProfileImage);
+    return unsubscribe;
+  }, [navigation, loadProfileImage]);
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -147,10 +171,17 @@ export default function EventsScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.logoText}>Front Row</Text>
-        <TouchableOpacity style={styles.shareButton}>
-          <Ionicons name="share-outline" size={24} color={COLORS.navy} />
+        <TouchableOpacity style={styles.profileButton} onPress={() => (navigation as any).navigate('Profile')}>
+          {profileImage ? (
+            <Image source={{ uri: profileImage }} style={styles.profileButtonImage} />
+          ) : (
+            <View style={styles.profileButtonPlaceholder}>
+              <Ionicons name="person" size={18} color={COLORS.navy} />
+            </View>
+          )}
         </TouchableOpacity>
+        <Text style={styles.logoText}>Front Row</Text>
+        <View style={styles.headerSpacer} />
       </View>
 
       {/* View Mode Toggle */}
@@ -280,13 +311,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
   },
+  profileButton: {
+    width: 34,
+    height: 34,
+  },
+  profileButtonImage: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 2,
+    borderColor: COLORS.navy,
+  },
+  profileButtonPlaceholder: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.navy,
+  },
   logoText: {
     fontFamily: FONTS.vt323,
     fontSize: 28,
     color: COLORS.navy,
   },
-  shareButton: {
-    padding: SPACING.xs,
+  headerSpacer: {
+    width: 34,
   },
   viewToggleContainer: {
     alignItems: 'center',
@@ -297,6 +349,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: BORDER_RADIUS.lg,
     padding: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
   },
   viewToggleButton: {
     flexDirection: 'row',
@@ -310,7 +367,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.navy,
   },
   viewToggleText: {
-    fontFamily: FONTS.medium,
+    fontFamily: 'GeistMono_500Medium',
     fontSize: FONT_SIZES.sm,
     color: COLORS.navy,
   },
@@ -318,7 +375,7 @@ const styles = StyleSheet.create({
     color: COLORS.white,
   },
   title: {
-    fontFamily: FONTS.bold,
+    fontFamily: 'GeistMono_700Bold',
     fontSize: 32,
     color: COLORS.navy,
     paddingHorizontal: SPACING.lg,

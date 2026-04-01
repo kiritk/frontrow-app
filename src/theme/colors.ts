@@ -1,7 +1,7 @@
 export const COLORS = {
   // Primary
   navy: '#1e3a5f',
-  cream: '#F5F0E6',
+  cream: '#FCFCFC',
   creamDark: '#E8E0D0',
   
   // Neutrals

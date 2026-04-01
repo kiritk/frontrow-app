@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   pageTitle: {
-    fontFamily: FONTS.bold,
+    fontFamily: 'GeistMono_700Bold',
     fontSize: 32,
     color: COLORS.navy,
     marginBottom: SPACING.lg,
