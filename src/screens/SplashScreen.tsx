@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     letterSpacing: -2,
   },
   subtitlePill: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.5)',
     borderRadius: 24,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.3)',
