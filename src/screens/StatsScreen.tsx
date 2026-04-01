@@ -362,6 +362,8 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.xl,
     padding: SPACING.lg,
     marginBottom: SPACING.lg,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -387,6 +389,8 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
     borderRadius: BORDER_RADIUS.lg,
     gap: SPACING.xs,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
   },
   yearDropdownText: {
     fontFamily: FONTS.medium,
