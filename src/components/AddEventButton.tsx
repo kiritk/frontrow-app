@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import CalendarPicker from './CalendarPicker';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -127,16 +128,31 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     });
   };
 
-  const handleSelectType = (type: string) => { 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setEventType(type); 
-    setStep(type === 'sports' ? 'sport-type' : 'details'); 
+  const resetDetails = () => {
+    setEventName(''); setVenue(''); setEventDate(new Date()); setDateSelected(false);
+    setShowDatePicker(false); setPhotos([]);
+    setHomeTeam(null); setAwayTeam(null); setHomeTeamQuery(''); setAwayTeamQuery('');
+    setShowHomeDropdown(false); setShowAwayDropdown(false);
+    setSelectedCity(null); setCityQuery(''); setShowCityDropdown(false); setCityInputFocused(false);
+    setSportType('');
   };
-  
-  const handleSelectSportType = (type: string) => { 
+
+  const handleSelectType = (type: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSportType(type); 
-    setStep('details'); 
+    resetDetails();
+    setEventType(type);
+    setStep(type === 'sports' ? 'sport-type' : 'details');
+  };
+
+  const handleSelectSportType = (type: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setEventName(''); setVenue(''); setEventDate(new Date()); setDateSelected(false);
+    setShowDatePicker(false); setPhotos([]);
+    setHomeTeam(null); setAwayTeam(null); setHomeTeamQuery(''); setAwayTeamQuery('');
+    setShowHomeDropdown(false); setShowAwayDropdown(false);
+    setSelectedCity(null); setCityQuery(''); setShowCityDropdown(false); setCityInputFocused(false);
+    setSportType(type);
+    setStep('details');
   };
   
   const handleDetailsNext = () => { 
@@ -433,7 +449,16 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
           </View>
         )}
         
-        {isTeamSport ? null : renderCitySelection()}
+        {isTeamSport ? (
+          venue ? (
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Location</Text>
+              <View style={[styles.input, { justifyContent: 'center' }]}>
+                <Text style={{ fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.navy }}>{venue}</Text>
+              </View>
+            </View>
+          ) : null
+        ) : renderCitySelection()}
         
         <View style={styles.inputGroup}>
           <Text style={styles.label}>When was it?</Text>
@@ -513,15 +538,11 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
               <View style={styles.datePickerOverlayInner}>
                 <View style={styles.datePickerModal}>
                   <Text style={styles.datePickerTitle}>Select Date</Text>
-                  <DateTimePicker 
-                    value={eventDate} 
-                    mode="date" 
-                    display="spinner"
-                    onChange={onDateChange} 
-                    maximumDate={new Date(2030, 11, 31)} 
-                    minimumDate={new Date(1950, 0, 1)} 
-                    themeVariant="light"
-                    style={styles.datePicker}
+                  <CalendarPicker
+                    selectedDate={eventDate}
+                    onDateChange={(d) => { setEventDate(d); setDateSelected(true); }}
+                    maximumDate={new Date(2030, 11, 31)}
+                    minimumDate={new Date(1950, 0, 1)}
                   />
                   <Pressable style={styles.dateConfirmButton} onPress={confirmDateSelection}>
                     <Text style={styles.dateConfirmText}>Confirm Date</Text>

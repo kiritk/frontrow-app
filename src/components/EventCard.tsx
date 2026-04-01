@@ -8,7 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import CalendarPicker from './CalendarPicker';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { updateLocalEvent } from '../lib/localStorage';
@@ -384,15 +384,11 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
           <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
             <View style={styles.editModalContent}>
               <Text style={styles.editModalTitle}>Edit Date</Text>
-              <DateTimePicker
-                value={editDate}
-                mode="date"
-                display="spinner"
-                onChange={(_, selectedDate) => { if (selectedDate) saveDate(selectedDate); }}
+              <CalendarPicker
+                selectedDate={editDate}
+                onDateChange={(d) => saveDate(d)}
                 maximumDate={new Date(2030, 11, 31)}
                 minimumDate={new Date(1950, 0, 1)}
-                themeVariant="light"
-                style={{ height: 150, marginBottom: SPACING.md }}
               />
               <Pressable style={styles.editModalSaveButton} onPress={confirmDateEdit}>
                 <Text style={styles.editModalSaveText}>Done</Text>
