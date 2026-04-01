@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
@@ -12,10 +12,13 @@ import { Modak_400Regular } from '@expo-google-fonts/modak';
 import { Iceland_400Regular } from '@expo-google-fonts/iceland';
 import { Zain_400Regular } from '@expo-google-fonts/zain';
 import { VT323_400Regular } from '@expo-google-fonts/vt323';
+import { GeistMono_400Regular, GeistMono_500Medium, GeistMono_700Bold } from '@expo-google-fonts/geist-mono';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthProvider } from './src/context/AuthContext';
 import EventsScreen from './src/screens/EventsScreen';
 import StatsScreen from './src/screens/StatsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import SplashScreen from './src/screens/SplashScreen';
 import AddEventButton from './src/components/AddEventButton';
 import { COLORS, FONTS } from './src/theme/colors';
 
@@ -100,6 +103,8 @@ function MainApp() {
   );
 }
 
+const SPLASH_SEEN_KEY = 'frontrow_splash_seen';
+
 export default function App() {
   const [fontsLoaded] = useFonts({
     Outfit_400Regular,
@@ -112,13 +117,38 @@ export default function App() {
     Iceland_400Regular,
     Zain_400Regular,
     VT323_400Regular,
+    GeistMono_400Regular,
+    GeistMono_500Medium,
+    GeistMono_700Bold,
   });
 
-  if (!fontsLoaded) {
+  const [showSplash, setShowSplash] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    AsyncStorage.getItem(SPLASH_SEEN_KEY).then(value => {
+      setShowSplash(value !== 'true');
+    });
+  }, []);
+
+  const handleSplashComplete = async () => {
+    await AsyncStorage.setItem(SPLASH_SEEN_KEY, 'true');
+    setShowSplash(false);
+  };
+
+  if (!fontsLoaded || showSplash === null) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.cream }}>
         <ActivityIndicator size="large" color={COLORS.navy} />
       </View>
+    );
+  }
+
+  if (showSplash) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar style="light" />
+        <SplashScreen onComplete={handleSplashComplete} />
+      </SafeAreaProvider>
     );
   }
 
