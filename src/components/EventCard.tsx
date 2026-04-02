@@ -692,10 +692,10 @@ const styles = StyleSheet.create({
   cardWrapper: {
     marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 12,
   },
   modalOverlay: {
     flex: 1,
