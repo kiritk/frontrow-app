@@ -16,7 +16,12 @@
     ],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "app.frontrow.live"
+      "bundleIdentifier": "app.frontrow.live",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Front Row needs camera access to add photos to your event memories.",
+        "NSPhotoLibraryUsageDescription": "Front Row needs photo library access to attach photos to your events."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -28,6 +33,18 @@
       "expo-asset",
       "expo-font",
       "@react-native-community/datetimepicker"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "2c713849-6da6-4910-8abf-4d34d669d649"
+      }
+    },
+    "owner": "kirit_k",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/2c713849-6da6-4910-8abf-4d34d669d649"
+    }
   }
 }
