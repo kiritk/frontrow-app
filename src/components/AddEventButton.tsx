@@ -359,6 +359,12 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
               </View>
             </View>
 
+            {/* Gradient fade from header to body */}
+            <LinearGradient
+              colors={['#4a9a8a', COLORS.cream]}
+              style={styles.headerFade}
+            />
+
             {/* Form body */}
             <ScrollView
               ref={scrollViewRef}
@@ -646,6 +652,9 @@ const styles = StyleSheet.create({
   coverPhotoText: {
     fontFamily: FONTS.medium, fontSize: FONT_SIZES.sm, color: COLORS.white,
   },
+
+  // Header fade
+  headerFade: { height: 30 },
 
   // Form body
   formBody: { flex: 1 },
