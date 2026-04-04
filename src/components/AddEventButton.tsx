@@ -74,6 +74,11 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
 
   const scrollViewRef = useRef<ScrollView>(null);
 
+  // Collapse/expand state for sections
+  const [eventTypeExpanded, setEventTypeExpanded] = useState(true);
+  const [sportTypeExpanded, setSportTypeExpanded] = useState(true);
+  const [teamsExpanded, setTeamsExpanded] = useState(true);
+
   // Determine if fields should be unlocked
   const isTeamSport = sportType === 'nfl' || sportType === 'mlb';
   const fieldsUnlocked = useMemo(() => {
@@ -93,6 +98,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     setHomeTeam(null); setAwayTeam(null); setHomeTeamQuery(''); setAwayTeamQuery('');
     setShowHomeDropdown(false); setShowAwayDropdown(false);
     setSelectedCity(null); setCityQuery(''); setShowCityDropdown(false);
+    setEventTypeExpanded(true); setSportTypeExpanded(true); setTeamsExpanded(true);
   };
 
   const handleClose = () => {
@@ -103,14 +109,16 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
 
   const handleSelectType = (type: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (type === eventType) return; // already selected
+    if (type === eventType) return;
     // Reset downstream fields
     setSportType(''); setEventName(''); setVenue('');
     setEventDate(new Date()); setDateSelected(false); setPhotos([]);
     setHomeTeam(null); setAwayTeam(null); setHomeTeamQuery(''); setAwayTeamQuery('');
     setShowHomeDropdown(false); setShowAwayDropdown(false);
     setSelectedCity(null); setCityQuery(''); setShowCityDropdown(false);
+    setSportTypeExpanded(true); setTeamsExpanded(true);
     setEventType(type);
+    setEventTypeExpanded(false);
   };
 
   const handleSelectSportType = (type: string) => {
@@ -121,7 +129,9 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     setHomeTeam(null); setAwayTeam(null); setHomeTeamQuery(''); setAwayTeamQuery('');
     setShowHomeDropdown(false); setShowAwayDropdown(false);
     setSelectedCity(null); setCityQuery(''); setShowCityDropdown(false);
+    setTeamsExpanded(true);
     setSportType(type);
+    setSportTypeExpanded(false);
   };
 
   const handleDatePress = () => {
@@ -180,13 +190,18 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   const selectHomeTeam = (team: SportTeam) => {
     setHomeTeam(team); setHomeTeamQuery(team.fullName); setShowHomeDropdown(false);
     setVenue(team.stadium);
-    // Auto-fill name if both teams selected
-    if (awayTeam) setEventName(`${team.name} vs ${awayTeam.name}`);
+    if (awayTeam) {
+      setEventName(`${team.name} vs ${awayTeam.name}`);
+      setTeamsExpanded(false);
+    }
     Keyboard.dismiss();
   };
   const selectAwayTeam = (team: SportTeam) => {
     setAwayTeam(team); setAwayTeamQuery(team.fullName); setShowAwayDropdown(false);
-    if (homeTeam) setEventName(`${homeTeam.name} vs ${team.name}`);
+    if (homeTeam) {
+      setEventName(`${homeTeam.name} vs ${team.name}`);
+      setTeamsExpanded(false);
+    }
     Keyboard.dismiss();
   };
   const selectCity = (city: USCity) => { setSelectedCity(city); setCityQuery(city.displayName); setShowCityDropdown(false); Keyboard.dismiss(); };
@@ -349,78 +364,117 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
-              {/* Event Type Section */}
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Select an Event type</Text>
-                <View style={styles.pillGrid}>
-                  {EVENT_TYPES.map((type) => (
-                    <TouchableOpacity
-                      key={type.value}
-                      style={[styles.pill, eventType === type.value && styles.pillActive]}
-                      onPress={() => handleSelectType(type.value)}
-                    >
-                      <Text style={styles.pillEmoji}>{type.emoji}</Text>
-                      <Text style={[styles.pillLabel, eventType === type.value && styles.pillLabelActive]}>{type.label}</Text>
-                    </TouchableOpacity>
-                  ))}
+              {/* Event Type Section - collapsible */}
+              <TouchableOpacity
+                style={styles.sectionCard}
+                onPress={() => { if (eventType) setEventTypeExpanded(!eventTypeExpanded); }}
+                activeOpacity={eventType ? 0.7 : 1}
+              >
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Select an Event type</Text>
+                  {eventType && !eventTypeExpanded && (
+                    <Text style={styles.sectionSelectedLabel}>
+                      {EVENT_TYPES.find(t => t.value === eventType)?.label}
+                    </Text>
+                  )}
                 </View>
-              </View>
-
-              {/* Sport Type Section - inline below event type */}
-              {eventType === 'sports' && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Select a Sport</Text>
+                {eventTypeExpanded && (
                   <View style={styles.pillGrid}>
-                    {SPORT_TYPES.map((type) => (
+                    {EVENT_TYPES.map((type) => (
                       <TouchableOpacity
                         key={type.value}
-                        style={[styles.pill, sportType === type.value && styles.pillActive]}
-                        onPress={() => handleSelectSportType(type.value)}
+                        style={[styles.pill, eventType === type.value && styles.pillActive]}
+                        onPress={() => handleSelectType(type.value)}
                       >
                         <Text style={styles.pillEmoji}>{type.emoji}</Text>
-                        <Text style={[styles.pillLabel, sportType === type.value && styles.pillLabelActive]}>{type.label}</Text>
+                        <Text style={[styles.pillLabel, eventType === type.value && styles.pillLabelActive]}>{type.label}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
-                </View>
+                )}
+              </TouchableOpacity>
+
+              {/* Sport Type Section - collapsible */}
+              {eventType === 'sports' && (
+                <TouchableOpacity
+                  style={styles.sectionCard}
+                  onPress={() => { if (sportType) setSportTypeExpanded(!sportTypeExpanded); }}
+                  activeOpacity={sportType ? 0.7 : 1}
+                >
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Select a Sport</Text>
+                    {sportType && !sportTypeExpanded && (
+                      <Text style={styles.sectionSelectedLabel}>
+                        {SPORT_TYPES.find(t => t.value === sportType)?.label}
+                      </Text>
+                    )}
+                  </View>
+                  {sportTypeExpanded && (
+                    <View style={styles.pillGrid}>
+                      {SPORT_TYPES.map((type) => (
+                        <TouchableOpacity
+                          key={type.value}
+                          style={[styles.pill, sportType === type.value && styles.pillActive]}
+                          onPress={() => handleSelectSportType(type.value)}
+                        >
+                          <Text style={styles.pillEmoji}>{type.emoji}</Text>
+                          <Text style={[styles.pillLabel, sportType === type.value && styles.pillLabelActive]}>{type.label}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </TouchableOpacity>
               )}
 
-              {/* Team Selection - NFL/MLB only */}
+              {/* Team Selection - collapsible, NFL/MLB only */}
               {isTeamSport && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Select the Teams</Text>
-                  <View style={styles.teamRow}>
-                    <View style={[styles.teamColumn, { zIndex: 20 }]}>
-                      <Text style={styles.teamLabel}>Home Team</Text>
-                      <View style={styles.inputWithDropdown}>
-                        <TextInput
-                          style={styles.teamInput}
-                          placeholder="Search teams.."
-                          placeholderTextColor={COLORS.grayLight}
-                          value={homeTeamQuery}
-                          onChangeText={(t) => { setHomeTeamQuery(t); setShowHomeDropdown(true); if (homeTeam && t !== homeTeam.fullName) { setHomeTeam(null); setVenue(''); setEventName(''); } }}
-                          onFocus={() => { setShowHomeDropdown(true); setShowAwayDropdown(false); }}
-                        />
-                        {renderTeamDropdown(getFilteredTeams(homeTeamQuery, awayTeam), selectHomeTeam, showHomeDropdown)}
-                      </View>
-                    </View>
-                    <Text style={styles.vsText}>vs</Text>
-                    <View style={[styles.teamColumn, { zIndex: 10 }]}>
-                      <Text style={styles.teamLabel}>Away Team</Text>
-                      <View style={styles.inputWithDropdown}>
-                        <TextInput
-                          style={styles.teamInput}
-                          placeholder="Search teams.."
-                          placeholderTextColor={COLORS.grayLight}
-                          value={awayTeamQuery}
-                          onChangeText={(t) => { setAwayTeamQuery(t); setShowAwayDropdown(true); if (awayTeam && t !== awayTeam.fullName) { setAwayTeam(null); setEventName(''); } }}
-                          onFocus={() => { setShowAwayDropdown(true); setShowHomeDropdown(false); }}
-                        />
-                        {renderTeamDropdown(getFilteredTeams(awayTeamQuery, homeTeam), selectAwayTeam, showAwayDropdown)}
-                      </View>
-                    </View>
+                <TouchableOpacity
+                  style={[styles.sectionCard, { zIndex: 20 }]}
+                  onPress={() => { if (homeTeam && awayTeam) setTeamsExpanded(!teamsExpanded); }}
+                  activeOpacity={homeTeam && awayTeam ? 0.7 : 1}
+                >
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Select the Teams</Text>
+                    {homeTeam && awayTeam && !teamsExpanded && (
+                      <Text style={styles.sectionSelectedLabel}>
+                        {homeTeam.name} vs {awayTeam.name}
+                      </Text>
+                    )}
                   </View>
-                </View>
+                  {teamsExpanded && (
+                    <View style={styles.teamRow}>
+                      <View style={[styles.teamColumn, { zIndex: 20 }]}>
+                        <Text style={styles.teamLabel}>Home Team</Text>
+                        <View style={styles.inputWithDropdown}>
+                          <TextInput
+                            style={styles.teamInput}
+                            placeholder="Search teams.."
+                            placeholderTextColor={COLORS.grayLight}
+                            value={homeTeamQuery}
+                            onChangeText={(t) => { setHomeTeamQuery(t); setShowHomeDropdown(true); if (homeTeam && t !== homeTeam.fullName) { setHomeTeam(null); setVenue(''); setEventName(''); } }}
+                            onFocus={() => { setShowHomeDropdown(true); setShowAwayDropdown(false); }}
+                          />
+                          {renderTeamDropdown(getFilteredTeams(homeTeamQuery, awayTeam), selectHomeTeam, showHomeDropdown)}
+                        </View>
+                      </View>
+                      <Text style={styles.vsText}>vs</Text>
+                      <View style={[styles.teamColumn, { zIndex: 10 }]}>
+                        <Text style={styles.teamLabel}>Away Team</Text>
+                        <View style={styles.inputWithDropdown}>
+                          <TextInput
+                            style={styles.teamInput}
+                            placeholder="Search teams.."
+                            placeholderTextColor={COLORS.grayLight}
+                            value={awayTeamQuery}
+                            onChangeText={(t) => { setAwayTeamQuery(t); setShowAwayDropdown(true); if (awayTeam && t !== awayTeam.fullName) { setAwayTeam(null); setEventName(''); } }}
+                            onFocus={() => { setShowAwayDropdown(true); setShowHomeDropdown(false); }}
+                          />
+                          {renderTeamDropdown(getFilteredTeams(awayTeamQuery, homeTeam), selectAwayTeam, showAwayDropdown)}
+                        </View>
+                      </View>
+                    </View>
+                  )}
+                </TouchableOpacity>
               )}
 
               {/* Name Field */}
@@ -558,7 +612,7 @@ const styles = StyleSheet.create({
   fabIcon: { color: COLORS.white, fontSize: 32, fontWeight: '300', marginTop: -2 },
 
   // Modal root
-  modalRoot: { flex: 1, backgroundColor: COLORS.cream },
+  modalRoot: { flex: 1, backgroundColor: COLORS.cream, borderTopLeftRadius: 20, borderTopRightRadius: 20, overflow: 'hidden' },
 
   // Header
   headerContainer: {
@@ -568,10 +622,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: SPACING.lg, paddingTop: SPACING.md,
   },
-  cancelButton: { width: 70 },
+  cancelButton: { minWidth: 80 },
   cancelText: {
     fontFamily: FONTS.medium, fontSize: FONT_SIZES.md, color: 'rgba(255,255,255,0.85)',
-    backgroundColor: 'rgba(255,255,255,0.15)', paddingVertical: 6, paddingHorizontal: 14,
+    backgroundColor: 'rgba(255,255,255,0.15)', paddingVertical: 6, paddingHorizontal: 16,
     borderRadius: BORDER_RADIUS.full, overflow: 'hidden', textAlign: 'center',
   },
   headerTitle: {
@@ -591,18 +645,28 @@ const styles = StyleSheet.create({
   formContent: { padding: SPACING.lg },
 
   // Sections
-  section: { marginBottom: SPACING.lg },
+  sectionCard: {
+    backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.xl, padding: SPACING.lg,
+    marginBottom: SPACING.md, borderWidth: 1, borderColor: '#E5E5E5',
+  },
+  sectionHeader: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+  },
   sectionTitle: {
-    fontFamily: 'GeistMono_700Bold', fontSize: FONT_SIZES.lg, color: COLORS.navy, marginBottom: SPACING.md,
+    fontFamily: FONTS.medium, fontSize: FONT_SIZES.lg, color: COLORS.navy,
+  },
+  sectionSelectedLabel: {
+    fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.sm, color: '#E91E8C',
   },
 
   // Pills
-  pillGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
+  pillGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginTop: SPACING.md },
   pill: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
     backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.full,
-    paddingVertical: 8, paddingHorizontal: 14,
+    paddingVertical: 8,
     borderWidth: 1.5, borderColor: '#E5E5E5',
+    width: (SCREEN_WIDTH - SPACING.lg * 2 - SPACING.lg * 2 - SPACING.sm * 2) / 3,
   },
   pillActive: {
     backgroundColor: COLORS.navy, borderColor: COLORS.navy,
@@ -614,7 +678,7 @@ const styles = StyleSheet.create({
   pillLabelActive: { color: COLORS.white },
 
   // Team selection
-  teamRow: { flexDirection: 'row', alignItems: 'flex-start' },
+  teamRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: SPACING.md },
   teamColumn: { flex: 1 },
   teamLabel: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.sm, color: COLORS.navy, marginBottom: SPACING.xs },
   teamInput: {
@@ -688,7 +752,7 @@ const styles = StyleSheet.create({
   },
   createButtonDisabled: { opacity: 0.6 },
   createButtonText: {
-    fontFamily: 'GeistMono_700Bold', fontSize: FONT_SIZES.md, color: COLORS.white,
+    fontFamily: FONTS.medium, fontSize: FONT_SIZES.md, color: COLORS.white,
   },
 
   // Date picker overlay
