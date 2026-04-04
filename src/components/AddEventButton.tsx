@@ -329,7 +329,8 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
         <ConfettiCannon count={150} origin={{ x: SCREEN_WIDTH / 2, y: -20 }} fadeOut explosionSpeed={400} fallSpeed={2500} colors={[COLORS.navy, '#FFD700', '#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3']} autoStart />
       )}
 
-      <Modal visible={modalVisible} animationType="slide" presentationStyle="fullScreen" onRequestClose={handleClose}>
+      <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={handleClose}>
+        <View style={{ flex: 1, backgroundColor: '#000' }}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={[styles.modalRoot, { paddingTop: insets.top }]}>
             {/* Header with gradient */}
@@ -349,11 +350,13 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
                 <Text style={styles.headerTitle}>New Event</Text>
                 <View style={styles.cancelButton} />
               </View>
-              {/* Cover photo button */}
-              <TouchableOpacity style={styles.coverPhotoButton} onPress={pickCoverPhoto}>
-                <Ionicons name="camera-outline" size={16} color={COLORS.white} />
-                <Text style={styles.coverPhotoText}>{coverPhoto ? 'Change cover photo' : 'Pick a cover photo'}</Text>
-              </TouchableOpacity>
+              {/* Cover photo button - centered in remaining space */}
+              <View style={styles.coverPhotoCenter}>
+                <TouchableOpacity style={styles.coverPhotoButton} onPress={pickCoverPhoto}>
+                  <Ionicons name="camera-outline" size={16} color={COLORS.white} />
+                  <Text style={styles.coverPhotoText}>{coverPhoto ? 'Change cover photo' : 'Pick a cover photo'}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Form body */}
@@ -598,6 +601,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
             )}
           </View>
         </KeyboardAvoidingView>
+        </View>
       </Modal>
     </>
   );
@@ -616,7 +620,7 @@ const styles = StyleSheet.create({
 
   // Header
   headerContainer: {
-    height: 180, justifyContent: 'space-between', overflow: 'hidden',
+    height: 180, overflow: 'hidden',
   },
   headerTopRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
@@ -629,12 +633,15 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.full, overflow: 'hidden', textAlign: 'center',
   },
   headerTitle: {
-    fontFamily: 'GeistMono_700Bold', fontSize: FONT_SIZES.lg, color: COLORS.white,
+    fontFamily: FONTS.medium, fontSize: FONT_SIZES.lg, color: COLORS.white,
+  },
+  coverPhotoCenter: {
+    flex: 1, justifyContent: 'center', alignItems: 'center',
   },
   coverPhotoButton: {
-    flexDirection: 'row', alignItems: 'center', alignSelf: 'center',
+    flexDirection: 'row', alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.4)', paddingVertical: 8, paddingHorizontal: 16,
-    borderRadius: BORDER_RADIUS.full, gap: 6, marginBottom: SPACING.lg,
+    borderRadius: BORDER_RADIUS.full, gap: 6,
   },
   coverPhotoText: {
     fontFamily: FONTS.medium, fontSize: FONT_SIZES.sm, color: COLORS.white,
@@ -666,7 +673,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.full,
     paddingVertical: 8,
     borderWidth: 1.5, borderColor: '#E5E5E5',
-    width: (SCREEN_WIDTH - SPACING.lg * 2 - SPACING.lg * 2 - SPACING.sm * 2) / 3,
+    width: (SCREEN_WIDTH - SPACING.lg * 4 - SPACING.sm * 2 - 2) / 3,
   },
   pillActive: {
     backgroundColor: COLORS.navy, borderColor: COLORS.navy,
