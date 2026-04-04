@@ -23,6 +23,7 @@ interface Event {
   venue_location?: string;
   date: string;
   photos?: string[];
+  cover_photo?: string;
   latitude?: number;
   longitude?: number;
   home_team?: { name: string; city: string; fullName: string };

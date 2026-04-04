@@ -29,6 +29,7 @@ interface EventCardProps {
     venue_location?: string;
     date: string;
     photos?: string[];
+    cover_photo?: string;
     home_team?: { name: string; city: string; fullName: string };
     away_team?: { name: string; city: string; fullName: string };
   };
@@ -226,15 +227,16 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
   const homeTeam = isNFLGame ? getTeamByName(event.home_team!.name) : isMLBGame ? getMLBTeamByName(event.home_team!.name) : null;
   const awayTeam = isNFLGame ? getTeamByName(event.away_team!.name) : isMLBGame ? getMLBTeamByName(event.away_team!.name) : null;
 
-  const getConcertBackground = () => require('../../assets/images/concert_bg.png');
-  const getTheaterBackground = () => require('../../assets/images/theater_bg.jpg');
-  const getComedyBackground = () => require('../../assets/images/comedy_bg.jpg');
-  const getLandmarkBackground = () => require('../../assets/images/landmark_bg.jpg');
-  const getOtherBackground = () => require('../../assets/images/other_bg.jpg');
-  const getBasketballBackground = () => require('../../assets/images/basketball_bg.jpg');
-  const getSoccerBackground = () => require('../../assets/images/soccer_bg.jpg');
-  const getTennisBackground = () => require('../../assets/images/tennis_bg.jpg');
-  const getOtherSportsBackground = () => require('../../assets/images/other_sports_bg.jpg');
+  const coverSource = event.cover_photo ? { uri: event.cover_photo } : null;
+  const getConcertBackground = () => coverSource || require('../../assets/images/concert_bg.png');
+  const getTheaterBackground = () => coverSource || require('../../assets/images/theater_bg.jpg');
+  const getComedyBackground = () => coverSource || require('../../assets/images/comedy_bg.jpg');
+  const getLandmarkBackground = () => coverSource || require('../../assets/images/landmark_bg.jpg');
+  const getOtherBackground = () => coverSource || require('../../assets/images/other_bg.jpg');
+  const getBasketballBackground = () => coverSource || require('../../assets/images/basketball_bg.jpg');
+  const getSoccerBackground = () => coverSource || require('../../assets/images/soccer_bg.jpg');
+  const getTennisBackground = () => coverSource || require('../../assets/images/tennis_bg.jpg');
+  const getOtherSportsBackground = () => coverSource || require('../../assets/images/other_sports_bg.jpg');
 
   const renderPhotoViewer = () => (
     <Modal visible={showPhotoViewer} transparent animationType="fade" onRequestClose={() => setShowPhotoViewer(false)}>
@@ -462,7 +464,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
         <View style={[styles.perforationRight, { top: PERFORATION_TOP }]} />
         <View style={[styles.teamBottomColor, { backgroundColor: homeColor }]} />
         <View style={styles.teamStadiumSection}>
-          <ImageBackground source={homeTeam?.stadiumImage} style={styles.teamStadiumImage} imageStyle={styles.teamStadiumImageStyle}>
+          <ImageBackground source={coverSource || homeTeam?.stadiumImage} style={styles.teamStadiumImage} imageStyle={styles.teamStadiumImageStyle}>
             <LinearGradient colors={['transparent', 'rgba(0,0,0,0)', homeColor + '40', homeColor + '80', homeColor + 'CC', homeColor]} locations={[0, 0.3, 0.5, 0.7, 0.85, 1]} style={styles.teamStadiumOverlay} />
           </ImageBackground>
         </View>

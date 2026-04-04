@@ -1,13 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Modal, TextInput,
-  ScrollView, Platform, Alert, ActivityIndicator, Image, Animated,
-  PanResponder, Dimensions, TouchableWithoutFeedback, Keyboard, Pressable,
+  ScrollView, Alert, ActivityIndicator, Image,
+  Dimensions, Keyboard, Pressable, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import CalendarPicker from './CalendarPicker';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { supabase } from '../lib/supabase';
@@ -17,16 +17,17 @@ import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colo
 import { NFL_TEAMS, NFLTeam } from '../data/nflTeams';
 import { MLB_TEAMS, MLBTeam } from '../data/mlbTeams';
 import { SORTED_CITIES, USCity } from '../data/usCities';
+import { Ionicons } from '@expo/vector-icons';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const EVENT_TYPES = [
-  { value: 'concert', label: 'Concerts', subtitle: 'Live music', emoji: '🎸' },
-  { value: 'sports', label: 'Sports', subtitle: 'Games & matches', emoji: '🏆' },
-  { value: 'theater', label: 'Theater', subtitle: 'Shows & plays', emoji: '🎭' },
-  { value: 'comedy', label: 'Comedy', subtitle: 'Stand-up & improv', emoji: '🎤' },
-  { value: 'landmark', label: 'Landmarks', subtitle: 'Famous places', emoji: '🏰' },
-  { value: 'other', label: 'Other', subtitle: 'Everything else', emoji: '✨' },
+  { value: 'sports', label: 'Sports', emoji: '🏆' },
+  { value: 'concert', label: 'Concerts', emoji: '🎸' },
+  { value: 'theater', label: 'Theater', emoji: '🎭' },
+  { value: 'comedy', label: 'Comedy', emoji: '🎤' },
+  { value: 'landmark', label: 'Landmarks', emoji: '🏰' },
+  { value: 'other', label: 'Other', emoji: '✨' },
 ];
 
 const SPORT_TYPES = [
@@ -38,7 +39,6 @@ const SPORT_TYPES = [
   { value: 'other', label: 'Other', emoji: '🏅' },
 ];
 
-type Step = 'type' | 'sport-type' | 'details' | 'photos';
 type SportTeam = NFLTeam | MLBTeam;
 
 export default function AddEventButton({ onEventAdded }: { onEventAdded: () => void }) {
@@ -46,20 +46,20 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   const insets = useSafeAreaInsets();
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState<Step>('type');
+
+  // Form state
   const [eventType, setEventType] = useState('');
   const [sportType, setSportType] = useState('');
   const [eventName, setEventName] = useState('');
   const [venue, setVenue] = useState('');
   const [eventDate, setEventDate] = useState<Date>(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-
-  useEffect(() => { console.log("showDatePicker is now:", showDatePicker); }, [showDatePicker]);
   const [dateSelected, setDateSelected] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
-  const [cityInputFocused, setCityInputFocused] = useState(false);
+  const [coverPhoto, setCoverPhoto] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
-  
+
+  // Team state
   const [homeTeam, setHomeTeam] = useState<SportTeam | null>(null);
   const [awayTeam, setAwayTeam] = useState<SportTeam | null>(null);
   const [homeTeamQuery, setHomeTeamQuery] = useState('');
@@ -67,146 +67,150 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   const [showHomeDropdown, setShowHomeDropdown] = useState(false);
   const [showAwayDropdown, setShowAwayDropdown] = useState(false);
 
+  // City state
   const [selectedCity, setSelectedCity] = useState<USCity | null>(null);
   const [cityQuery, setCityQuery] = useState('');
   const [showCityDropdown, setShowCityDropdown] = useState(false);
 
   const scrollViewRef = useRef<ScrollView>(null);
-  const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
-  const modalOffsetAnim = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(0)).current;
-  
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) => gestureState.dy > 5,
-      onPanResponderMove: (_, gestureState) => {
-        if (gestureState.dy > 0) translateY.setValue(gestureState.dy);
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dy > 100) {
-          Animated.timing(translateY, { toValue: SCREEN_HEIGHT, duration: 200, useNativeDriver: true }).start(() => {
-            handleClose();
-            translateY.setValue(0);
-          });
-        } else {
-          Animated.spring(translateY, { toValue: 0, useNativeDriver: true }).start();
-        }
-      },
-    })
-  ).current;
 
-  useEffect(() => {
-    if (modalVisible) {
-      slideAnim.setValue(SCREEN_HEIGHT);
-      Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, tension: 65, friction: 11 }).start();
+  // Determine if fields should be unlocked
+  const isTeamSport = sportType === 'nfl' || sportType === 'mlb';
+  const fieldsUnlocked = useMemo(() => {
+    if (!eventType) return false;
+    if (eventType === 'sports') {
+      if (!sportType) return false;
+      if (isTeamSport) return !!(homeTeam && awayTeam);
+      return true;
     }
-  }, [modalVisible]);
+    return true;
+  }, [eventType, sportType, isTeamSport, homeTeam, awayTeam]);
 
-  useEffect(() => {
-    Animated.timing(modalOffsetAnim, {
-      toValue: cityInputFocused ? -150 : 0,
-      duration: 250,
-      useNativeDriver: true,
-    }).start();
-  }, [cityInputFocused]);
-
-  const resetForm = () => { 
-    setStep('type'); setEventType(''); setSportType(''); setEventName(''); setVenue(''); 
-    setEventDate(new Date()); setDateSelected(false); setShowDatePicker(false); setPhotos([]);
+  const resetForm = () => {
+    setEventType(''); setSportType(''); setEventName(''); setVenue('');
+    setEventDate(new Date()); setDateSelected(false); setShowDatePicker(false);
+    setPhotos([]); setCoverPhoto(null);
     setHomeTeam(null); setAwayTeam(null); setHomeTeamQuery(''); setAwayTeamQuery('');
     setShowHomeDropdown(false); setShowAwayDropdown(false);
-    setSelectedCity(null); setCityQuery(''); setShowCityDropdown(false); setCityInputFocused(false);
+    setSelectedCity(null); setCityQuery(''); setShowCityDropdown(false);
   };
 
   const handleClose = () => {
     Keyboard.dismiss();
-    setCityInputFocused(false);
-    Animated.timing(slideAnim, { toValue: SCREEN_HEIGHT, duration: 250, useNativeDriver: true }).start(() => {
-      setModalVisible(false);
-      resetForm();
-    });
-  };
-
-  const resetDetails = () => {
-    setEventName(''); setVenue(''); setEventDate(new Date()); setDateSelected(false);
-    setShowDatePicker(false); setPhotos([]);
-    setHomeTeam(null); setAwayTeam(null); setHomeTeamQuery(''); setAwayTeamQuery('');
-    setShowHomeDropdown(false); setShowAwayDropdown(false);
-    setSelectedCity(null); setCityQuery(''); setShowCityDropdown(false); setCityInputFocused(false);
-    setSportType('');
+    setModalVisible(false);
+    resetForm();
   };
 
   const handleSelectType = (type: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    resetDetails();
+    if (type === eventType) return; // already selected
+    // Reset downstream fields
+    setSportType(''); setEventName(''); setVenue('');
+    setEventDate(new Date()); setDateSelected(false); setPhotos([]);
+    setHomeTeam(null); setAwayTeam(null); setHomeTeamQuery(''); setAwayTeamQuery('');
+    setShowHomeDropdown(false); setShowAwayDropdown(false);
+    setSelectedCity(null); setCityQuery(''); setShowCityDropdown(false);
     setEventType(type);
-    setStep(type === 'sports' ? 'sport-type' : 'details');
   };
 
   const handleSelectSportType = (type: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setEventName(''); setVenue(''); setEventDate(new Date()); setDateSelected(false);
-    setShowDatePicker(false); setPhotos([]);
+    if (type === sportType) return;
+    setEventName(''); setVenue('');
+    setEventDate(new Date()); setDateSelected(false); setPhotos([]);
     setHomeTeam(null); setAwayTeam(null); setHomeTeamQuery(''); setAwayTeamQuery('');
     setShowHomeDropdown(false); setShowAwayDropdown(false);
-    setSelectedCity(null); setCityQuery(''); setShowCityDropdown(false); setCityInputFocused(false);
+    setSelectedCity(null); setCityQuery(''); setShowCityDropdown(false);
     setSportType(type);
-    setStep('details');
-  };
-  
-  const handleDetailsNext = () => { 
-    const isTeamSport = sportType === 'nfl' || sportType === 'mlb';
-    if (isTeamSport) {
-      if (!homeTeam || !awayTeam || !venue || !dateSelected) { Alert.alert('Error', 'Please fill in all fields'); return; }
-      setEventName(`${homeTeam.name} vs ${awayTeam.name}`);
-    } else if (eventType === 'sports') {
-      if (!eventName || !venue || !dateSelected) { Alert.alert('Error', 'Please fill in all fields'); return; }
-    } else {
-      if (!eventName || !selectedCity || !dateSelected) { Alert.alert('Error', 'Please fill in all fields'); return; }
-      setVenue(selectedCity.displayName);
-    }
-    setStep('photos'); 
   };
 
   const handleDatePress = () => {
-    console.log('Date button pressed!');
     Keyboard.dismiss();
-    setCityInputFocused(false);
     setShowCityDropdown(false);
     setShowHomeDropdown(false);
     setShowAwayDropdown(false);
     setShowDatePicker(true);
-    console.log("State set to true, current value will update on next render");
   };
 
-  const onDateChange = (event: any, selectedDate?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowDatePicker(false);
-      if (event.type === 'dismissed') return;
-    }
-    if (selectedDate) { 
-      setEventDate(selectedDate); 
-      setDateSelected(true); 
-    }
+  const confirmDateSelection = () => {
+    setDateSelected(true);
+    setShowDatePicker(false);
   };
 
-  const confirmDateSelection = () => { 
-    setDateSelected(true); 
-    setShowDatePicker(false); 
-  };
-  
-  const formatDisplayDate = (date: Date) => date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  const formatDisplayDate = (date: Date) => date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   const formatDateForDB = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
-  const pickImages = async () => {
+  const getPrompts = () => {
+    if (eventType === 'sports') {
+      switch (sportType) {
+        case 'nfl': return { placeholder: '49ers vs Chiefs...' };
+        case 'mlb': return { placeholder: 'Yankees vs Red Sox...' };
+        case 'nba': return { placeholder: 'Warriors vs Celtics...' };
+        case 'soccer': return { placeholder: 'Real Madrid vs Barcelona...' };
+        case 'tennis': return { placeholder: 'Alcaraz vs Djokovic...' };
+        case 'other': return { placeholder: '2026 Winter Olympics...' };
+        default: return { placeholder: 'Team vs Team...' };
+      }
+    }
+    switch (eventType) {
+      case 'concert': return { placeholder: 'Taylor Swift, The Weeknd...' };
+      case 'theater': return { placeholder: 'Hamilton, Wicked...' };
+      case 'comedy': return { placeholder: 'Dave Chappelle...' };
+      case 'landmark': return { placeholder: 'Eiffel Tower...' };
+      default: return { placeholder: 'Describe the event...' };
+    }
+  };
+
+  // Team helpers
+  const getTeamsList = (): SportTeam[] => sportType === 'nfl' ? NFL_TEAMS : sportType === 'mlb' ? MLB_TEAMS : [];
+  const sortedTeams = [...getTeamsList()].sort((a, b) => a.fullName.localeCompare(b.fullName));
+
+  const getFilteredTeams = (query: string, excludeTeam: SportTeam | null) => sortedTeams.filter(team => {
+    if (excludeTeam && team.name === excludeTeam.name) return false;
+    if (!query) return true;
+    return team.name.toLowerCase().includes(query.toLowerCase()) || team.city.toLowerCase().includes(query.toLowerCase()) || team.fullName.toLowerCase().includes(query.toLowerCase());
+  });
+
+  // City helpers
+  const getFilteredCities = (query: string) => {
+    if (!query) return SORTED_CITIES.slice(0, 5);
+    return SORTED_CITIES.filter(city => city.displayName.toLowerCase().includes(query.toLowerCase()) || city.city.toLowerCase().includes(query.toLowerCase()) || city.state.toLowerCase().includes(query.toLowerCase())).slice(0, 5);
+  };
+
+  const selectHomeTeam = (team: SportTeam) => {
+    setHomeTeam(team); setHomeTeamQuery(team.fullName); setShowHomeDropdown(false);
+    setVenue(team.stadium);
+    // Auto-fill name if both teams selected
+    if (awayTeam) setEventName(`${team.name} vs ${awayTeam.name}`);
+    Keyboard.dismiss();
+  };
+  const selectAwayTeam = (team: SportTeam) => {
+    setAwayTeam(team); setAwayTeamQuery(team.fullName); setShowAwayDropdown(false);
+    if (homeTeam) setEventName(`${homeTeam.name} vs ${team.name}`);
+    Keyboard.dismiss();
+  };
+  const selectCity = (city: USCity) => { setSelectedCity(city); setCityQuery(city.displayName); setShowCityDropdown(false); Keyboard.dismiss(); };
+
+  const handleCitySubmit = () => {
+    const filteredCities = getFilteredCities(cityQuery);
+    if (filteredCities.length > 0) selectCity(filteredCities[0]);
+    else { setShowCityDropdown(false); Keyboard.dismiss(); }
+  };
+
+  // Photo pickers
+  const pickCoverPhoto = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') { Alert.alert('Permission needed', 'Please allow access to your photos'); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [16, 9], quality: 0.8 });
+    if (!result.canceled) setCoverPhoto(result.assets[0].uri);
+  };
+
+  const pickPhotos = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') { Alert.alert('Permission needed', 'Please allow access to your photos'); return; }
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: 6 - photos.length, quality: 0.8 });
     if (!result.canceled) setPhotos([...photos, ...result.assets.map(a => a.uri)].slice(0, 6));
   };
-
-  const removePhoto = (index: number) => setPhotos(photos.filter((_, i) => i !== index));
 
   const triggerConfetti = () => {
     setShowConfetti(true);
@@ -215,19 +219,24 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   };
 
   const handleSubmit = async () => {
+    // Validate
+    const finalName = isTeamSport && homeTeam && awayTeam ? `${homeTeam.name} vs ${awayTeam.name}` : eventName;
+    if (!finalName) { Alert.alert('Missing Info', 'Please enter an event name'); return; }
+    if (!isTeamSport && !selectedCity && eventType !== 'sports') { Alert.alert('Missing Info', 'Please select a location'); return; }
+    if (eventType === 'sports' && !isTeamSport && !selectedCity) { Alert.alert('Missing Info', 'Please select a location'); return; }
+    if (!dateSelected) { Alert.alert('Missing Info', 'Please select a date'); return; }
+
     setLoading(true);
     try {
-      const isTeamSport = sportType === 'nfl' || sportType === 'mlb';
-      const finalEventName = isTeamSport && homeTeam && awayTeam ? `${homeTeam.name} vs ${awayTeam.name}` : eventName;
-      
       const eventData: any = {
-        title: finalEventName,
+        title: finalName,
         type: eventType,
         sport: eventType === 'sports' ? sportType : null,
         venue: isTeamSport ? venue : (selectedCity?.displayName || venue),
         venue_location: selectedCity?.displayName || null,
         date: formatDateForDB(eventDate),
         photos: photos.length > 0 ? photos : [],
+        cover_photo: coverPhoto || null,
       };
 
       if (selectedCity && !isTeamSport) {
@@ -246,16 +255,13 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
         const { error } = await supabase.from('events').insert([{ ...eventData, user_id: user.id }]).select();
         if (error) throw error;
       }
-      
+
       Keyboard.dismiss();
-      setCityInputFocused(false);
-      Animated.timing(slideAnim, { toValue: SCREEN_HEIGHT, duration: 250, useNativeDriver: true }).start(() => {
-        setModalVisible(false);
-        resetForm();
-        triggerConfetti();
-        onEventAdded();
-      });
-      
+      setModalVisible(false);
+      resetForm();
+      triggerConfetti();
+      onEventAdded();
+
     } catch (e: any) {
       Alert.alert('Error', e.message || 'Failed to create event');
     } finally {
@@ -263,53 +269,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     }
   };
 
-  const getEventEmoji = () => eventType === 'sports' ? (SPORT_TYPES.find(s => s.value === sportType)?.emoji || '🏆') : (EVENT_TYPES.find(e => e.value === eventType)?.emoji || '🎫');
-  
-  const getPrompts = () => {
-    if (eventType === 'sports') {
-      switch (sportType) {
-        case 'nfl': return { name: 'Who played?', placeholder: '49ers vs Chiefs...' };
-        case 'mlb': return { name: 'Who played?', placeholder: 'Yankees vs Red Sox...' };
-        case 'nba': return { name: 'Who played?', placeholder: 'Warriors vs Celtics...' };
-        case 'soccer': return { name: 'Who played?', placeholder: 'Real Madrid vs Barcelona...' };
-        case 'tennis': return { name: 'Who played?', placeholder: 'Alcaraz vs Djokovic...' };
-        case 'other': return { name: 'What was the event?', placeholder: '2026 Winter Olympics...' };
-        default: return { name: 'Who played?', placeholder: 'Team vs Team...' };
-      }
-    }
-    switch (eventType) {
-      case 'concert': return { name: 'Who did you see?', placeholder: 'Taylor Swift, The Weeknd...' };
-      case 'theater': return { name: 'What was the show?', placeholder: 'Hamilton, Wicked...' };
-      case 'comedy': return { name: 'Who was the comedian?', placeholder: 'Dave Chappelle...' };
-      case 'landmark': return { name: 'What was the landmark?', placeholder: 'Eiffel Tower...' };
-      default: return { name: 'What was the experience?', placeholder: 'Describe...' };
-    }
-  };
-
-  const getTeamsList = (): SportTeam[] => sportType === 'nfl' ? NFL_TEAMS : sportType === 'mlb' ? MLB_TEAMS : [];
-  const sortedTeams = [...getTeamsList()].sort((a, b) => a.fullName.localeCompare(b.fullName));
-  
-  const getFilteredTeams = (query: string, excludeTeam: SportTeam | null) => sortedTeams.filter(team => {
-    if (excludeTeam && team.name === excludeTeam.name) return false;
-    if (!query) return true;
-    return team.name.toLowerCase().includes(query.toLowerCase()) || team.city.toLowerCase().includes(query.toLowerCase()) || team.fullName.toLowerCase().includes(query.toLowerCase());
-  });
-
-  const getFilteredCities = (query: string) => {
-    if (!query) return SORTED_CITIES.slice(0, 5);
-    return SORTED_CITIES.filter(city => city.displayName.toLowerCase().includes(query.toLowerCase()) || city.city.toLowerCase().includes(query.toLowerCase()) || city.state.toLowerCase().includes(query.toLowerCase())).slice(0, 5);
-  };
-
-  const selectHomeTeam = (team: SportTeam) => { setHomeTeam(team); setHomeTeamQuery(team.fullName); setShowHomeDropdown(false); setVenue(team.stadium); Keyboard.dismiss(); };
-  const selectAwayTeam = (team: SportTeam) => { setAwayTeam(team); setAwayTeamQuery(team.fullName); setShowAwayDropdown(false); Keyboard.dismiss(); };
-  const selectCity = (city: USCity) => { setSelectedCity(city); setCityQuery(city.displayName); setShowCityDropdown(false); setCityInputFocused(false); Keyboard.dismiss(); };
-
-  const handleCityInputFocus = () => { setCityInputFocused(true); setShowCityDropdown(true); };
-  const handleCitySubmit = () => {
-    const filteredCities = getFilteredCities(cityQuery);
-    if (filteredCities.length > 0) selectCity(filteredCities[0]);
-    else { setCityInputFocused(false); setShowCityDropdown(false); Keyboard.dismiss(); }
-  };
+  // --- RENDER HELPERS ---
 
   const renderTeamDropdown = (teams: SportTeam[], onSelect: (team: SportTeam) => void, show: boolean) => {
     if (!show || teams.length === 0) return null;
@@ -342,176 +302,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     );
   };
 
-  const renderTeamSelection = () => {
-    const homeFiltered = getFilteredTeams(homeTeamQuery, awayTeam);
-    const awayFiltered = getFilteredTeams(awayTeamQuery, homeTeam);
-    return (
-      <View style={styles.teamContainer}>
-        <View style={styles.teamRow}>
-          <View style={styles.teamColumn}>
-            <Text style={styles.teamLabel}>Home Team</Text>
-            <View style={styles.inputWithDropdown}>
-              <TextInput style={styles.teamInput} placeholder="Search teams.." placeholderTextColor={COLORS.grayLight} value={homeTeamQuery}
-                onChangeText={(t) => { setHomeTeamQuery(t); setShowHomeDropdown(true); if (homeTeam && t !== homeTeam.fullName) setHomeTeam(null); }}
-                onFocus={() => { setShowHomeDropdown(true); setShowAwayDropdown(false); }} />
-              {renderTeamDropdown(homeFiltered, selectHomeTeam, showHomeDropdown)}
-            </View>
-          </View>
-          <Text style={styles.vsText}>vs</Text>
-          <View style={styles.teamColumn}>
-            <Text style={styles.teamLabel}>Away Team</Text>
-            <View style={styles.inputWithDropdown}>
-              <TextInput style={styles.teamInput} placeholder="Search teams.." placeholderTextColor={COLORS.grayLight} value={awayTeamQuery}
-                onChangeText={(t) => { setAwayTeamQuery(t); setShowAwayDropdown(true); if (awayTeam && t !== awayTeam.fullName) setAwayTeam(null); }}
-                onFocus={() => { setShowAwayDropdown(true); setShowHomeDropdown(false); }} />
-              {renderTeamDropdown(awayFiltered, selectAwayTeam, showAwayDropdown)}
-            </View>
-          </View>
-        </View>
-      </View>
-    );
-  };
-
-  const renderCitySelection = () => (
-    <View style={[styles.inputGroup, { zIndex: 10 }]}>
-      <Text style={styles.label}>Location (City/State)</Text>
-      <View style={styles.inputWithDropdown}>
-        <TextInput style={styles.input} placeholder="Search cities..." placeholderTextColor={COLORS.grayLight} value={cityQuery}
-          onChangeText={(t) => { setCityQuery(t); setShowCityDropdown(true); if (selectedCity && t !== selectedCity.displayName) setSelectedCity(null); }}
-          onFocus={handleCityInputFocus} onSubmitEditing={handleCitySubmit} returnKeyType="done" />
-        {renderCityDropdown()}
-      </View>
-    </View>
-  );
-
-  const renderTypeSelection = () => (
-    <View style={styles.stepContent}>
-      <Text style={styles.stepTitle}>What type of event?</Text>
-      <Text style={styles.stepSubtitle}>Choose a category</Text>
-      <View style={styles.typeGrid}>
-        {EVENT_TYPES.map((type) => (
-          <TouchableOpacity key={type.value} style={styles.typeCardWrapper} onPress={() => handleSelectType(type.value)}>
-            <View style={styles.typeCard}>
-              <Text style={styles.typeEmoji}>{type.emoji}</Text>
-              <Text style={styles.typeLabel}>{type.label}</Text>
-              <Text style={styles.typeSubtitleText}>{type.subtitle}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>
-  );
-
-  const renderSportTypeSelection = () => (
-    <View style={styles.stepContent}>
-      <TouchableOpacity onPress={() => setStep('type')} style={styles.backButton}><Text style={styles.backText}>← Back</Text></TouchableOpacity>
-      <Text style={styles.stepTitle}>What sport?</Text>
-      <Text style={styles.stepSubtitle}>Choose a league</Text>
-      <View style={styles.sportGrid}>
-        {SPORT_TYPES.map((type) => (
-          <TouchableOpacity key={type.value} style={styles.sportCardWrapper} onPress={() => handleSelectSportType(type.value)}>
-            <View style={styles.sportCard}>
-              <Text style={styles.sportEmoji}>{type.emoji}</Text>
-              <Text style={styles.sportLabel}>{type.label}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>
-  );
-
-  const renderDetails = () => {
-    const prompts = getPrompts();
-    const isTeamSport = sportType === 'nfl' || sportType === 'mlb';
-    const isNonSportsEvent = eventType !== 'sports';
-    return (
-      <View style={styles.stepContent}>
-        <TouchableOpacity onPress={() => setStep(eventType === 'sports' ? 'sport-type' : 'type')} style={styles.backButton}>
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.stepTitle}>The Details</Text>
-        <Text style={styles.stepSubtitle}>Tell us about your experience</Text>
-        
-        {isTeamSport ? renderTeamSelection() : (
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>{prompts.name}</Text>
-            <TextInput
-              style={styles.input}
-              placeholder={prompts.placeholder}
-              placeholderTextColor={COLORS.grayLight}
-              value={eventName}
-              onChangeText={setEventName}
-              returnKeyType="next"
-              blurOnSubmit
-              onFocus={() => { setShowCityDropdown(false); setCityInputFocused(true); }}
-              onBlur={() => setCityInputFocused(false)}
-            />
-          </View>
-        )}
-        
-        {isTeamSport ? (
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Location</Text>
-            <View style={[styles.input, { justifyContent: 'center' }]}>
-              <Text style={{ fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: venue ? COLORS.navy : COLORS.grayLight }}>
-                {venue || 'Auto-filled from home team'}
-              </Text>
-            </View>
-          </View>
-        ) : renderCitySelection()}
-        
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>When was it?</Text>
-          <Pressable style={styles.dateButton} onPress={handleDatePress}>
-            <Text style={[styles.dateButtonText, !dateSelected && styles.dateButtonPlaceholder]}>
-              {dateSelected ? formatDisplayDate(eventDate) : 'Select a date'}
-            </Text>
-            <Text style={styles.calendarIcon}>📅</Text>
-          </Pressable>
-        </View>
-        
-        <Pressable style={styles.nextButton} onPress={handleDetailsNext}>
-          <Text style={styles.nextButtonText}>Next</Text>
-        </Pressable>
-      </View>
-    );
-  };
-
-  const renderPhotos = () => {
-    const isTeamSport = sportType === 'nfl' || sportType === 'mlb';
-    const displayTitle = isTeamSport && homeTeam && awayTeam ? `${homeTeam.name} vs ${awayTeam.name}` : eventName;
-    const displayLocation = isTeamSport ? venue : (selectedCity?.displayName || venue);
-    return (
-      <View style={styles.stepContent}>
-        <TouchableOpacity onPress={() => setStep('details')} style={styles.backButton}><Text style={styles.backText}>← Back</Text></TouchableOpacity>
-        <View style={styles.photoHeader}>
-          <Text style={styles.photoEmoji}>{getEventEmoji()}</Text>
-          <Text style={styles.photoEventName}>{displayTitle}</Text>
-          <Text style={styles.photoEventLocation}>{displayLocation}</Text>
-        </View>
-        <Text style={styles.photoPrompt}>Add up to 6 photos to remember this moment</Text>
-        <View style={styles.photoGrid}>
-          {photos.map((uri, i) => (
-            <TouchableOpacity key={i} style={styles.photoThumb} onPress={() => removePhoto(i)}>
-              <Image source={{ uri }} style={styles.photoImage} />
-              <View style={styles.photoRemove}><Text style={styles.photoRemoveText}>✕</Text></View>
-            </TouchableOpacity>
-          ))}
-          {photos.length < 6 && (
-            <TouchableOpacity style={styles.addPhotoBtn} onPress={pickImages}>
-              <Text style={styles.addPhotoIcon}>+</Text>
-              <Text style={styles.addPhotoText}>Add Photos</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-        <TouchableOpacity style={[styles.submitButton, loading && styles.submitDisabled]} onPress={handleSubmit} disabled={loading}>
-          {loading ? <ActivityIndicator color={COLORS.cream} /> : <Text style={styles.submitButtonText}>Add to Collection</Text>}
-        </TouchableOpacity>
-      </View>
-    );
-  };
-
-  // FAB is positioned at bottom: 24 to align with tab bar
+  const prompts = getPrompts();
 
   return (
     <>
@@ -523,19 +314,220 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
         <ConfettiCannon count={150} origin={{ x: SCREEN_WIDTH / 2, y: -20 }} fadeOut explosionSpeed={400} fallSpeed={2500} colors={[COLORS.navy, '#FFD700', '#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3']} autoStart />
       )}
 
-      {/* Main Add Event Modal */}
-      <Modal visible={modalVisible} animationType="none" transparent onRequestClose={handleClose}>
-        <View style={styles.modalOverlay}>
-          <Animated.View style={[styles.modalContainer, { transform: [{ translateY: Animated.add(slideAnim, Animated.add(translateY, modalOffsetAnim)) }] }]}>
-            <View {...panResponder.panHandlers}><View style={styles.dragHandle} /></View>
-            <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
-              {step === 'type' && renderTypeSelection()}
-              {step === 'sport-type' && renderSportTypeSelection()}
-              {step === 'details' && renderDetails()}
-              {step === 'photos' && renderPhotos()}
+      <Modal visible={modalVisible} animationType="slide" presentationStyle="fullScreen" onRequestClose={handleClose}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <View style={[styles.modalRoot, { paddingTop: insets.top }]}>
+            {/* Header with gradient */}
+            <View style={styles.headerContainer}>
+              {coverPhoto ? (
+                <Image source={{ uri: coverPhoto }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
+              ) : null}
+              <LinearGradient
+                colors={coverPhoto ? ['rgba(0,0,0,0.3)', 'rgba(30,58,95,0.85)'] : ['#1e3a5f', '#2a6a7a', '#4a9a8a']}
+                style={StyleSheet.absoluteFillObject}
+              />
+              {/* Top row */}
+              <View style={styles.headerTopRow}>
+                <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
+                  <Text style={styles.cancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>New Event</Text>
+                <View style={styles.cancelButton} />
+              </View>
+              {/* Cover photo button */}
+              <TouchableOpacity style={styles.coverPhotoButton} onPress={pickCoverPhoto}>
+                <Ionicons name="camera-outline" size={16} color={COLORS.white} />
+                <Text style={styles.coverPhotoText}>{coverPhoto ? 'Change cover photo' : 'Pick a cover photo'}</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Form body */}
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.formBody}
+              contentContainerStyle={styles.formContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Event Type Section */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Select an Event type</Text>
+                <View style={styles.pillGrid}>
+                  {EVENT_TYPES.map((type) => (
+                    <TouchableOpacity
+                      key={type.value}
+                      style={[styles.pill, eventType === type.value && styles.pillActive]}
+                      onPress={() => handleSelectType(type.value)}
+                    >
+                      <Text style={styles.pillEmoji}>{type.emoji}</Text>
+                      <Text style={[styles.pillLabel, eventType === type.value && styles.pillLabelActive]}>{type.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Sport Type Section - inline below event type */}
+              {eventType === 'sports' && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Select a Sport</Text>
+                  <View style={styles.pillGrid}>
+                    {SPORT_TYPES.map((type) => (
+                      <TouchableOpacity
+                        key={type.value}
+                        style={[styles.pill, sportType === type.value && styles.pillActive]}
+                        onPress={() => handleSelectSportType(type.value)}
+                      >
+                        <Text style={styles.pillEmoji}>{type.emoji}</Text>
+                        <Text style={[styles.pillLabel, sportType === type.value && styles.pillLabelActive]}>{type.label}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {/* Team Selection - NFL/MLB only */}
+              {isTeamSport && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Select the Teams</Text>
+                  <View style={styles.teamRow}>
+                    <View style={[styles.teamColumn, { zIndex: 20 }]}>
+                      <Text style={styles.teamLabel}>Home Team</Text>
+                      <View style={styles.inputWithDropdown}>
+                        <TextInput
+                          style={styles.teamInput}
+                          placeholder="Search teams.."
+                          placeholderTextColor={COLORS.grayLight}
+                          value={homeTeamQuery}
+                          onChangeText={(t) => { setHomeTeamQuery(t); setShowHomeDropdown(true); if (homeTeam && t !== homeTeam.fullName) { setHomeTeam(null); setVenue(''); setEventName(''); } }}
+                          onFocus={() => { setShowHomeDropdown(true); setShowAwayDropdown(false); }}
+                        />
+                        {renderTeamDropdown(getFilteredTeams(homeTeamQuery, awayTeam), selectHomeTeam, showHomeDropdown)}
+                      </View>
+                    </View>
+                    <Text style={styles.vsText}>vs</Text>
+                    <View style={[styles.teamColumn, { zIndex: 10 }]}>
+                      <Text style={styles.teamLabel}>Away Team</Text>
+                      <View style={styles.inputWithDropdown}>
+                        <TextInput
+                          style={styles.teamInput}
+                          placeholder="Search teams.."
+                          placeholderTextColor={COLORS.grayLight}
+                          value={awayTeamQuery}
+                          onChangeText={(t) => { setAwayTeamQuery(t); setShowAwayDropdown(true); if (awayTeam && t !== awayTeam.fullName) { setAwayTeam(null); setEventName(''); } }}
+                          onFocus={() => { setShowAwayDropdown(true); setShowHomeDropdown(false); }}
+                        />
+                        {renderTeamDropdown(getFilteredTeams(awayTeamQuery, homeTeam), selectAwayTeam, showAwayDropdown)}
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              )}
+
+              {/* Name Field */}
+              <View style={[styles.fieldRow, !fieldsUnlocked && styles.fieldDisabled]}>
+                <Ionicons name="text-outline" size={20} color={fieldsUnlocked ? COLORS.navy : COLORS.grayLight} style={styles.fieldIcon} />
+                {isTeamSport && fieldsUnlocked ? (
+                  <View style={styles.fieldTextContainer}>
+                    <Text style={styles.fieldFilledText}>{eventName}</Text>
+                    <Ionicons name="checkmark-circle" size={18} color="#22C55E" />
+                  </View>
+                ) : (
+                  <TextInput
+                    style={styles.fieldInput}
+                    placeholder="Name of the event"
+                    placeholderTextColor={COLORS.grayLight}
+                    value={eventName}
+                    onChangeText={setEventName}
+                    editable={fieldsUnlocked && !isTeamSport}
+                    returnKeyType="next"
+                  />
+                )}
+              </View>
+
+              {/* Where Field */}
+              <View style={[styles.fieldRow, !fieldsUnlocked && styles.fieldDisabled, { zIndex: 10 }]}>
+                <Ionicons name="location-outline" size={20} color={fieldsUnlocked ? COLORS.navy : COLORS.grayLight} style={styles.fieldIcon} />
+                {isTeamSport && fieldsUnlocked ? (
+                  <View style={styles.fieldTextContainer}>
+                    <Text style={styles.fieldFilledText}>{venue}</Text>
+                    <Ionicons name="checkmark-circle" size={18} color="#22C55E" />
+                  </View>
+                ) : fieldsUnlocked ? (
+                  <View style={{ flex: 1 }}>
+                    <View style={styles.inputWithDropdown}>
+                      <TextInput
+                        style={styles.fieldInput}
+                        placeholder="Where was the event?"
+                        placeholderTextColor={COLORS.grayLight}
+                        value={cityQuery}
+                        onChangeText={(t) => { setCityQuery(t); setShowCityDropdown(true); if (selectedCity && t !== selectedCity.displayName) setSelectedCity(null); }}
+                        onFocus={() => setShowCityDropdown(true)}
+                        onSubmitEditing={handleCitySubmit}
+                        returnKeyType="done"
+                      />
+                      {renderCityDropdown()}
+                    </View>
+                  </View>
+                ) : (
+                  <Text style={styles.fieldPlaceholder}>Where was the event?</Text>
+                )}
+              </View>
+
+              {/* When Field */}
+              <Pressable
+                style={[styles.fieldRow, !fieldsUnlocked && styles.fieldDisabled]}
+                onPress={fieldsUnlocked ? handleDatePress : undefined}
+              >
+                <Ionicons name="calendar-outline" size={20} color={fieldsUnlocked ? COLORS.navy : COLORS.grayLight} style={styles.fieldIcon} />
+                <Text style={[styles.fieldInput, { color: dateSelected ? COLORS.navy : COLORS.grayLight }]}>
+                  {dateSelected ? formatDisplayDate(eventDate) : 'When was the event?'}
+                </Text>
+              </Pressable>
+
+              {/* Photos Field */}
+              <Pressable
+                style={[styles.fieldRow, !fieldsUnlocked && styles.fieldDisabled]}
+                onPress={fieldsUnlocked ? pickPhotos : undefined}
+              >
+                <Ionicons name="images-outline" size={20} color={fieldsUnlocked ? COLORS.navy : COLORS.grayLight} style={styles.fieldIcon} />
+                <Text style={[styles.fieldInput, { color: photos.length > 0 ? COLORS.navy : COLORS.grayLight, flex: 1 }]}>
+                  {photos.length > 0 ? `${photos.length} picture${photos.length > 1 ? 's' : ''} uploaded` : 'Upload Pictures'}
+                </Text>
+                {fieldsUnlocked && (
+                  <Ionicons name="add-outline" size={22} color={COLORS.grayLight} />
+                )}
+              </Pressable>
+
+              {/* Photo thumbnails */}
+              {photos.length > 0 && (
+                <View style={styles.photoThumbs}>
+                  {photos.map((uri, i) => (
+                    <TouchableOpacity key={i} style={styles.photoThumb} onPress={() => setPhotos(photos.filter((_, idx) => idx !== i))}>
+                      <Image source={{ uri }} style={styles.photoImage} />
+                      <View style={styles.photoRemove}><Text style={styles.photoRemoveText}>✕</Text></View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              {/* Spacer for bottom button */}
+              <View style={{ height: 80 }} />
             </ScrollView>
+
+            {/* Create Event Button - fixed at bottom */}
+            <View style={[styles.bottomBar, { paddingBottom: insets.bottom + SPACING.md }]}>
+              <TouchableOpacity
+                style={[styles.createButton, loading && styles.createButtonDisabled]}
+                onPress={handleSubmit}
+                disabled={loading}
+              >
+                {loading ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.createButtonText}>Create Event</Text>}
+              </TouchableOpacity>
+            </View>
+
+            {/* Date Picker Overlay */}
             {showDatePicker && (
-              <View style={styles.datePickerOverlayInner}>
+              <View style={styles.datePickerOverlay}>
                 <View style={styles.datePickerModal}>
                   <Text style={styles.datePickerTitle}>Select Date</Text>
                   <CalendarPicker
@@ -550,80 +542,168 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
                 </View>
               </View>
             )}
-          </Animated.View>
-        </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
-
-      
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  fab: { position: 'absolute', right: 20, width: 60, height: 60, borderRadius: 30, backgroundColor: COLORS.navy, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 8, zIndex: 100 },
+  fab: {
+    position: 'absolute', right: 20, width: 60, height: 60, borderRadius: 30,
+    backgroundColor: COLORS.navy, alignItems: 'center', justifyContent: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 8, zIndex: 100,
+  },
   fabIcon: { color: COLORS.white, fontSize: 32, fontWeight: '300', marginTop: -2 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  modalContainer: { backgroundColor: COLORS.cream, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '70%' },
-  scrollContent: { paddingBottom: 40 },
-  dragHandle: { width: 40, height: 4, backgroundColor: COLORS.grayLight, borderRadius: 2, alignSelf: 'center', marginTop: 8, marginBottom: 8 },
-  stepContent: { padding: SPACING.lg, paddingTop: SPACING.md },
-  stepTitle: { fontFamily: 'GeistMono_700Bold', fontSize: 28, color: COLORS.navy, marginBottom: 4 },
-  stepSubtitle: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.gray, marginBottom: SPACING.lg },
-  backButton: { marginBottom: SPACING.md },
-  backText: { fontFamily: FONTS.medium, fontSize: FONT_SIZES.md, color: COLORS.navy },
-  typeGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
-  typeCardWrapper: { width: '50%', padding: 6 },
-  typeCard: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, padding: SPACING.lg, alignItems: 'center', borderWidth: 1, borderColor: '#E5E5E5', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 },
-  typeEmoji: { fontSize: 48, marginBottom: SPACING.md },
-  typeLabel: { fontFamily: 'GeistMono_700Bold', fontSize: FONT_SIZES.lg, color: COLORS.navy, marginBottom: SPACING.xs, textAlign: 'center' },
-  typeSubtitleText: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.sm, color: COLORS.gray, textAlign: 'center' },
-  sportGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
-  sportCardWrapper: { width: '50%', padding: 6 },
-  sportCard: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, padding: SPACING.lg, alignItems: 'center', borderWidth: 1, borderColor: '#E5E5E5', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 },
-  sportEmoji: { fontSize: 48, marginBottom: SPACING.md },
-  sportLabel: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.lg, color: COLORS.navy, textAlign: 'center' },
-  inputGroup: { marginBottom: SPACING.lg },
-  label: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.md, color: COLORS.navy, marginBottom: SPACING.sm },
-  input: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.navy, backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.md, padding: SPACING.md, paddingVertical: SPACING.lg, borderWidth: 1, borderColor: COLORS.grayLight },
+
+  // Modal root
+  modalRoot: { flex: 1, backgroundColor: COLORS.cream },
+
+  // Header
+  headerContainer: {
+    height: 180, justifyContent: 'space-between', overflow: 'hidden',
+  },
+  headerTopRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: SPACING.lg, paddingTop: SPACING.md,
+  },
+  cancelButton: { width: 70 },
+  cancelText: {
+    fontFamily: FONTS.medium, fontSize: FONT_SIZES.md, color: 'rgba(255,255,255,0.85)',
+    backgroundColor: 'rgba(255,255,255,0.15)', paddingVertical: 6, paddingHorizontal: 14,
+    borderRadius: BORDER_RADIUS.full, overflow: 'hidden', textAlign: 'center',
+  },
+  headerTitle: {
+    fontFamily: 'GeistMono_700Bold', fontSize: FONT_SIZES.lg, color: COLORS.white,
+  },
+  coverPhotoButton: {
+    flexDirection: 'row', alignItems: 'center', alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.4)', paddingVertical: 8, paddingHorizontal: 16,
+    borderRadius: BORDER_RADIUS.full, gap: 6, marginBottom: SPACING.lg,
+  },
+  coverPhotoText: {
+    fontFamily: FONTS.medium, fontSize: FONT_SIZES.sm, color: COLORS.white,
+  },
+
+  // Form body
+  formBody: { flex: 1 },
+  formContent: { padding: SPACING.lg },
+
+  // Sections
+  section: { marginBottom: SPACING.lg },
+  sectionTitle: {
+    fontFamily: 'GeistMono_700Bold', fontSize: FONT_SIZES.lg, color: COLORS.navy, marginBottom: SPACING.md,
+  },
+
+  // Pills
+  pillGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
+  pill: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.full,
+    paddingVertical: 8, paddingHorizontal: 14,
+    borderWidth: 1.5, borderColor: '#E5E5E5',
+  },
+  pillActive: {
+    backgroundColor: COLORS.navy, borderColor: COLORS.navy,
+  },
+  pillEmoji: { fontSize: 16 },
+  pillLabel: {
+    fontFamily: FONTS.medium, fontSize: FONT_SIZES.sm, color: COLORS.navy,
+  },
+  pillLabelActive: { color: COLORS.white },
+
+  // Team selection
+  teamRow: { flexDirection: 'row', alignItems: 'flex-start' },
+  teamColumn: { flex: 1 },
+  teamLabel: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.sm, color: COLORS.navy, marginBottom: SPACING.xs },
+  teamInput: {
+    fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.navy,
+    backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md, borderWidth: 1, borderColor: COLORS.grayLight,
+  },
+  vsText: { fontFamily: FONTS.bold, fontSize: FONT_SIZES.lg, color: COLORS.navy, marginHorizontal: SPACING.sm, marginTop: 28 },
+
+  // Dropdowns
   inputWithDropdown: { position: 'relative', zIndex: 10 },
-  dropdown: { position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.md, borderWidth: 1, borderColor: COLORS.grayLight, marginTop: 4, maxHeight: 200, zIndex: 1000, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
+  dropdown: {
+    position: 'absolute', top: '100%', left: 0, right: 0,
+    backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1, borderColor: COLORS.grayLight, marginTop: 4,
+    maxHeight: 200, zIndex: 1000, elevation: 5,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4,
+  },
   dropdownScroll: { maxHeight: 200 },
   dropdownItem: { padding: SPACING.md, borderTopWidth: 1, borderTopColor: COLORS.grayLight },
   dropdownItemFirst: { borderTopWidth: 0 },
   dropdownItemText: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.navy },
-  teamContainer: { marginBottom: SPACING.lg, zIndex: 20 },
-  teamRow: { flexDirection: 'row', alignItems: 'flex-start' },
-  teamColumn: { flex: 1 },
-  teamLabel: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.sm, color: COLORS.navy, marginBottom: SPACING.xs },
-  teamInput: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.navy, backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.md, padding: SPACING.md, paddingVertical: SPACING.md, borderWidth: 1, borderColor: COLORS.grayLight },
-  vsText: { fontFamily: FONTS.bold, fontSize: FONT_SIZES.lg, color: COLORS.navy, marginHorizontal: SPACING.sm, marginTop: 28 },
-  dateButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.md, padding: SPACING.md, paddingVertical: SPACING.lg, borderWidth: 1, borderColor: COLORS.grayLight },
-  dateButtonText: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.navy },
-  dateButtonPlaceholder: { color: COLORS.grayLight },
-  calendarIcon: { fontSize: 20 },
-  datePickerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  datePickerOverlayInner: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', zIndex: 1000 },
-  datePickerModal: { backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg, padding: SPACING.lg, width: '85%', alignItems: 'center' },
+
+  // Field rows
+  fieldRow: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg,
+    paddingVertical: 14, paddingHorizontal: SPACING.md,
+    marginBottom: SPACING.md,
+    borderWidth: 1, borderColor: '#E5E5E5',
+  },
+  fieldDisabled: {
+    backgroundColor: '#F0F0F0', borderColor: '#E8E8E8',
+  },
+  fieldIcon: { marginRight: SPACING.md },
+  fieldInput: {
+    fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.navy, flex: 1,
+  },
+  fieldPlaceholder: {
+    fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.grayLight, flex: 1,
+  },
+  fieldTextContainer: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+  },
+  fieldFilledText: {
+    fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.navy, flex: 1,
+  },
+
+  // Photo thumbnails
+  photoThumbs: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: SPACING.md,
+  },
+  photoThumb: { width: 70, height: 70, borderRadius: BORDER_RADIUS.md, overflow: 'hidden' },
+  photoImage: { width: '100%', height: '100%' },
+  photoRemove: {
+    position: 'absolute', top: 4, right: 4,
+    backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 10, width: 20, height: 20,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  photoRemoveText: { color: COLORS.white, fontSize: 11, fontWeight: 'bold' },
+
+  // Bottom bar
+  bottomBar: {
+    paddingHorizontal: SPACING.lg, paddingTop: SPACING.md,
+    backgroundColor: COLORS.cream,
+    borderTopWidth: 1, borderTopColor: '#E5E5E5',
+  },
+  createButton: {
+    backgroundColor: COLORS.navy, borderRadius: BORDER_RADIUS.lg,
+    paddingVertical: 16, alignItems: 'center',
+  },
+  createButtonDisabled: { opacity: 0.6 },
+  createButtonText: {
+    fontFamily: 'GeistMono_700Bold', fontSize: FONT_SIZES.md, color: COLORS.white,
+  },
+
+  // Date picker overlay
+  datePickerOverlay: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', zIndex: 1000,
+  },
+  datePickerModal: {
+    backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg, width: '85%', alignItems: 'center',
+  },
   datePickerTitle: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.lg, color: COLORS.navy, marginBottom: SPACING.md },
-  datePicker: { height: 200, width: '100%' },
-  dateConfirmButton: { backgroundColor: COLORS.navy, borderRadius: BORDER_RADIUS.md, padding: SPACING.md, alignItems: 'center', marginTop: SPACING.md, width: '100%' },
+  dateConfirmButton: {
+    backgroundColor: COLORS.navy, borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md, alignItems: 'center', marginTop: SPACING.md, width: '100%',
+  },
   dateConfirmText: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.md, color: COLORS.white },
-  nextButton: { backgroundColor: COLORS.navy, borderRadius: BORDER_RADIUS.lg, padding: SPACING.lg, alignItems: 'center', marginTop: SPACING.lg },
-  nextButtonText: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.md, color: COLORS.white },
-  photoHeader: { alignItems: 'center', marginBottom: SPACING.lg },
-  photoEmoji: { fontSize: 48, marginBottom: SPACING.sm },
-  photoEventName: { fontFamily: FONTS.bold, fontSize: FONT_SIZES.xl, color: COLORS.navy, textAlign: 'center' },
-  photoEventLocation: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.md, color: COLORS.gray },
-  photoPrompt: { fontFamily: FONTS.regular, fontSize: FONT_SIZES.sm, color: COLORS.gray, textAlign: 'center', marginBottom: SPACING.lg },
-  photoGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4, marginBottom: SPACING.lg },
-  photoThumb: { width: '33.33%', aspectRatio: 1, padding: 4 },
-  photoImage: { width: '100%', height: '100%', borderRadius: BORDER_RADIUS.md },
-  photoRemove: { position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 12, width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
-  photoRemoveText: { color: COLORS.white, fontSize: 14, fontWeight: 'bold' },
-  addPhotoBtn: { width: '33.33%', aspectRatio: 1, padding: 4, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.white, borderRadius: BORDER_RADIUS.md, borderWidth: 2, borderColor: COLORS.grayLight, borderStyle: 'dashed' },
-  addPhotoIcon: { fontSize: 32, color: COLORS.navy },
-  addPhotoText: { fontFamily: FONTS.medium, fontSize: FONT_SIZES.xs, color: COLORS.navy, marginTop: 4 },
-  submitButton: { backgroundColor: COLORS.navy, borderRadius: BORDER_RADIUS.lg, padding: SPACING.md, alignItems: 'center' },
-  submitDisabled: { opacity: 0.6 },
-  submitButtonText: { fontFamily: FONTS.semiBold, fontSize: FONT_SIZES.md, color: COLORS.white },
 });
