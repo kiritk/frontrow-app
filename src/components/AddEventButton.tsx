@@ -330,10 +330,9 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
         <ConfettiCannon count={150} origin={{ x: SCREEN_WIDTH / 2, y: -20 }} fadeOut explosionSpeed={400} fallSpeed={2500} colors={[COLORS.navy, '#FFD700', '#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3']} autoStart />
       )}
 
-      <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={handleClose}>
-        <View style={{ flex: 1, backgroundColor: '#000' }}>
+      <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={handleClose}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <View style={[styles.modalRoot, { paddingTop: insets.top }]}>
+          <View style={styles.modalRoot}>
             {/* Background gradient that extends behind form */}
             <LinearGradient
               colors={coverPhoto ? ['rgba(0,0,0,0.3)', 'rgba(30,58,95,0.85)', COLORS.cream] : ['#1e3a5f', '#2a6a7a', '#7ab5b0', '#b8d5d1', COLORS.cream]}
@@ -602,7 +601,6 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
             )}
           </View>
         </KeyboardAvoidingView>
-        </View>
       </Modal>
     </>
   );
