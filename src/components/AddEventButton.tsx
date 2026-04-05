@@ -488,7 +488,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
 
               {/* Name Field */}
               <View style={[styles.fieldRow, !fieldsUnlocked && styles.fieldDisabled]}>
-                <Ionicons name="text-outline" size={20} color={fieldsUnlocked ? COLORS.navy : COLORS.grayLight} style={styles.fieldIcon} />
+                <Ionicons name="star-outline" size={20} color={fieldsUnlocked ? COLORS.navy : COLORS.grayLight} style={styles.fieldIcon} />
                 {isTeamSport && fieldsUnlocked ? (
                   <View style={styles.fieldTextContainer}>
                     <Text style={styles.fieldFilledText}>{eventName}</Text>
