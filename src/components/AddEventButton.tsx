@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
-import CalendarPicker from './CalendarPicker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -591,22 +591,37 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
             </View>
             )}
 
-            {/* Date Picker Overlay */}
-            {showDatePicker && (
-              <View style={styles.datePickerOverlay}>
-                <View style={styles.datePickerModal}>
-                  <Text style={styles.datePickerTitle}>Select Date</Text>
-                  <CalendarPicker
-                    selectedDate={eventDate}
-                    onDateChange={(d) => { setEventDate(d); setDateSelected(true); }}
+            {/* Date Picker - native platform picker */}
+            {showDatePicker && Platform.OS === 'ios' && (
+              <Pressable style={styles.datePickerOverlay} onPress={confirmDateSelection}>
+                <Pressable style={styles.datePickerModal} onPress={(e) => e.stopPropagation()}>
+                  <DateTimePicker
+                    value={eventDate}
+                    mode="date"
+                    display="inline"
+                    onChange={(_, d) => { if (d) { setEventDate(d); setDateSelected(true); } }}
                     maximumDate={new Date(2030, 11, 31)}
                     minimumDate={new Date(1950, 0, 1)}
+                    themeVariant="light"
                   />
                   <Pressable style={styles.dateConfirmButton} onPress={confirmDateSelection}>
-                    <Text style={styles.dateConfirmText}>Confirm Date</Text>
+                    <Text style={styles.dateConfirmText}>Done</Text>
                   </Pressable>
-                </View>
-              </View>
+                </Pressable>
+              </Pressable>
+            )}
+            {showDatePicker && Platform.OS === 'android' && (
+              <DateTimePicker
+                value={eventDate}
+                mode="date"
+                display="default"
+                onChange={(event, d) => {
+                  setShowDatePicker(false);
+                  if (event.type === 'set' && d) { setEventDate(d); setDateSelected(true); }
+                }}
+                maximumDate={new Date(2030, 11, 31)}
+                minimumDate={new Date(1950, 0, 1)}
+              />
             )}
           </View>
         </KeyboardAvoidingView>
