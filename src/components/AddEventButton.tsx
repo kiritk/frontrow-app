@@ -275,8 +275,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
       if (isGuest) {
         await saveLocalEvent(eventData);
       } else if (user) {
-        const { error } = await supabase.from('events').insert([{ ...eventData, user_id: user.id }]).select();
-        if (error) throw error;
+        await saveLocalEvent(eventData);
       }
 
       Keyboard.dismiss();
