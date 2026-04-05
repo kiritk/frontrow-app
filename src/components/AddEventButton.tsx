@@ -333,39 +333,26 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
         <View style={{ flex: 1, backgroundColor: '#000' }}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={[styles.modalRoot, { paddingTop: insets.top }]}>
-            {/* Header with gradient */}
-            <View style={styles.headerContainer}>
-              {coverPhoto ? (
-                <Image source={{ uri: coverPhoto }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
-              ) : null}
-              <LinearGradient
-                colors={coverPhoto ? ['rgba(0,0,0,0.3)', 'rgba(30,58,95,0.85)'] : ['#1e3a5f', '#2a6a7a', '#4a9a8a']}
-                style={StyleSheet.absoluteFillObject}
-              />
-              {/* Top row */}
-              <View style={styles.headerTopRow}>
-                <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
-                  <Text style={styles.cancelText}>Cancel</Text>
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>New Event</Text>
-                <View style={styles.cancelButton} />
-              </View>
-              {/* Cover photo button - centered in remaining space */}
-              <View style={styles.coverPhotoCenter}>
-                <TouchableOpacity style={styles.coverPhotoButton} onPress={pickCoverPhoto}>
-                  <Ionicons name="camera-outline" size={16} color={COLORS.white} />
-                  <Text style={styles.coverPhotoText}>{coverPhoto ? 'Change cover photo' : 'Pick a cover photo'}</Text>
-                </TouchableOpacity>
-              </View>
+            {/* Background gradient that extends behind form */}
+            <LinearGradient
+              colors={coverPhoto ? ['rgba(0,0,0,0.3)', 'rgba(30,58,95,0.85)', COLORS.cream] : ['#1e3a5f', '#2a6a7a', '#7ab5b0', '#b8d5d1', COLORS.cream]}
+              locations={coverPhoto ? [0, 0.4, 1] : [0, 0.15, 0.35, 0.5, 0.7]}
+              style={styles.backgroundGradient}
+            />
+            {coverPhoto ? (
+              <Image source={{ uri: coverPhoto }} style={styles.coverPhotoBackground} resizeMode="cover" />
+            ) : null}
+
+            {/* Header - fixed top row */}
+            <View style={styles.headerTopRow}>
+              <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>New Event</Text>
+              <View style={styles.cancelButton} />
             </View>
 
-            {/* Gradient fade from header to body */}
-            <LinearGradient
-              colors={['#4a9a8a', COLORS.cream]}
-              style={styles.headerFade}
-            />
-
-            {/* Form body */}
+            {/* Scrollable content - includes cover photo button and form */}
             <ScrollView
               ref={scrollViewRef}
               style={styles.formBody}
@@ -373,6 +360,13 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
+              {/* Cover photo button */}
+              <View style={styles.coverPhotoCenter}>
+                <TouchableOpacity style={styles.coverPhotoButton} onPress={pickCoverPhoto}>
+                  <Ionicons name="camera-outline" size={16} color={COLORS.white} />
+                  <Text style={styles.coverPhotoText}>{coverPhoto ? 'Change cover photo' : 'Pick a cover photo'}</Text>
+                </TouchableOpacity>
+              </View>
               {/* Event Type Section - collapsible */}
               <TouchableOpacity
                 style={styles.sectionCard}
@@ -624,13 +618,19 @@ const styles = StyleSheet.create({
   // Modal root
   modalRoot: { flex: 1, backgroundColor: COLORS.cream, borderTopLeftRadius: 20, borderTopRightRadius: 20, overflow: 'hidden' },
 
-  // Header
-  headerContainer: {
-    height: 180, overflow: 'hidden',
+  // Background gradient
+  backgroundGradient: {
+    position: 'absolute', top: 0, left: 0, right: 0, height: 400,
   },
+  coverPhotoBackground: {
+    position: 'absolute', top: 0, left: 0, right: 0, height: 250,
+  },
+
+  // Header
   headerTopRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: SPACING.lg, paddingTop: SPACING.md,
+    paddingHorizontal: SPACING.lg, paddingTop: SPACING.md, paddingBottom: SPACING.sm,
+    zIndex: 10,
   },
   cancelButton: { minWidth: 80 },
   cancelText: {
@@ -642,7 +642,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.medium, fontSize: FONT_SIZES.lg, color: COLORS.white,
   },
   coverPhotoCenter: {
-    flex: 1, justifyContent: 'center', alignItems: 'center',
+    alignItems: 'center', paddingVertical: 40,
   },
   coverPhotoButton: {
     flexDirection: 'row', alignItems: 'center',
@@ -653,12 +653,9 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.medium, fontSize: FONT_SIZES.sm, color: COLORS.white,
   },
 
-  // Header fade
-  headerFade: { height: 30 },
-
   // Form body
   formBody: { flex: 1 },
-  formContent: { padding: SPACING.lg },
+  formContent: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.lg },
 
   // Sections
   sectionCard: {
