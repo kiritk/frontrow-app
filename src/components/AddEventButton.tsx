@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Modal, TextInput,
   ScrollView, Alert, ActivityIndicator, Image,
@@ -78,6 +78,13 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   const [eventTypeExpanded, setEventTypeExpanded] = useState(true);
   const [sportTypeExpanded, setSportTypeExpanded] = useState(true);
   const [teamsExpanded, setTeamsExpanded] = useState(true);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardWillShow', () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener('keyboardWillHide', () => setKeyboardVisible(false));
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, []);
 
   // Determine if fields should be unlocked
   const isTeamSport = sportType === 'nfl' || sportType === 'mlb';
@@ -571,7 +578,8 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
               <View style={{ height: 80 }} />
             </ScrollView>
 
-            {/* Create Event Button - fixed at bottom */}
+            {/* Create Event Button - fixed at bottom, hidden when keyboard is visible */}
+            {!keyboardVisible && (
             <View style={[styles.bottomBar, { paddingBottom: insets.bottom + SPACING.md }]}>
               <TouchableOpacity
                 style={[styles.createButton, loading && styles.createButtonDisabled]}
@@ -581,6 +589,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
                 {loading ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.createButtonText}>Create Event</Text>}
               </TouchableOpacity>
             </View>
+            )}
 
             {/* Date Picker Overlay */}
             {showDatePicker && (
