@@ -71,25 +71,12 @@ export default function EventsScreen() {
 
   const fetchEvents = useCallback(async () => {
     try {
-      if (isGuest) {
-        // Load from local storage
-        const localEvents = await getLocalEvents();
-        setEvents(localEvents);
-      } else if (user) {
-        // Load from Supabase
-        const { data, error } = await supabase
-          .from('events')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('date', { ascending: false });
-
-        if (error) throw error;
-        setEvents(data || []);
-      }
+      const localEvents = await getLocalEvents();
+      setEvents(localEvents);
     } catch (error) {
       console.error('Error fetching events:', error);
     }
-  }, [user, isGuest]);
+  }, []);
 
   useEffect(() => {
     fetchEvents();
@@ -139,14 +126,7 @@ export default function EventsScreen() {
 
   const handleDeleteEvent = async (eventId: string) => {
     try {
-      if (isGuest) {
-        // Delete from local storage
-        await deleteLocalEvent(eventId);
-      } else {
-        // Delete from Supabase
-        const { error } = await supabase.from('events').delete().eq('id', eventId);
-        if (error) throw error;
-      }
+      await deleteLocalEvent(eventId);
       setEvents(events.filter(e => e.id !== eventId));
     } catch (error) {
       console.error('Error deleting event:', error);

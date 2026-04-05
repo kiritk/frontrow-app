@@ -90,11 +90,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
 
   const updateEvent = async (updates: Record<string, any>) => {
     try {
-      if (isGuest) {
-        await updateLocalEvent(event.id, updates);
-      } else {
-        await supabase.from('events').update(updates).eq('id', event.id);
-      }
+      await updateLocalEvent(event.id, updates);
       onUpdate?.();
     } catch (error) {
       console.error('Error updating event:', error);
