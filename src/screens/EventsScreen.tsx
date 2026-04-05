@@ -40,7 +40,7 @@ const CATEGORIES = [
   { key: 'other', label: 'Other', icon: 'ellipsis-horizontal-outline' },
 ];
 
-export default function EventsScreen() {
+export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const { user, isGuest } = useAuth();
   const navigation = useNavigation();
   const [events, setEvents] = useState<Event[]>([]);
@@ -80,7 +80,7 @@ export default function EventsScreen() {
 
   useEffect(() => {
     fetchEvents();
-  }, [fetchEvents]);
+  }, [fetchEvents, refreshKey]);
 
   // Events filtered by year only (used for determining visible categories)
   const yearFilteredEvents = React.useMemo(() => {
