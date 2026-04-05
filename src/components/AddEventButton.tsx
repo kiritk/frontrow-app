@@ -377,7 +377,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
                   <Text style={styles.sectionTitle}>Select an Event type</Text>
                   {eventType && !eventTypeExpanded && (
                     <Text style={styles.sectionSelectedLabel}>
-                      {EVENT_TYPES.find(t => t.value === eventType)?.label}
+                      {EVENT_TYPES.find(t => t.value === eventType)?.emoji}
                     </Text>
                   )}
                 </View>
@@ -408,7 +408,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
                     <Text style={styles.sectionTitle}>Select a Sport</Text>
                     {sportType && !sportTypeExpanded && (
                       <Text style={styles.sectionSelectedLabel}>
-                        {SPORT_TYPES.find(t => t.value === sportType)?.label}
+                        {SPORT_TYPES.find(t => t.value === sportType)?.emoji}
                       </Text>
                     )}
                   </View>
