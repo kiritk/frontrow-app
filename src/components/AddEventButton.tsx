@@ -151,23 +151,24 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   const formatDateForDB = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
   const getPrompts = () => {
+    const whereWhen = { where: 'Where was it?', when: 'When was it?' };
     if (eventType === 'sports') {
       switch (sportType) {
-        case 'nfl': return { placeholder: '49ers vs Chiefs...' };
-        case 'mlb': return { placeholder: 'Yankees vs Red Sox...' };
-        case 'nba': return { placeholder: 'Warriors vs Celtics...' };
-        case 'soccer': return { placeholder: 'Real Madrid vs Barcelona...' };
-        case 'tennis': return { placeholder: 'Alcaraz vs Djokovic...' };
-        case 'other': return { placeholder: '2026 Winter Olympics...' };
-        default: return { placeholder: 'Team vs Team...' };
+        case 'nfl': return { name: '49ers vs Chiefs...', ...whereWhen };
+        case 'mlb': return { name: 'Yankees vs Red Sox...', ...whereWhen };
+        case 'nba': return { name: 'Warriors vs Celtics...', ...whereWhen };
+        case 'soccer': return { name: 'Real Madrid vs Barcelona...', ...whereWhen };
+        case 'tennis': return { name: 'Alcaraz vs Djokovic...', ...whereWhen };
+        case 'other': return { name: '2026 Winter Olympics...', ...whereWhen };
+        default: return { name: 'Team vs Team...', ...whereWhen };
       }
     }
     switch (eventType) {
-      case 'concert': return { placeholder: 'Taylor Swift, The Weeknd...' };
-      case 'theater': return { placeholder: 'Hamilton, Wicked...' };
-      case 'comedy': return { placeholder: 'Dave Chappelle...' };
-      case 'landmark': return { placeholder: 'Eiffel Tower...' };
-      default: return { placeholder: 'Describe the event...' };
+      case 'concert': return { name: 'Who did you see?', ...whereWhen };
+      case 'theater': return { name: 'What was the show?', ...whereWhen };
+      case 'comedy': return { name: 'Who was the comedian?', ...whereWhen };
+      case 'landmark': return { name: 'What was the landmark?', ...whereWhen };
+      default: return { name: 'What was the experience?', ...whereWhen };
     }
   };
 
@@ -329,10 +330,9 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
         <ConfettiCannon count={150} origin={{ x: SCREEN_WIDTH / 2, y: -20 }} fadeOut explosionSpeed={400} fallSpeed={2500} colors={[COLORS.navy, '#FFD700', '#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3']} autoStart />
       )}
 
-      <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={handleClose}>
-        <View style={{ flex: 1, backgroundColor: '#000' }}>
+      <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={handleClose}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <View style={[styles.modalRoot, { paddingTop: insets.top }]}>
+          <View style={styles.modalRoot}>
             {/* Background gradient that extends behind form */}
             <LinearGradient
               colors={coverPhoto ? ['rgba(0,0,0,0.3)', 'rgba(30,58,95,0.85)', COLORS.cream] : ['#1e3a5f', '#2a6a7a', '#7ab5b0', '#b8d5d1', COLORS.cream]}
@@ -491,7 +491,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
                 ) : (
                   <TextInput
                     style={styles.fieldInput}
-                    placeholder="Name of the event"
+                    placeholder={prompts.name}
                     placeholderTextColor={COLORS.grayLight}
                     value={eventName}
                     onChangeText={setEventName}
@@ -514,7 +514,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
                     <View style={styles.inputWithDropdown}>
                       <TextInput
                         style={styles.fieldInput}
-                        placeholder="Where was the event?"
+                        placeholder={prompts.where}
                         placeholderTextColor={COLORS.grayLight}
                         value={cityQuery}
                         onChangeText={(t) => { setCityQuery(t); setShowCityDropdown(true); if (selectedCity && t !== selectedCity.displayName) setSelectedCity(null); }}
@@ -526,7 +526,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
                     </View>
                   </View>
                 ) : (
-                  <Text style={styles.fieldPlaceholder}>Where was the event?</Text>
+                  <Text style={styles.fieldPlaceholder}>{prompts.where}</Text>
                 )}
               </View>
 
@@ -537,7 +537,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
               >
                 <Ionicons name="calendar-outline" size={20} color={fieldsUnlocked ? COLORS.navy : COLORS.grayLight} style={styles.fieldIcon} />
                 <Text style={[styles.fieldInput, { color: dateSelected ? COLORS.navy : COLORS.grayLight }]}>
-                  {dateSelected ? formatDisplayDate(eventDate) : 'When was the event?'}
+                  {dateSelected ? formatDisplayDate(eventDate) : prompts.when}
                 </Text>
               </Pressable>
 
@@ -601,7 +601,6 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
             )}
           </View>
         </KeyboardAvoidingView>
-        </View>
       </Modal>
     </>
   );
