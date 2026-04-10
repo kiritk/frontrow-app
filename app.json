@@ -17,10 +17,11 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "app.frontrow.live",
-      "buildNumber": "12",
+      "buildNumber": "13",
       "infoPlist": {
         "NSCameraUsageDescription": "Front Row needs camera access to add photos to your event memories.",
         "NSPhotoLibraryUsageDescription": "Front Row needs photo library access to attach photos to your events.",
+        "NSLocationWhenInUseUsageDescription": "Front Row uses your location to show nearby events on the map.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
