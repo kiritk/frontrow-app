@@ -17,7 +17,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "app.frontrow.live",
-      "buildNumber": "1",
+      "buildNumber": "10",
       "infoPlist": {
         "NSCameraUsageDescription": "Front Row needs camera access to add photos to your event memories.",
         "NSPhotoLibraryUsageDescription": "Front Row needs photo library access to attach photos to your events."
