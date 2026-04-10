@@ -74,7 +74,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
         left: (CARD_WIDTH - NOTCH_WIDTH) / 2,
         width: NOTCH_WIDTH,
         height: NOTCH_HEIGHT,
-        backgroundColor: COLORS.cream,
+        backgroundColor: '#FBFCFC',
         borderBottomLeftRadius: NOTCH_WIDTH / 2,
         borderBottomRightRadius: NOTCH_WIDTH / 2,
         zIndex: 100,
