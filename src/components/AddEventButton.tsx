@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Modal, TextInput,
   ScrollView, Alert, ActivityIndicator, Image,
@@ -16,7 +16,7 @@ import { saveLocalEvent } from '../lib/localStorage';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 import { NFL_TEAMS, NFLTeam } from '../data/nflTeams';
 import { MLB_TEAMS, MLBTeam } from '../data/mlbTeams';
-import { SORTED_CITIES, USCity } from '../data/usCities';
+import { searchCities, City } from '../lib/geonames';
 import { Ionicons } from '@expo/vector-icons';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -68,7 +68,8 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   const [showAwayDropdown, setShowAwayDropdown] = useState(false);
 
   // City state
-  const [selectedCity, setSelectedCity] = useState<USCity | null>(null);
+  const [selectedCity, setSelectedCity] = useState<City | null>(null);
+  const [cityResults, setCityResults] = useState<City[]>([]);
   const [cityQuery, setCityQuery] = useState('');
   const [showCityDropdown, setShowCityDropdown] = useState(false);
 
@@ -104,7 +105,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     setPhotos([]); setCoverPhoto(null);
     setHomeTeam(null); setAwayTeam(null); setHomeTeamQuery(''); setAwayTeamQuery('');
     setShowHomeDropdown(false); setShowAwayDropdown(false);
-    setSelectedCity(null); setCityQuery(''); setShowCityDropdown(false);
+    setSelectedCity(null); setCityQuery(''); setShowCityDropdown(false); setCityResults([]);
     setEventTypeExpanded(true); setSportTypeExpanded(true); setTeamsExpanded(true);
   };
 
@@ -189,11 +190,16 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     return team.name.toLowerCase().includes(query.toLowerCase()) || team.city.toLowerCase().includes(query.toLowerCase()) || team.fullName.toLowerCase().includes(query.toLowerCase());
   });
 
-  // City helpers
-  const getFilteredCities = (query: string) => {
-    if (!query) return SORTED_CITIES.slice(0, 5);
-    return SORTED_CITIES.filter(city => city.displayName.toLowerCase().includes(query.toLowerCase()) || city.city.toLowerCase().includes(query.toLowerCase()) || city.state.toLowerCase().includes(query.toLowerCase())).slice(0, 5);
-  };
+  // City search with debounce
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleCitySearch = useCallback((query: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (query.length < 2) { setCityResults([]); return; }
+    debounceRef.current = setTimeout(async () => {
+      const results = await searchCities(query);
+      setCityResults(results);
+    }, 300);
+  }, []);
 
   const selectHomeTeam = (team: SportTeam) => {
     setHomeTeam(team); setHomeTeamQuery(team.fullName); setShowHomeDropdown(false);
@@ -212,11 +218,10 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     }
     Keyboard.dismiss();
   };
-  const selectCity = (city: USCity) => { setSelectedCity(city); setCityQuery(city.displayName); setShowCityDropdown(false); Keyboard.dismiss(); };
+  const selectCity = (city: City) => { setSelectedCity(city); setCityQuery(city.displayName); setShowCityDropdown(false); setCityResults([]); Keyboard.dismiss(); };
 
   const handleCitySubmit = () => {
-    const filteredCities = getFilteredCities(cityQuery);
-    if (filteredCities.length > 0) selectCity(filteredCities[0]);
+    if (cityResults.length > 0) selectCity(cityResults[0]);
     else { setShowCityDropdown(false); Keyboard.dismiss(); }
   };
 
@@ -309,13 +314,12 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   };
 
   const renderCityDropdown = () => {
-    const filteredCities = getFilteredCities(cityQuery);
-    if (!showCityDropdown || filteredCities.length === 0) return null;
+    if (!showCityDropdown || cityResults.length === 0) return null;
     return (
       <View style={styles.dropdown}>
         <ScrollView style={styles.dropdownScroll} keyboardShouldPersistTaps="always" nestedScrollEnabled>
-          {filteredCities.map((city, index) => (
-            <TouchableOpacity key={`${city.city}-${city.stateCode}`} style={[styles.dropdownItem, index === 0 && styles.dropdownItemFirst]} onPress={() => selectCity(city)}>
+          {cityResults.map((city, index) => (
+            <TouchableOpacity key={`${city.city}-${city.latitude}-${city.longitude}`} style={[styles.dropdownItem, index === 0 && styles.dropdownItemFirst]} onPress={() => selectCity(city)}>
               <Text style={styles.dropdownItemText}>{city.displayName}</Text>
             </TouchableOpacity>
           ))}
@@ -523,7 +527,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
                         placeholder={prompts.where}
                         placeholderTextColor={COLORS.grayLight}
                         value={cityQuery}
-                        onChangeText={(t) => { setCityQuery(t); setShowCityDropdown(true); if (selectedCity && t !== selectedCity.displayName) setSelectedCity(null); }}
+                        onChangeText={(t) => { setCityQuery(t); setShowCityDropdown(true); handleCitySearch(t); if (selectedCity && t !== selectedCity.displayName) setSelectedCity(null); }}
                         onFocus={() => setShowCityDropdown(true)}
                         onSubmitEditing={handleCitySubmit}
                         returnKeyType="done"
