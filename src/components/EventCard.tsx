@@ -63,6 +63,24 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
   const { isGuest } = useAuth();
   const CARD_WIDTH = (width - 48 - 12) / 2;
   const CARD_HEIGHT = CARD_WIDTH * 1.2;
+  const NOTCH_WIDTH = CARD_WIDTH * 0.22;
+  const NOTCH_HEIGHT = NOTCH_WIDTH / 2;
+  const topNotch = (
+    <View
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: (CARD_WIDTH - NOTCH_WIDTH) / 2,
+        width: NOTCH_WIDTH,
+        height: NOTCH_HEIGHT,
+        backgroundColor: COLORS.cream,
+        borderBottomLeftRadius: NOTCH_WIDTH / 2,
+        borderBottomRightRadius: NOTCH_WIDTH / 2,
+        zIndex: 100,
+      }}
+    />
+  );
 
   const [showActionModal, setShowActionModal] = useState(false);
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
@@ -455,6 +473,8 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
     const homeColor = homeTeam?.primaryColor || '#2a1a3a';
     return (
       <View style={[styles.card, { height: CARD_HEIGHT }]}>
+      {topNotch}
+        {topNotch}
         <View style={[styles.teamBottomColor, { backgroundColor: homeColor }]} />
         <View style={styles.teamStadiumSection}>
           <ImageBackground source={coverSource || homeTeam?.stadiumImage} style={styles.teamStadiumImage} imageStyle={styles.teamStadiumImageStyle}>
@@ -484,6 +504,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
 
   const renderConcertCard = () => (
     <View style={[styles.card, { height: CARD_HEIGHT }]}>
+      {topNotch}
       <View style={styles.topSection}>
         <ImageBackground source={getConcertBackground()} style={styles.imageBackground} imageStyle={styles.imageStyle}>
           <LinearGradient colors={['transparent', 'rgba(26, 26, 46, 0.7)', CONCERT_COLORS.gradientStart]} style={styles.imageOverlay} />
@@ -507,6 +528,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
 
   const renderTheaterCard = () => (
     <View style={[styles.card, { height: CARD_HEIGHT }]}>
+      {topNotch}
       <View style={styles.topSection}>
         <ImageBackground source={getTheaterBackground()} style={styles.imageBackground} imageStyle={styles.imageStyle}>
           <LinearGradient colors={['transparent', 'rgba(26, 10, 10, 0.7)', THEATER_COLORS.gradientStart]} style={styles.imageOverlay} />
@@ -530,6 +552,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
 
   const renderComedyCard = () => (
     <View style={[styles.card, { height: CARD_HEIGHT }]}>
+      {topNotch}
       <View style={styles.topSection}>
         <ImageBackground source={getComedyBackground()} style={styles.imageBackground} imageStyle={styles.imageStyle}>
           <LinearGradient colors={['transparent', 'rgba(26, 5, 5, 0.7)', COMEDY_COLORS.gradientStart]} style={styles.imageOverlay} />
@@ -553,6 +576,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
 
   const renderLandmarkCard = () => (
     <View style={[styles.card, { height: CARD_HEIGHT }]}>
+      {topNotch}
       <View style={styles.topSection}>
         <ImageBackground source={getLandmarkBackground()} style={styles.imageBackground} imageStyle={styles.imageStyle}>
           <LinearGradient colors={['transparent', 'rgba(26, 25, 23, 0.7)', LANDMARK_COLORS.gradientStart]} style={styles.imageOverlay} />
@@ -576,6 +600,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
 
   const renderOtherCard = () => (
     <View style={[styles.card, { height: CARD_HEIGHT }]}>
+      {topNotch}
       <View style={styles.topSection}>
         <ImageBackground source={getOtherBackground()} style={styles.imageBackground} imageStyle={styles.imageStyle}>
           <LinearGradient colors={['transparent', 'rgba(42, 21, 16, 0.7)', OTHER_COLORS.gradientStart]} style={styles.imageOverlay} />
@@ -599,6 +624,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
 
   const renderSportCard = (bgSource: any, gradientFade: string) => (
     <View style={[styles.card, { height: CARD_HEIGHT }]}>
+      {topNotch}
       <View style={styles.topSection}>
         <ImageBackground source={bgSource} style={styles.imageBackground} imageStyle={styles.imageStyle}>
           <LinearGradient colors={['transparent', gradientFade + '99', gradientFade]} style={styles.imageOverlay} />
@@ -622,6 +648,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
 
   const renderDefaultCard = () => (
     <View style={[styles.card, { height: CARD_HEIGHT }]}>
+      {topNotch}
       <LinearGradient colors={cardStyle.gradientColors} style={styles.defaultGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
         <View style={styles.defaultImageArea}>
           <Text style={styles.defaultTitle} numberOfLines={2}>{title.toUpperCase()}</Text>
@@ -674,7 +701,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.75,
+    shadowOpacity: 0.5,
     shadowRadius: 20,
     elevation: 16,
   },
