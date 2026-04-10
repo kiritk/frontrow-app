@@ -1,11 +1,15 @@
-// Dynamic Expo config that extends app.json and injects secrets from env vars.
+// Dynamic Expo config that extends app.json and injects the Mapbox
+// download-token secret from the MAPBOX_DOWNLOAD_TOKEN env var.
 // See .env.example for the required variables.
-const appJson = require('./app.json');
-
-module.exports = {
-  ...appJson.expo,
+//
+// This is exported as a function (rather than a plain object) so that
+// Expo's `modifyConfigAsync` flow can still write updates (e.g. the
+// ITSAppUsesNonExemptEncryption declaration during `eas submit`) to
+// the underlying static config at app.json.
+module.exports = ({ config }) => ({
+  ...config,
   plugins: [
-    ...(appJson.expo.plugins || []),
+    ...(config.plugins || []),
     [
       '@rnmapbox/maps',
       {
@@ -14,4 +18,4 @@ module.exports = {
       },
     ],
   ],
-};
+});
