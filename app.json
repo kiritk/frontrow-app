@@ -32,7 +32,14 @@
     "plugins": [
       "expo-asset",
       "expo-font",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "@rnmapbox/maps",
+        {
+          "RNMapboxMapsImpl": "mapbox",
+          "RNMapboxMapsDownloadToken": "REPLACE_WITH_YOUR_SECRET_DOWNLOAD_TOKEN"
+        }
+      ]
     ],
     "extra": {
       "eas": {
