@@ -698,14 +698,14 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
 
 const styles = StyleSheet.create({
   cardWrapper: {
-    marginBottom: 36,
+    marginBottom: 20,
     borderRadius: 8,
     backgroundColor: '#1a1a2e',
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 16,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 6,
   },
   modalOverlay: {
     flex: 1,
