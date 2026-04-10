@@ -702,7 +702,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#1a1a2e',
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
     shadowRadius: 6,
     elevation: 6,
