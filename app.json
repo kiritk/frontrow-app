@@ -2,7 +2,7 @@
   "expo": {
     "name": "Front Row",
     "slug": "frontrow",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -17,7 +17,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "app.frontrow.live",
-      "buildNumber": "4",
+      "buildNumber": "12",
       "infoPlist": {
         "NSCameraUsageDescription": "Front Row needs camera access to add photos to your event memories.",
         "NSPhotoLibraryUsageDescription": "Front Row needs photo library access to attach photos to your events.",

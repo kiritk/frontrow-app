@@ -8,7 +8,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { getLocalEvents, deleteLocalEvent } from '../lib/localStorage';
 import EventCard from '../components/EventCard';
-import EventsMap from '../components/EventsMap';
+import EventsGlobe from '../components/EventsGlobe';
 import * as Haptics from 'expo-haptics';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
@@ -274,7 +274,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
           />
         </>
       ) : (
-        <EventsMap events={filteredEvents} />
+        <EventsGlobe events={filteredEvents} />
       )}
     </SafeAreaView>
   );
