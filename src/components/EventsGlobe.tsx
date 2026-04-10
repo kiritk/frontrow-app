@@ -46,6 +46,33 @@ const typeColors: Record<string, string> = {
 // Offset in degrees when multiple events share a coordinate (~300-400m)
 const OFFSET_DISTANCE = 0.003;
 
+// Label layers in Mapbox Outdoors v12 — hidden to produce a clean, label-free globe.
+// Any id that doesn't exist in the current style is a harmless no-op.
+const HIDDEN_LABEL_LAYERS = [
+  'continent-label',
+  'country-label',
+  'state-label',
+  'settlement-subdivision-label',
+  'settlement-minor-label',
+  'settlement-major-label',
+  'airport-label',
+  'poi-label',
+  'water-point-label',
+  'water-line-label',
+  'waterway-label',
+  'natural-point-label',
+  'natural-line-label',
+  'transit-label',
+  'road-label',
+  'road-label-simple',
+  'road-number-shield',
+  'road-exit-shield',
+  'path-pedestrian-label',
+  'ferry-aerialway-label',
+  'block-number-label',
+  'contour-label',
+];
+
 export default function EventsGlobe({ events }: EventsGlobeProps) {
   const cameraRef = useRef<Mapbox.Camera>(null);
 
@@ -167,7 +194,7 @@ export default function EventsGlobe({ events }: EventsGlobeProps) {
     <View style={styles.container}>
       <Mapbox.MapView
         style={styles.map}
-        styleURL={Mapbox.StyleURL.Dark}
+        styleURL={Mapbox.StyleURL.Outdoors}
         projection="globe"
         scaleBarEnabled={false}
         attributionEnabled={true}
@@ -180,6 +207,27 @@ export default function EventsGlobe({ events }: EventsGlobeProps) {
             zoomLevel: initialCamera.zoomLevel,
           }}
         />
+
+        {/* Space atmosphere: black sky, subtle stars, soft horizon glow */}
+        <Mapbox.Atmosphere
+          style={{
+            color: '#a8c8ff',
+            highColor: '#000814',
+            spaceColor: '#000000',
+            horizonBlend: 0.04,
+            starIntensity: 0.4,
+          }}
+        />
+
+        {/* Hide all text labels so the globe reads as pure terrain */}
+        {HIDDEN_LABEL_LAYERS.map(layerId => (
+          <Mapbox.SymbolLayer
+            key={layerId}
+            id={layerId}
+            existing
+            style={{ visibility: 'none' }}
+          />
+        ))}
 
         {eventsWithOffsets.map(({ event, displayLat, displayLng, team, isTeamSport }) => (
           <Mapbox.MarkerView
