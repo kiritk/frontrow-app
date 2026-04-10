@@ -672,9 +672,9 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
 const styles = StyleSheet.create({
   cardWrapper: {
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.5,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.75,
     shadowRadius: 20,
     elevation: 16,
   },
