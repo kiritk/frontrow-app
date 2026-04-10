@@ -20,7 +20,8 @@
       "buildNumber": "12",
       "infoPlist": {
         "NSCameraUsageDescription": "Front Row needs camera access to add photos to your event memories.",
-        "NSPhotoLibraryUsageDescription": "Front Row needs photo library access to attach photos to your events."
+        "NSPhotoLibraryUsageDescription": "Front Row needs photo library access to attach photos to your events.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
