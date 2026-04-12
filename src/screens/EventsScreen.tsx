@@ -4,9 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { getLocalEvents, deleteLocalEvent } from '../lib/localStorage';
+import { fetchEvents as fetchEventsFromService, removeEvent } from '../lib/eventService';
 import EventCard from '../components/EventCard';
 import EventsGlobe from '../components/EventsGlobe';
 import * as Haptics from 'expo-haptics';
@@ -71,12 +70,12 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
 
   const fetchEvents = useCallback(async () => {
     try {
-      const localEvents = await getLocalEvents();
-      setEvents(localEvents);
+      const allEvents = await fetchEventsFromService(user?.id);
+      setEvents(allEvents);
     } catch (error) {
       console.error('Error fetching events:', error);
     }
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     fetchEvents();
@@ -126,7 +125,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
 
   const handleDeleteEvent = async (eventId: string) => {
     try {
-      await deleteLocalEvent(eventId);
+      await removeEvent(eventId, user?.id);
       setEvents(events.filter(e => e.id !== eventId));
     } catch (error) {
       console.error('Error deleting event:', error);

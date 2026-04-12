@@ -11,7 +11,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { getLocalEvents } from '../lib/localStorage';
-import { supabase } from '../lib/supabase';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
 const PROFILE_STORAGE_KEY = 'frontrow_user_profile';
@@ -54,18 +53,10 @@ export default function ProfileScreen() {
 
   const fetchEventCount = async () => {
     try {
-      if (user) {
-        // Fetch from Supabase for logged in users
-        const { count } = await supabase
-          .from('events')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id);
-        setEventCount(count || 0);
-      } else {
-        // Fetch from local storage for guests
-        const localEvents = await getLocalEvents();
-        setEventCount(localEvents.length);
-      }
+      // AsyncStorage is the source of truth for both guests and
+      // logged-in users (it has photos; Supabase only stores text).
+      const localEvents = await getLocalEvents();
+      setEventCount(localEvents.length);
     } catch (error) {
       console.log('Error fetching event count:', error);
     }
