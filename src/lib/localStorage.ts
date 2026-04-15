@@ -56,6 +56,28 @@ export const saveLocalEvent = async (event: Omit<LocalEvent, 'id' | 'created_at'
   }
 };
 
+// Save a local event with a known ID (used when syncing with Supabase)
+export const saveLocalEventWithId = async (event: LocalEvent): Promise<void> => {
+  try {
+    const events = await getLocalEvents();
+    events.unshift(event);
+    await AsyncStorage.setItem(LOCAL_EVENTS_KEY, JSON.stringify(events));
+  } catch (error) {
+    console.error('Error saving local event with id:', error);
+    throw error;
+  }
+};
+
+// Bulk replace all local events (used after migration ID updates)
+export const setLocalEvents = async (events: LocalEvent[]): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(LOCAL_EVENTS_KEY, JSON.stringify(events));
+  } catch (error) {
+    console.error('Error setting local events:', error);
+    throw error;
+  }
+};
+
 // Update a local event
 export const updateLocalEvent = async (id: string, updates: Partial<LocalEvent>): Promise<void> => {
   try {

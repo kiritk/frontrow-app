@@ -10,9 +10,8 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import ConfettiCannon from 'react-native-confetti-cannon';
-import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { saveLocalEvent } from '../lib/localStorage';
+import { createEvent } from '../lib/eventService';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 import { NFL_TEAMS, NFLTeam } from '../data/nflTeams';
 import { MLB_TEAMS, MLBTeam } from '../data/mlbTeams';
@@ -277,11 +276,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
         eventData.away_team = { name: awayTeam.name, city: awayTeam.city, fullName: awayTeam.fullName };
       }
 
-      if (isGuest) {
-        await saveLocalEvent(eventData);
-      } else if (user) {
-        await saveLocalEvent(eventData);
-      }
+      await createEvent(eventData, user?.id);
 
       Keyboard.dismiss();
       setModalVisible(false);

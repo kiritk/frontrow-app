@@ -9,9 +9,9 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import CalendarPicker from './CalendarPicker';
-import { supabase } from '../lib/supabase';
+
 import { useAuth } from '../context/AuthContext';
-import { updateLocalEvent } from '../lib/localStorage';
+import { editEvent } from '../lib/eventService';
 import { SORTED_CITIES, USCity } from '../data/usCities';
 import { COLORS, FONTS, SPACING, FONT_SIZES, BORDER_RADIUS } from '../theme/colors';
 import { getTeamByName } from '../data/nflTeams';
@@ -60,7 +60,7 @@ const OTHER_COLORS = {
 
 export default function EventCard({ event, onDelete, onUpdate }: EventCardProps) {
   const { width } = useWindowDimensions();
-  const { isGuest } = useAuth();
+  const { user, isGuest } = useAuth();
   const CARD_WIDTH = (width - 48 - 12) / 2;
   const CARD_HEIGHT = CARD_WIDTH * 1.2;
   const NOTCH_WIDTH = CARD_WIDTH * 0.22;
@@ -107,7 +107,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
 
   const updateEvent = async (updates: Record<string, any>) => {
     try {
-      await updateLocalEvent(event.id, updates);
+      await editEvent(event.id, updates, user?.id);
       onUpdate?.();
     } catch (error) {
       console.error('Error updating event:', error);

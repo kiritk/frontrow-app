@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { getLocalEvents, clearLocalEvents } from '../lib/localStorage';
+import { migrateGuestEvents } from '../lib/eventService';
 
 interface AuthContextType {
   user: User | null;
@@ -52,41 +52,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   };
 
-  // Migrate local events to user's account
+  // Migrate local events to user's Supabase account.
+  // Local events (including photos) are preserved — only text fields
+  // are copied to the cloud.  Local IDs are updated to match Supabase
+  // UUIDs so future edits/deletes stay in sync.
   const migrateLocalEventsToAccount = async (): Promise<number> => {
     if (!user) return 0;
-
     try {
-      const localEvents = await getLocalEvents();
-      if (localEvents.length === 0) return 0;
-
-      // Prepare events for Supabase (remove local id, add user_id)
-      const eventsToInsert = localEvents.map(event => ({
-        user_id: user.id,
-        title: event.title,
-        type: event.type,
-        sport: event.sport || null,
-        venue: event.venue,
-        venue_location: event.venue_location || null,
-        date: event.date,
-        photos: event.photos || [],
-        latitude: event.latitude || null,
-        longitude: event.longitude || null,
-        home_team: event.home_team || null,
-        away_team: event.away_team || null,
-      }));
-
-      const { error } = await supabase.from('events').insert(eventsToInsert);
-      
-      if (error) {
-        console.error('Error migrating events:', error);
-        throw error;
-      }
-
-      // Clear local events after successful migration
-      await clearLocalEvents();
-      
-      return localEvents.length;
+      return await migrateGuestEvents(user.id);
     } catch (error) {
       console.error('Migration error:', error);
       throw error;

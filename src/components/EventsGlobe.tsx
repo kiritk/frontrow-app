@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import Mapbox from '@rnmapbox/maps';
 import { COLORS, FONTS, FONT_SIZES, SPACING } from '../theme/colors';
@@ -153,42 +153,11 @@ export default function EventsGlobe({ events }: EventsGlobeProps) {
     return result;
   })();
 
-  // Initial camera centered on the event cluster (or world view if empty)
-  const getInitialCamera = () => {
-    if (eventsWithCoords.length === 0) {
-      return { centerCoordinate: [0, 20] as [number, number], zoomLevel: 0 };
-    }
-    const lats = eventsWithCoords.map(e => e.latitude);
-    const lngs = eventsWithCoords.map(e => e.longitude);
-    const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
-    const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
-    return {
-      centerCoordinate: [centerLng, centerLat] as [number, number],
-      zoomLevel: eventsWithCoords.length === 1 ? 4 : 1.5,
-    };
+  // Fixed world-view camera: entire spherical globe visible by default.
+  const initialCamera = {
+    centerCoordinate: [0, 20] as [number, number],
+    zoomLevel: 0,
   };
-
-  const initialCamera = getInitialCamera();
-
-  // Re-center when events change
-  useEffect(() => {
-    cameraRef.current?.setCamera({
-      centerCoordinate: initialCamera.centerCoordinate,
-      zoomLevel: initialCamera.zoomLevel,
-      animationDuration: 800,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [events.length]);
-
-  if (eventsWithCoords.length === 0) {
-    return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyEmoji}>🌍</Text>
-        <Text style={styles.emptyText}>No events with locations yet</Text>
-        <Text style={styles.emptySubtext}>Add events to see them on the globe</Text>
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>

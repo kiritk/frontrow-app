@@ -14,23 +14,20 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-export interface Event {
+export interface SupabaseEvent {
   id: string;
   user_id: string;
-  event_name: string;
-  event_type: 'concert' | 'sports' | 'theater' | 'comedy' | 'festival' | 'other';
+  title: string;
+  type: string;
+  sport?: string | null;
   venue: string;
-  city: string;
-  event_date: string;
-  section?: string;
-  row?: string;
-  seat?: string;
-  rating?: number;
-  notes?: string;
-  photo_url?: string;
+  venue_location?: string | null;
+  date: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  home_team?: { name: string; city: string; fullName: string } | null;
+  away_team?: { name: string; city: string; fullName: string } | null;
   created_at: string;
-  updated_at: string;
 }
 
-export type EventInsert = Omit<Event, 'id' | 'created_at' | 'updated_at'>;
-export type EventUpdate = Partial<EventInsert>;
+export type SupabaseEventInsert = Omit<SupabaseEvent, 'id' | 'created_at'>;
