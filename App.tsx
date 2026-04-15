@@ -90,6 +90,14 @@ function MainApp() {
         tabBar={(props) => <CustomTabBar {...props} />}
         screenOptions={{
           headerShown: false,
+          // Let the screen (and the globe) render all the way to the bottom edge
+          // behind the floating tab-bar pill instead of being clipped above it.
+          tabBarStyle: {
+            position: 'absolute',
+            backgroundColor: 'transparent',
+            borderTopWidth: 0,
+            elevation: 0,
+          },
         }}
       >
         <Tab.Screen name="Events">
