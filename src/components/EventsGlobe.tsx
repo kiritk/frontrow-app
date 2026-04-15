@@ -4,7 +4,7 @@ import Mapbox from '@rnmapbox/maps';
 import { COLORS, FONTS, FONT_SIZES, SPACING } from '../theme/colors';
 import { getTeamByName } from '../data/nflTeams';
 import { getMLBTeamByName } from '../data/mlbTeams';
-import { initMapbox } from '../lib/mapbox';
+import { initMapbox, isMapboxNativeAvailable } from '../lib/mapbox';
 
 initMapbox();
 
@@ -75,6 +75,20 @@ const HIDDEN_LABEL_LAYERS = [
 
 export default function EventsGlobe({ events }: EventsGlobeProps) {
   const cameraRef = useRef<Mapbox.Camera>(null);
+
+  // Expo Go doesn't include the Mapbox native module — render a placeholder
+  // so the rest of the app stays testable.
+  if (!isMapboxNativeAvailable) {
+    return (
+      <View style={styles.placeholderContainer}>
+        <Text style={styles.placeholderEmoji}>🌍</Text>
+        <Text style={styles.placeholderTitle}>Globe preview</Text>
+        <Text style={styles.placeholderSubtitle}>
+          Map renders in a dev build (Expo Go doesn't include the Mapbox native module).
+        </Text>
+      </View>
+    );
+  }
 
   const getEventCoordinates = (event: Event) => {
     if (event.latitude && event.longitude) {
@@ -293,5 +307,30 @@ const styles = StyleSheet.create({
   },
   emojiMarker: {
     fontSize: 22,
+  },
+  placeholderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#0a1a2f',
+    padding: SPACING.xl,
+  },
+  placeholderEmoji: {
+    fontSize: 72,
+    marginBottom: SPACING.md,
+  },
+  placeholderTitle: {
+    fontFamily: FONTS.semiBold,
+    fontSize: FONT_SIZES.lg,
+    color: COLORS.white,
+    textAlign: 'center',
+  },
+  placeholderSubtitle: {
+    fontFamily: FONTS.regular,
+    fontSize: FONT_SIZES.sm,
+    color: '#9fb3d4',
+    textAlign: 'center',
+    marginTop: SPACING.xs,
+    maxWidth: 280,
   },
 });
