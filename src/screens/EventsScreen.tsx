@@ -39,8 +39,9 @@ const CATEGORIES = [
   { key: 'other', label: 'Other', icon: 'ellipsis-horizontal-outline' },
 ];
 
-// Space reserved at bottom of sheet so content doesn't hide behind tab bar / FAB
-const TAB_BAR_INSET = 104;
+// Space reserved at bottom of list content so event cards aren't hidden
+// behind the floating tab bar / FAB (tab bar bottom=24 + height=60 + margin).
+const LIST_BOTTOM_PADDING = 110;
 
 export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const { user } = useAuth();
@@ -232,8 +233,6 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
         index={1}
         snapPoints={snapPoints}
         enablePanDownToClose={false}
-        bottomInset={TAB_BAR_INSET}
-        detached={false}
         backgroundStyle={styles.sheetBackground}
         handleIndicatorStyle={styles.sheetHandle}
       >
@@ -412,7 +411,7 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.md,
-    paddingBottom: SPACING.xl,
+    paddingBottom: LIST_BOTTOM_PADDING,
   },
   row: {
     justifyContent: 'space-between',
