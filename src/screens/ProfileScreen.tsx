@@ -11,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { getLocalEvents } from '../lib/localStorage';
+import AuthScreen from './AuthScreen';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
 const PROFILE_STORAGE_KEY = 'frontrow_user_profile';
@@ -31,11 +32,17 @@ export default function ProfileScreen() {
   const [editLastName, setEditLastName] = useState('');
   const [editProfileImage, setEditProfileImage] = useState<string | null>(null);
   const [eventCount, setEventCount] = useState(0);
+  const [authModalVisible, setAuthModalVisible] = useState(false);
 
   useEffect(() => {
     loadProfile();
     fetchEventCount();
   }, [user]);
+
+  // Auto-close the auth modal once the user successfully signs in
+  useEffect(() => {
+    if (user && authModalVisible) setAuthModalVisible(false);
+  }, [user, authModalVisible]);
 
   const loadProfile = async () => {
     try {
@@ -229,8 +236,39 @@ export default function ProfileScreen() {
               <Text style={styles.eventCountLabel}>Events Attended</Text>
             </View>
           </View>
+
+          {/* Sign In button — only shown for guests */}
+          {!user && (
+            <TouchableOpacity
+              style={styles.signInButton}
+              onPress={() => setAuthModalVisible(true)}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="log-in-outline" size={20} color={COLORS.white} />
+              <Text style={styles.signInButtonText}>Sign In</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </ScrollView>
+
+      {/* Sign in / sign up flow */}
+      <Modal
+        visible={authModalVisible}
+        animationType="slide"
+        onRequestClose={() => setAuthModalVisible(false)}
+      >
+        <View style={{ flex: 1 }}>
+          <AuthScreen />
+          <SafeAreaView edges={['top']} style={styles.authCloseContainer} pointerEvents="box-none">
+            <TouchableOpacity
+              style={styles.authCloseButton}
+              onPress={() => setAuthModalVisible(false)}
+            >
+              <Ionicons name="close" size={22} color={COLORS.white} />
+            </TouchableOpacity>
+          </SafeAreaView>
+        </View>
+      </Modal>
 
       {/* Edit Profile Modal */}
       <Modal
@@ -491,7 +529,41 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.sm,
     color: COLORS.gray,
   },
-  
+  signInButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.navy,
+    borderRadius: BORDER_RADIUS.lg,
+    paddingVertical: SPACING.md,
+    marginTop: SPACING.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  signInButtonText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: FONT_SIZES.md,
+    color: COLORS.white,
+  },
+  authCloseContainer: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    padding: SPACING.md,
+  },
+  authCloseButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',

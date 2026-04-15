@@ -52,7 +52,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
   const sheetRef = useRef<BottomSheet>(null);
-  const snapPoints = useMemo(() => ['25%', '55%', '90%'], []);
+  const snapPoints = useMemo(() => ['25%', '45%', '85%'], []);
 
   const loadProfileImage = useCallback(async () => {
     try {
