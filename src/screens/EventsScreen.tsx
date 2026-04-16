@@ -375,7 +375,8 @@ const styles = StyleSheet.create({
     paddingBottom: LIST_BOTTOM_PADDING,
   },
   row: {
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
+    gap: 20,
   },
   empty: {
     alignItems: 'center',
