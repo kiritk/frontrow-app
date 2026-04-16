@@ -12,19 +12,40 @@ const OLIVE_GREEN = '#6B8E23';
 export default function AuthScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
 
-  const fieldsFilled = email.trim().length > 0 && password.length > 0;
+  const fieldsFilled =
+    email.trim().length > 0 &&
+    password.length > 0 &&
+    (!isSignUp || confirmPassword.length > 0);
+
+  const toggleMode = () => {
+    setIsSignUp(prev => !prev);
+    setConfirmPassword('');
+  };
 
   const handleSubmit = async () => {
-    if (!email || !password) { Alert.alert('Error', 'Please fill in all fields'); return; }
+    if (!email || !password || (isSignUp && !confirmPassword)) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+    if (isSignUp && password !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
     setLoading(true);
     try {
       const { error } = isSignUp ? await signUp(email, password) : await signIn(email, password);
-      if (error) { Alert.alert('Error', error.message); }
-      else if (isSignUp) { Alert.alert('Success', 'Account created! You can now sign in.'); setIsSignUp(false); }
+      if (error) {
+        Alert.alert('Error', error.message);
+      } else if (isSignUp) {
+        Alert.alert('Success', 'Account created! You can now sign in.');
+        setIsSignUp(false);
+        setConfirmPassword('');
+      }
     } finally { setLoading(false); }
   };
 
@@ -61,6 +82,28 @@ export default function AuthScreen() {
               autoCapitalize="none"
             />
           </View>
+          {isSignUp && (
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Confirm Password</Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  confirmPassword.length > 0 &&
+                    password !== confirmPassword &&
+                    styles.inputError,
+                ]}
+                placeholder="••••••••"
+                placeholderTextColor={COLORS.grayLight}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+                autoCapitalize="none"
+              />
+              {confirmPassword.length > 0 && password !== confirmPassword && (
+                <Text style={styles.errorText}>Passwords don't match</Text>
+              )}
+            </View>
+          )}
           <TouchableOpacity
             style={styles.button}
             onPress={handleSubmit}
@@ -75,7 +118,7 @@ export default function AuthScreen() {
               </Text>
             )}
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => setIsSignUp(!isSignUp)} style={styles.toggleButton}>
+          <TouchableOpacity onPress={toggleMode} style={styles.toggleButton}>
             <Text style={styles.toggleText}>
               {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
             </Text>
@@ -121,6 +164,15 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     fontSize: FONT_SIZES.md,
     color: COLORS.navy,
+  },
+  inputError: {
+    borderColor: COLORS.error,
+  },
+  errorText: {
+    fontFamily: FONTS.regular,
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.error,
+    marginTop: SPACING.xs,
   },
   button: {
     backgroundColor: COLORS.navy,
