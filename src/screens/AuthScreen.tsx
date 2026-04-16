@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
-const OLIVE_GREEN = '#6B8E23';
+const DARK_YELLOW = '#B8860B';
 
 export default function AuthScreen() {
   const [email, setEmail] = useState('');
@@ -53,7 +53,6 @@ export default function AuthScreen() {
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.logo}>🎫</Text>
           <Text style={styles.title}>Front Row</Text>
           <Text style={styles.subtitle}>Never forget that moment</Text>
         </View>
@@ -61,7 +60,7 @@ export default function AuthScreen() {
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Email</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, isSignUp && styles.inputSignUp]}
               placeholder="your@email.com"
               placeholderTextColor={COLORS.grayLight}
               value={email}
@@ -73,7 +72,7 @@ export default function AuthScreen() {
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Password</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, isSignUp && styles.inputSignUp]}
               placeholder="••••••••"
               placeholderTextColor={COLORS.grayLight}
               value={password}
@@ -88,6 +87,7 @@ export default function AuthScreen() {
               <TextInput
                 style={[
                   styles.input,
+                  styles.inputSignUp,
                   confirmPassword.length > 0 &&
                     password !== confirmPassword &&
                     styles.inputError,
@@ -133,7 +133,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.white },
   content: { flex: 1, justifyContent: 'center', paddingHorizontal: SPACING.xl },
   header: { alignItems: 'center', marginBottom: SPACING.xxl },
-  logo: { fontSize: 64, marginBottom: SPACING.md },
   title: {
     fontFamily: 'GeistMono_700Bold',
     fontSize: 48,
@@ -165,6 +164,9 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.md,
     color: COLORS.navy,
   },
+  inputSignUp: {
+    borderColor: DARK_YELLOW,
+  },
   inputError: {
     borderColor: COLORS.error,
   },
@@ -195,6 +197,6 @@ const styles = StyleSheet.create({
   toggleText: {
     fontFamily: FONTS.regular,
     fontSize: FONT_SIZES.sm,
-    color: OLIVE_GREEN,
+    color: DARK_YELLOW,
   },
 });
