@@ -272,20 +272,21 @@ export default function ProfileScreen() {
         </View>
       </ScrollView>
 
-      {/* Sign in / sign up flow */}
+      {/* Sign in / sign up flow — iOS native page sheet (~85% height, swipe-to-dismiss) */}
       <Modal
         visible={authModalVisible}
         animationType="slide"
+        presentationStyle="pageSheet"
         onRequestClose={() => setAuthModalVisible(false)}
       >
-        <View style={{ flex: 1 }}>
+        <View style={styles.authSheet}>
           <AuthScreen />
           <SafeAreaView edges={['top']} style={styles.authCloseContainer} pointerEvents="box-none">
             <TouchableOpacity
               style={styles.authCloseButton}
               onPress={() => setAuthModalVisible(false)}
             >
-              <Ionicons name="close" size={22} color={COLORS.white} />
+              <Ionicons name="close" size={20} color={COLORS.navy} />
             </TouchableOpacity>
           </SafeAreaView>
         </View>
@@ -587,17 +588,22 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.md,
     color: COLORS.error,
   },
+  authSheet: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
   authCloseContainer: {
     position: 'absolute',
     top: 0,
     right: 0,
+    alignItems: 'flex-end',
     padding: SPACING.md,
   },
   authCloseButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.creamDark,
     justifyContent: 'center',
     alignItems: 'center',
   },
