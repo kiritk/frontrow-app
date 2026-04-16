@@ -56,7 +56,7 @@ const CONTINENT_ORDER: Continent[] = [
 const LIST_BOTTOM_PADDING = 110;
 
 export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
-  const { user } = useAuth();
+  const { user, localEventsVersion } = useAuth();
   const navigation = useNavigation();
   const [events, setEvents] = useState<Event[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -97,7 +97,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
 
   useEffect(() => {
     fetchEvents();
-  }, [fetchEvents, refreshKey]);
+  }, [fetchEvents, refreshKey, localEventsVersion]);
 
   // Events filtered by year (used to determine which categories are visible)
   const yearFilteredEvents = useMemo(() => {
@@ -252,6 +252,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
         index={1}
         snapPoints={snapPoints}
         enablePanDownToClose={false}
+        enableDynamicSizing={false}
         backgroundStyle={styles.sheetBackground}
         handleIndicatorStyle={styles.sheetHandle}
       >

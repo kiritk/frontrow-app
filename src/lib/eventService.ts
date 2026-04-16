@@ -165,15 +165,20 @@ export async function editEvent(
 /**
  * Migrate guest events to a newly-authenticated account.
  *
- * Inserts all local events into Supabase (text only), then updates
- * local IDs to match the Supabase UUIDs.  Local events (including
- * photos) are preserved — NOT cleared.
+ * Only events with `local_*` IDs are migrated — events already backed
+ * by a Supabase UUID are left alone, so this is safe to call on every
+ * sign-in (no-ops when there's nothing to migrate).
+ *
+ * Inserts the guest events into Supabase (text only), then swaps their
+ * local IDs to the returned UUIDs while keeping photos and list order
+ * intact.  Already-synced events stay untouched.
  */
 export async function migrateGuestEvents(userId: string): Promise<number> {
   const localEvents = await getLocalEvents();
-  if (localEvents.length === 0) return 0;
+  const guestEvents = localEvents.filter(e => e.id.startsWith('local_'));
+  if (guestEvents.length === 0) return 0;
 
-  const rows: SupabaseEventInsert[] = localEvents.map(e => ({
+  const rows: SupabaseEventInsert[] = guestEvents.map(e => ({
     user_id: userId,
     title: e.title,
     type: e.type,
@@ -193,15 +198,19 @@ export async function migrateGuestEvents(userId: string): Promise<number> {
     .select('id');
 
   if (error) throw error;
+  if (!data || data.length !== guestEvents.length) return 0;
 
-  // Update local events with Supabase UUIDs (preserving photos).
-  if (data && data.length === localEvents.length) {
-    const updated = localEvents.map((e, i) => ({
-      ...e,
-      id: data[i].id,
-    }));
-    await setLocalEvents(updated);
-  }
+  // Map each old local_* ID to its new Supabase UUID.
+  const idMap = new Map<string, string>();
+  guestEvents.forEach((e, i) => idMap.set(e.id, data[i].id));
 
-  return localEvents.length;
+  // Swap IDs in-place so order is preserved and non-guest events are
+  // left untouched.
+  const updated = localEvents.map(e => {
+    const newId = idMap.get(e.id);
+    return newId ? { ...e, id: newId } : e;
+  });
+  await setLocalEvents(updated);
+
+  return guestEvents.length;
 }
