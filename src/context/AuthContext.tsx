@@ -1,7 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { migrateGuestEvents } from '../lib/eventService';
+import { clearLocalEvents } from '../lib/localStorage';
+
+const PROFILE_STORAGE_KEY = 'frontrow_user_profile';
 
 interface AuthContextType {
   user: User | null;
@@ -48,7 +52,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
+  // Log out and wipe the app back to its default/empty state: clear
+  // the cached profile (name + avatar) and all locally-stored events
+  // (including photos) before ending the Supabase session.
   const signOut = async () => {
+    try {
+      await Promise.all([
+        AsyncStorage.removeItem(PROFILE_STORAGE_KEY),
+        clearLocalEvents(),
+      ]);
+    } catch (error) {
+      console.warn('[AuthContext] Failed to clear local data on sign out:', error);
+    }
     await supabase.auth.signOut();
   };
 

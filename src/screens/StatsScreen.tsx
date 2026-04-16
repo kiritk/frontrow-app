@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, ImageBackground } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../context/AuthContext';
 import { getLocalEvents } from '../lib/localStorage';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 import { getTeamByName } from '../data/nflTeams';
@@ -21,6 +23,8 @@ interface Event {
 }
 
 export default function StatsScreen() {
+  const navigation = useNavigation();
+  const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -35,9 +39,16 @@ export default function StatsScreen() {
     }
   };
 
+  // Re-fetch on mount, whenever auth state changes (e.g. logout wipes
+  // local events), and whenever the Stats tab regains focus.
   useEffect(() => {
     fetchEvents();
-  }, []);
+  }, [user]);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', fetchEvents);
+    return unsubscribe;
+  }, [navigation]);
 
   const onRefresh = async () => {
     setRefreshing(true);
