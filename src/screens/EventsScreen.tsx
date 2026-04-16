@@ -252,6 +252,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
         index={1}
         snapPoints={snapPoints}
         enablePanDownToClose={false}
+        enableDynamicSizing={false}
         backgroundStyle={styles.sheetBackground}
         handleIndicatorStyle={styles.sheetHandle}
       >
