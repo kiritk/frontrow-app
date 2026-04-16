@@ -61,8 +61,21 @@ const OTHER_COLORS = {
 export default function EventCard({ event, onDelete, onUpdate }: EventCardProps) {
   const { width } = useWindowDimensions();
   const { user, isGuest } = useAuth();
-  const CARD_WIDTH = (width - 48 - 12) / 2;
-  const CARD_HEIGHT = CARD_WIDTH * 1.2;
+
+  // The card's internal layout (notch size, backgrounds, typography
+  // metrics) was tuned for a 2-column grid.  We keep those "designed"
+  // dimensions so every internal element renders at its native size,
+  // then uniformly shrink the whole card via a single `scale` transform
+  // so three cards fit per row instead of two.
+  const DESIGNED_WIDTH = (width - 48 - 12) / 2;
+  const DESIGNED_HEIGHT = DESIGNED_WIDTH * 1.2;
+  const COL_COUNT = 3;
+  const ACTUAL_WIDTH = (width - 48 - 12 * (COL_COUNT - 1)) / COL_COUNT;
+  const SCALE = ACTUAL_WIDTH / DESIGNED_WIDTH;
+  const ACTUAL_HEIGHT = DESIGNED_HEIGHT * SCALE;
+
+  const CARD_WIDTH = DESIGNED_WIDTH;
+  const CARD_HEIGHT = DESIGNED_HEIGHT;
   const NOTCH_WIDTH = CARD_WIDTH * 0.22;
   const NOTCH_HEIGHT = NOTCH_WIDTH / 2;
   const topNotch = (
@@ -682,10 +695,26 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
   };
 
   return (
-    <View style={[styles.cardWrapper, { width: CARD_WIDTH, height: CARD_HEIGHT }]}>
-      <TouchableOpacity onPress={handleCardPress} activeOpacity={0.95} style={{ flex: 1 }}>
-        {renderFrontCard()}
-      </TouchableOpacity>
+    <View style={{ width: ACTUAL_WIDTH, height: ACTUAL_HEIGHT, marginBottom: 20 }}>
+      {/* The card is rendered at its full "designed" size and then
+          uniformly shrunk via `transform: scale` so every element
+          (background, text, icons, shadows, notch) scales evenly. */}
+      <View
+        style={{
+          position: 'absolute',
+          width: DESIGNED_WIDTH,
+          height: DESIGNED_HEIGHT,
+          left: (ACTUAL_WIDTH - DESIGNED_WIDTH) / 2,
+          top: (ACTUAL_HEIGHT - DESIGNED_HEIGHT) / 2,
+          transform: [{ scale: SCALE }],
+        }}
+      >
+        <View style={[styles.cardWrapper, { width: DESIGNED_WIDTH, height: DESIGNED_HEIGHT, marginBottom: 0 }]}>
+          <TouchableOpacity onPress={handleCardPress} activeOpacity={0.95} style={{ flex: 1 }}>
+            {renderFrontCard()}
+          </TouchableOpacity>
+        </View>
+      </View>
 
       {renderActionModal()}
       {renderEditTitleModal()}
