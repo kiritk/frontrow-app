@@ -260,7 +260,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
           data={filteredEvents}
           renderItem={renderEventCard}
           keyExtractor={item => item.id}
-          numColumns={2}
+          numColumns={3}
           columnWrapperStyle={filteredEvents.length > 0 ? styles.row : undefined}
           contentContainerStyle={styles.listContent}
           refreshControl={
