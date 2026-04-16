@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
@@ -12,6 +12,10 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isGuest: boolean;
+  // Bumps whenever locally-stored events are rewritten out-of-band
+  // (e.g. guest events migrated to a new account).  Screens can
+  // include this in their fetch-effect deps to stay in sync.
+  localEventsVersion: number;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -24,6 +28,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [localEventsVersion, setLocalEventsVersion] = useState(0);
+
+  // Track the last user id we've already handled so we only migrate
+  // once per guest-to-signed-in transition (and not on token refreshes
+  // or duplicate INITIAL_SESSION events).
+  const migratedForUserIdRef = useRef<string | null>(null);
+
+  // Migrate any local_* guest events to the newly-signed-in account.
+  // Safe to call repeatedly — no-ops when there's nothing to migrate.
+  const runGuestMigration = async (userId: string) => {
+    if (migratedForUserIdRef.current === userId) return;
+    migratedForUserIdRef.current = userId;
+    try {
+      const migrated = await migrateGuestEvents(userId);
+      if (migrated > 0) {
+        // Storage IDs changed — tell screens to refetch.
+        setLocalEventsVersion(v => v + 1);
+      }
+    } catch (error) {
+      console.warn('[AuthContext] Guest event migration failed:', error);
+      // Clear the guard so a future auth event can retry.
+      migratedForUserIdRef.current = null;
+    }
+  };
 
   useEffect(() => {
     // Get initial session
@@ -31,12 +59,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      if (session?.user) {
+        runGuestMigration(session.user.id);
+      }
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      setUser(session?.user ?? null);
+      const nextUser = session?.user ?? null;
+      setUser(nextUser);
+      if (nextUser) {
+        runGuestMigration(nextUser.id);
+      } else {
+        migratedForUserIdRef.current = null;
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -86,6 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session,
     loading,
     isGuest: !user,
+    localEventsVersion,
     signUp,
     signIn,
     signOut,

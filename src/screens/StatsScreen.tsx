@@ -24,7 +24,7 @@ interface Event {
 
 export default function StatsScreen() {
   const navigation = useNavigation();
-  const { user } = useAuth();
+  const { user, localEventsVersion } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -40,10 +40,11 @@ export default function StatsScreen() {
   };
 
   // Re-fetch on mount, whenever auth state changes (e.g. logout wipes
-  // local events), and whenever the Stats tab regains focus.
+  // local events), after a guest→account migration rewrites local IDs,
+  // and whenever the Stats tab regains focus.
   useEffect(() => {
     fetchEvents();
-  }, [user]);
+  }, [user, localEventsVersion]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', fetchEvents);
