@@ -23,7 +23,7 @@ interface UserProfile {
 }
 
 export default function ProfileScreen() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -246,6 +246,27 @@ export default function ProfileScreen() {
             >
               <Ionicons name="log-in-outline" size={20} color={COLORS.white} />
               <Text style={styles.signInButtonText}>Sign In</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Logout button — only shown when signed in */}
+          {!!user && (
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={() =>
+                Alert.alert(
+                  'Log out',
+                  'Are you sure you want to log out?',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Log out', style: 'destructive', onPress: () => signOut() },
+                  ],
+                )
+              }
+              activeOpacity={0.85}
+            >
+              <Ionicons name="log-out-outline" size={20} color={COLORS.error} />
+              <Text style={styles.logoutButtonText}>Log Out</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -548,6 +569,23 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     fontSize: FONT_SIZES.md,
     color: COLORS.white,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    paddingVertical: SPACING.md,
+    marginTop: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.error,
+  },
+  logoutButtonText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: FONT_SIZES.md,
+    color: COLORS.error,
   },
   authCloseContainer: {
     position: 'absolute',

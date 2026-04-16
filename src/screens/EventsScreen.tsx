@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,6 +9,8 @@ import { useAuth } from '../context/AuthContext';
 import { fetchEvents as fetchEventsFromService, removeEvent } from '../lib/eventService';
 import EventCard from '../components/EventCard';
 import EventsGlobe from '../components/EventsGlobe';
+import FilterDropdown, { DropdownOption } from '../components/FilterDropdown';
+import { continentForEvent, Continent } from '../lib/continents';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
 const PROFILE_STORAGE_KEY = 'frontrow_user_profile';
@@ -29,14 +31,24 @@ interface Event {
   away_team?: { name: string; city: string; fullName: string };
 }
 
-const CATEGORIES = [
-  { key: 'all', label: 'All', icon: null },
-  { key: 'sports', label: 'Sports', icon: 'trophy-outline' },
-  { key: 'concert', label: 'Concerts', icon: 'musical-notes-outline' },
-  { key: 'theater', label: 'Theater', icon: 'ticket-outline' },
-  { key: 'comedy', label: 'Comedy', icon: 'mic-outline' },
-  { key: 'landmark', label: 'Landmarks', icon: 'location-outline' },
-  { key: 'other', label: 'Other', icon: 'ellipsis-horizontal-outline' },
+const CATEGORIES: DropdownOption[] = [
+  { value: 'all', label: 'All', icon: null },
+  { value: 'sports', label: 'Sports', icon: 'trophy-outline' },
+  { value: 'concert', label: 'Concerts', icon: 'musical-notes-outline' },
+  { value: 'theater', label: 'Theater', icon: 'ticket-outline' },
+  { value: 'comedy', label: 'Comedy', icon: 'mic-outline' },
+  { value: 'landmark', label: 'Landmarks', icon: 'location-outline' },
+  { value: 'other', label: 'Other', icon: 'ellipsis-horizontal-outline' },
+];
+
+const CONTINENT_ORDER: Continent[] = [
+  'North America',
+  'South America',
+  'Europe',
+  'Africa',
+  'Asia',
+  'Oceania',
+  'Antarctica',
 ];
 
 // Space reserved at bottom of list content so event cards aren't hidden
@@ -50,6 +62,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>('All');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedContinent, setSelectedContinent] = useState<string>('all');
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
   const sheetRef = useRef<BottomSheet>(null);
@@ -98,21 +111,46 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   }, [events, selectedYear]);
 
   const visibleCategories = useMemo(() => {
-    if (yearFilteredEvents.length === 0) return [];
+    if (yearFilteredEvents.length === 0) return [CATEGORIES[0]];
     const eventTypes = new Set(yearFilteredEvents.map(e => e.type));
-    return CATEGORIES.filter(cat => cat.key === 'all' || eventTypes.has(cat.key));
+    return CATEGORIES.filter(cat => cat.value === 'all' || eventTypes.has(cat.value));
   }, [yearFilteredEvents]);
 
   useEffect(() => {
-    if (selectedCategory !== 'all' && !visibleCategories.some(c => c.key === selectedCategory)) {
+    if (selectedCategory !== 'all' && !visibleCategories.some(c => c.value === selectedCategory)) {
       setSelectedCategory('all');
     }
   }, [visibleCategories, selectedCategory]);
 
-  const filteredEvents = useMemo(() => {
+  const categoryFilteredEvents = useMemo(() => {
     if (selectedCategory === 'all') return yearFilteredEvents;
     return yearFilteredEvents.filter(e => e.type === selectedCategory);
   }, [yearFilteredEvents, selectedCategory]);
+
+  // Continents that have at least one event in the current year+category filter
+  const continentOptions = useMemo<DropdownOption[]>(() => {
+    const present = new Set<Continent>();
+    categoryFilteredEvents.forEach(e => {
+      const c = continentForEvent(e);
+      if (c) present.add(c);
+    });
+    const opts: DropdownOption[] = [{ value: 'all', label: 'All' }];
+    CONTINENT_ORDER.forEach(c => {
+      if (present.has(c)) opts.push({ value: c, label: c });
+    });
+    return opts;
+  }, [categoryFilteredEvents]);
+
+  useEffect(() => {
+    if (selectedContinent !== 'all' && !continentOptions.some(o => o.value === selectedContinent)) {
+      setSelectedContinent('all');
+    }
+  }, [continentOptions, selectedContinent]);
+
+  const filteredEvents = useMemo(() => {
+    if (selectedContinent === 'all') return categoryFilteredEvents;
+    return categoryFilteredEvents.filter(e => continentForEvent(e) === selectedContinent);
+  }, [categoryFilteredEvents, selectedContinent]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -129,10 +167,15 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
     }
   };
 
-  const years = useMemo(() => {
+  const yearOptions = useMemo<DropdownOption[]>(() => {
     const set = new Set<string>();
     events.forEach(e => set.add(new Date(e.date).getFullYear().toString()));
-    return ['Upcoming', 'All', ...Array.from(set).sort((a, b) => Number(b) - Number(a))];
+    const years = Array.from(set).sort((a, b) => Number(b) - Number(a));
+    return [
+      { value: 'All', label: 'All' },
+      { value: 'Upcoming', label: 'Upcoming' },
+      ...years.map(y => ({ value: y, label: y })),
+    ];
   }, [events]);
 
   const renderEventCard = useCallback(
@@ -147,54 +190,30 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
     <View style={styles.sheetHeader}>
       <Text style={styles.sheetTitle}>Events</Text>
 
-      {/* Year tabs */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.yearTabsContent}
-        style={styles.yearTabsContainer}
-      >
-        {years.map(year => (
-          <TouchableOpacity
-            key={year}
-            style={[styles.yearTab, selectedYear === year && styles.yearTabActive]}
-            onPress={() => setSelectedYear(year)}
-          >
-            <Text style={[styles.yearTabText, selectedYear === year && styles.yearTabTextActive]}>
-              {year}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      {/* Category pills */}
-      {visibleCategories.length > 0 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoryPillsContent}
-          style={styles.categoryPillsContainer}
-        >
-          {visibleCategories.map(cat => (
-            <TouchableOpacity
-              key={cat.key}
-              style={[styles.categoryPill, selectedCategory === cat.key && styles.categoryPillActive]}
-              onPress={() => setSelectedCategory(cat.key)}
-            >
-              {cat.icon && (
-                <Ionicons
-                  name={cat.icon as any}
-                  size={16}
-                  color={selectedCategory === cat.key ? COLORS.white : COLORS.navy}
-                />
-              )}
-              <Text style={[styles.categoryPillText, selectedCategory === cat.key && styles.categoryPillTextActive]}>
-                {cat.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      )}
+      <View style={styles.dropdownRow}>
+        <FilterDropdown
+          label="Year"
+          value={selectedYear}
+          options={yearOptions}
+          onSelect={setSelectedYear}
+          defaultValue="All"
+        />
+        <FilterDropdown
+          label="Category"
+          value={selectedCategory}
+          options={visibleCategories}
+          onSelect={setSelectedCategory}
+          defaultValue="all"
+          showIconOnPill
+        />
+        <FilterDropdown
+          label="Continent"
+          value={selectedContinent}
+          options={continentOptions}
+          onSelect={setSelectedContinent}
+          defaultValue="all"
+        />
+      </View>
     </View>
   );
 
@@ -344,69 +363,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     marginTop: SPACING.xs,
   },
-  yearTabsContainer: {
-    marginTop: SPACING.sm,
-  },
-  yearTabsContent: {
-    paddingHorizontal: SPACING.lg,
-    gap: SPACING.lg,
-    alignItems: 'center',
-    height: 32,
-  },
-  yearTab: {
-    justifyContent: 'center',
-    height: 28,
-  },
-  yearTabActive: {
-    borderBottomWidth: 2,
-    borderBottomColor: COLORS.navy,
-  },
-  yearTabText: {
-    fontFamily: FONTS.regular,
-    fontSize: FONT_SIZES.md,
-    color: COLORS.gray,
-  },
-  yearTabTextActive: {
-    fontFamily: FONTS.semiBold,
-    color: COLORS.navy,
-  },
-  categoryPillsContainer: {
-    marginTop: SPACING.sm,
-  },
-  categoryPillsContent: {
-    paddingHorizontal: SPACING.lg,
-    gap: SPACING.sm,
-    alignItems: 'center',
-    height: 44,
-  },
-  categoryPill: {
+  dropdownRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.white,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    borderRadius: BORDER_RADIUS.xl,
-    gap: 6,
-    height: 36,
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  categoryPillActive: {
-    backgroundColor: COLORS.navy,
-  },
-  categoryPillText: {
-    fontFamily: FONTS.medium,
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.navy,
-  },
-  categoryPillTextActive: {
-    color: COLORS.white,
+    paddingHorizontal: SPACING.lg,
+    marginTop: SPACING.md,
+    gap: SPACING.sm,
   },
   listContent: {
     paddingHorizontal: SPACING.lg,
