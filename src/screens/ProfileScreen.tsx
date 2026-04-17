@@ -244,8 +244,13 @@ export default function ProfileScreen() {
               onPress={() => setAuthModalVisible(true)}
               activeOpacity={0.85}
             >
-              <Ionicons name="log-in-outline" size={20} color={COLORS.white} />
-              <Text style={styles.signInButtonText}>Sign In</Text>
+              <Ionicons name="log-in-outline" size={28} color={COLORS.white} />
+              <View style={styles.signInTextContainer}>
+                <Text style={styles.signInButtonText}>Sign In</Text>
+                <Text style={styles.signInSubtext}>
+                  Create an account to save your experiences across devices
+                </Text>
+              </View>
             </TouchableOpacity>
           )}
 
@@ -554,11 +559,11 @@ const styles = StyleSheet.create({
   signInButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
+    gap: SPACING.md,
     backgroundColor: COLORS.navy,
-    borderRadius: BORDER_RADIUS.lg,
-    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.xl,
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.lg,
     marginTop: SPACING.lg,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -566,10 +571,19 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   },
+  signInTextContainer: {
+    flex: 1,
+  },
   signInButtonText: {
     fontFamily: FONTS.semiBold,
-    fontSize: FONT_SIZES.md,
+    fontSize: FONT_SIZES.lg,
     color: COLORS.white,
+    marginBottom: 4,
+  },
+  signInSubtext: {
+    fontFamily: FONTS.regular,
+    fontSize: FONT_SIZES.sm,
+    color: 'rgba(255,255,255,0.7)',
   },
   logoutButton: {
     flexDirection: 'row',
