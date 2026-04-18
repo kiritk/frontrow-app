@@ -1,15 +1,12 @@
-import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, RefreshControl, Dimensions } from 'react-native';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
-import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useAuth } from '../context/AuthContext';
 import { fetchEvents as fetchEventsFromService, removeEvent } from '../lib/eventService';
 import EventCard from '../components/EventCard';
-import EventsGlobe from '../components/EventsGlobe';
 import FilterDropdown, { DropdownOption } from '../components/FilterDropdown';
 import { continentForEvent, Continent } from '../lib/continents';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
@@ -52,8 +49,6 @@ const CONTINENT_ORDER: Continent[] = [
   'Antarctica',
 ];
 
-// Space reserved at bottom of list content so event cards aren't hidden
-// behind the floating tab bar / FAB (tab bar bottom=24 + height=60 + margin).
 const LIST_BOTTOM_PADDING = 110;
 
 export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
@@ -65,16 +60,6 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedContinent, setSelectedContinent] = useState<string>('all');
   const [profileImage, setProfileImage] = useState<string | null>(null);
-
-  const sheetRef = useRef<BottomSheet>(null);
-  const snapPoints = useMemo(() => ['25%', '45%', '85%'], []);
-
-  // Track the sheet's top-edge Y position so the globe container
-  // height matches exactly the visible area above the sheet.
-  const sheetPosition = useSharedValue(Dimensions.get('window').height * 0.55);
-  const globeStyle = useAnimatedStyle(() => ({
-    height: sheetPosition.value,
-  }));
 
   const loadProfileImage = useCallback(async () => {
     try {
@@ -107,7 +92,6 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
     fetchEvents();
   }, [fetchEvents, refreshKey, localEventsVersion]);
 
-  // Events filtered by year (used to determine which categories are visible)
   const yearFilteredEvents = useMemo(() => {
     let filtered = [...events];
     if (selectedYear !== 'All' && selectedYear !== 'Upcoming') {
@@ -135,7 +119,6 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
     return yearFilteredEvents.filter(e => e.type === selectedCategory);
   }, [yearFilteredEvents, selectedCategory]);
 
-  // Continents that have at least one event in the current year+category filter
   const continentOptions = useMemo<DropdownOption[]>(() => {
     const present = new Set<Continent>();
     categoryFilteredEvents.forEach(e => {
@@ -193,11 +176,32 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
     [fetchEvents, events]
   );
 
-  // Sticky filter header rendered inside the bottom sheet
-  const renderSheetHeader = () => (
-    <View style={styles.sheetHeader}>
-      <Text style={styles.sheetTitle}>Events</Text>
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.profileButton}
+          onPress={() => (navigation as any).navigate('Profile')}
+        >
+          {profileImage ? (
+            <Image source={{ uri: profileImage }} style={styles.profileButtonImage} />
+          ) : (
+            <View style={styles.profileButtonPlaceholder}>
+              <Ionicons name="person" size={18} color={COLORS.navy} />
+            </View>
+          )}
+        </TouchableOpacity>
+        <View style={styles.logoPill}>
+          <Text style={styles.logoText}>Front Row</Text>
+        </View>
+        <View style={styles.headerSpacer} />
+      </View>
 
+      {/* Page title + filters */}
+      <View style={styles.titleRow}>
+        <Text style={styles.pageTitle}>Events</Text>
+      </View>
       <View style={styles.dropdownRow}>
         <FilterDropdown
           label="Year"
@@ -222,89 +226,34 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
           defaultValue="all"
         />
       </View>
-    </View>
-  );
 
-  return (
-    <View style={styles.container}>
-      {/* Globe sized to the visible area above the bottom sheet */}
-      <Animated.View style={[styles.globeContainer, globeStyle]}>
-        <EventsGlobe events={filteredEvents} />
-      </Animated.View>
-
-      {/* Header: profile avatar + logo, overlaid on the globe */}
-      <SafeAreaView style={styles.headerSafeArea} edges={['top']} pointerEvents="box-none">
-        <View style={styles.header} pointerEvents="box-none">
-          <TouchableOpacity
-            style={styles.profileButton}
-            onPress={() => (navigation as any).navigate('Profile')}
-          >
-            {profileImage ? (
-              <Image source={{ uri: profileImage }} style={styles.profileButtonImage} />
-            ) : (
-              <View style={styles.profileButtonPlaceholder}>
-                <Ionicons name="person" size={18} color={COLORS.navy} />
-              </View>
-            )}
-          </TouchableOpacity>
-          <View style={styles.logoPill}>
-            <Text style={styles.logoText}>Front Row</Text>
+      {/* Event grid */}
+      <FlatList
+        data={filteredEvents}
+        renderItem={renderEventCard}
+        keyExtractor={item => item.id}
+        numColumns={3}
+        columnWrapperStyle={filteredEvents.length > 0 ? styles.row : undefined}
+        contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.navy} />
+        }
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <Text style={styles.emptyEmoji}>🎫</Text>
+            <Text style={styles.emptyText}>No events yet</Text>
+            <Text style={styles.emptySubtext}>Tap + to add your first event</Text>
           </View>
-          <View style={styles.headerSpacer} />
-        </View>
-      </SafeAreaView>
-
-      {/* Draggable bottom sheet with filter pills and events list */}
-      <BottomSheet
-        ref={sheetRef}
-        index={1}
-        snapPoints={snapPoints}
-        enablePanDownToClose={false}
-        enableDynamicSizing={false}
-        animatedPosition={sheetPosition}
-        backgroundStyle={styles.sheetBackground}
-        handleIndicatorStyle={styles.sheetHandle}
-      >
-        {renderSheetHeader()}
-        <BottomSheetFlatList
-          data={filteredEvents}
-          renderItem={renderEventCard}
-          keyExtractor={item => item.id}
-          numColumns={3}
-          columnWrapperStyle={filteredEvents.length > 0 ? styles.row : undefined}
-          contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.navy} />
-          }
-          ListEmptyComponent={
-            <View style={styles.empty}>
-              <Text style={styles.emptyEmoji}>🎫</Text>
-              <Text style={styles.emptyText}>No events yet</Text>
-              <Text style={styles.emptySubtext}>Tap + to add your first event</Text>
-            </View>
-          }
-        />
-      </BottomSheet>
-    </View>
+        }
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
-  },
-  globeContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-  },
-  headerSafeArea: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
+    backgroundColor: COLORS.cream,
   },
   header: {
     flexDirection: 'row',
@@ -322,7 +271,7 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: 19,
     borderWidth: 2,
-    borderColor: COLORS.white,
+    borderColor: COLORS.navy,
   },
   profileButtonPlaceholder: {
     width: 38,
@@ -332,23 +281,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: COLORS.white,
+    borderColor: COLORS.creamDark,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 4,
+    elevation: 2,
   },
   logoPill: {
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: COLORS.white,
     paddingHorizontal: SPACING.md,
     paddingVertical: 4,
     borderRadius: BORDER_RADIUS.xl,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
+    borderWidth: 1,
+    borderColor: COLORS.creamDark,
   },
   logoText: {
     fontFamily: FONTS.vt323,
@@ -358,31 +304,20 @@ const styles = StyleSheet.create({
   headerSpacer: {
     width: 38,
   },
-  sheetBackground: {
-    backgroundColor: COLORS.cream,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-  },
-  sheetHandle: {
-    backgroundColor: COLORS.gray,
-    width: 44,
-    height: 5,
-  },
-  sheetHeader: {
+  titleRow: {
+    paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.xs,
-    backgroundColor: COLORS.cream,
   },
-  sheetTitle: {
+  pageTitle: {
     fontFamily: 'GeistMono_700Bold',
     fontSize: 28,
     color: COLORS.navy,
-    paddingHorizontal: SPACING.lg,
-    marginTop: SPACING.xs,
   },
   dropdownRow: {
     flexDirection: 'row',
     paddingHorizontal: SPACING.lg,
     marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
     gap: SPACING.sm,
   },
   listContent: {

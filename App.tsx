@@ -16,6 +16,7 @@ import { VT323_400Regular } from '@expo-google-fonts/vt323';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthProvider } from './src/context/AuthContext';
 import EventsScreen from './src/screens/EventsScreen';
+import MapScreen from './src/screens/MapScreen';
 import StatsScreen from './src/screens/StatsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import SplashScreen from './src/screens/SplashScreen';
@@ -24,11 +25,16 @@ import { COLORS, FONTS } from './src/theme/colors';
 
 const Tab = createBottomTabNavigator();
 
+// Visible tabs in the pill bar — Profile is omitted (accessed via header icon).
+const VISIBLE_TABS = ['Events', 'Map', 'Stats'];
+
 function CustomTabBar({ state, descriptors, navigation }: any) {
   return (
     <View style={styles.tabBarWrapper}>
       <View style={styles.tabBarContainer}>
         {state.routes.map((route: any, index: number) => {
+          if (!VISIBLE_TABS.includes(route.name)) return null;
+
           const { options } = descriptors[route.key];
           const isFocused = state.index === index;
           const onPress = () => {
@@ -41,14 +47,16 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
               navigation.navigate(route.name);
             }
           };
+
           let iconName: keyof typeof Ionicons.glyphMap = 'ellipse';
           if (route.name === 'Events') {
             iconName = isFocused ? 'ticket' : 'ticket-outline';
+          } else if (route.name === 'Map') {
+            iconName = isFocused ? 'map' : 'map-outline';
           } else if (route.name === 'Stats') {
             iconName = isFocused ? 'stats-chart' : 'stats-chart-outline';
-          } else if (route.name === 'Profile') {
-            iconName = isFocused ? 'person' : 'person-outline';
           }
+
           return (
             <TouchableOpacity
               key={route.key}
@@ -59,15 +67,12 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
               onPress={onPress}
               style={styles.tabButton}
             >
-              <Ionicons 
-                name={iconName} 
-                size={24} 
-                color={isFocused ? COLORS.navy : COLORS.gray} 
+              <Ionicons
+                name={iconName}
+                size={24}
+                color={isFocused ? COLORS.navy : COLORS.gray}
               />
-              <Text style={[
-                styles.tabLabel,
-                { color: isFocused ? COLORS.navy : COLORS.gray }
-              ]}>
+              <Text style={[styles.tabLabel, { color: isFocused ? COLORS.navy : COLORS.gray }]}>
                 {route.name}
               </Text>
             </TouchableOpacity>
@@ -103,6 +108,7 @@ function MainApp() {
         <Tab.Screen name="Events">
           {() => <EventsScreen refreshKey={refreshKey} />}
         </Tab.Screen>
+        <Tab.Screen name="Map" component={MapScreen} />
         <Tab.Screen name="Stats" component={StatsScreen} />
         <Tab.Screen name="Profile" component={ProfileScreen} />
       </Tab.Navigator>
