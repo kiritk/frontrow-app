@@ -21,21 +21,21 @@ import { Ionicons } from '@expo/vector-icons';
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const EVENT_TYPES = [
-  { value: 'sports', label: 'Sports', emoji: '🏆' },
-  { value: 'concert', label: 'Concerts', emoji: '🎸' },
-  { value: 'theater', label: 'Theater', emoji: '🎭' },
-  { value: 'comedy', label: 'Comedy', emoji: '🎤' },
-  { value: 'landmark', label: 'Landmarks', emoji: '🏰' },
-  { value: 'other', label: 'Other', emoji: '✨' },
+  { value: 'sports', label: 'Sports', icon: 'trophy-outline' as const },
+  { value: 'concert', label: 'Concerts', icon: 'musical-notes-outline' as const },
+  { value: 'theater', label: 'Theater', icon: 'film-outline' as const },
+  { value: 'comedy', label: 'Comedy', icon: 'mic-outline' as const },
+  { value: 'landmark', label: 'Landmarks', icon: 'location-outline' as const },
+  { value: 'other', label: 'Other', icon: 'ellipsis-horizontal-outline' as const },
 ];
 
 const SPORT_TYPES = [
-  { value: 'nfl', label: 'NFL', emoji: '🏈' },
-  { value: 'mlb', label: 'MLB', emoji: '⚾' },
-  { value: 'nba', label: 'NBA', emoji: '🏀' },
-  { value: 'soccer', label: 'Soccer', emoji: '⚽' },
-  { value: 'tennis', label: 'Tennis', emoji: '🎾' },
-  { value: 'other', label: 'Other', emoji: '🏅' },
+  { value: 'nfl', label: 'NFL', icon: 'american-football-outline' as const },
+  { value: 'mlb', label: 'MLB', icon: 'baseball-outline' as const },
+  { value: 'nba', label: 'NBA', icon: 'basketball-outline' as const },
+  { value: 'soccer', label: 'Soccer', icon: 'football-outline' as const },
+  { value: 'tennis', label: 'Tennis', icon: 'tennisball-outline' as const },
+  { value: 'other', label: 'Other', icon: 'ribbon-outline' as const },
 ];
 
 type SportTeam = NFLTeam | MLBTeam;
@@ -381,23 +381,28 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>Select an Event type</Text>
                   {eventType && !eventTypeExpanded && (
-                    <Text style={styles.sectionSelectedLabel}>
-                      {EVENT_TYPES.find(t => t.value === eventType)?.emoji}
-                    </Text>
+                    <Ionicons
+                      name={EVENT_TYPES.find(t => t.value === eventType)?.icon || 'ellipse'}
+                      size={18}
+                      color={COLORS.navy}
+                    />
                   )}
                 </View>
                 {eventTypeExpanded && (
                   <View style={styles.pillGrid}>
-                    {EVENT_TYPES.map((type) => (
-                      <TouchableOpacity
-                        key={type.value}
-                        style={[styles.pill, eventType === type.value && styles.pillActive]}
-                        onPress={() => handleSelectType(type.value)}
-                      >
-                        <Text style={styles.pillEmoji}>{type.emoji}</Text>
-                        <Text style={[styles.pillLabel, eventType === type.value && styles.pillLabelActive]}>{type.label}</Text>
-                      </TouchableOpacity>
-                    ))}
+                    {EVENT_TYPES.map((type) => {
+                      const active = eventType === type.value;
+                      return (
+                        <TouchableOpacity
+                          key={type.value}
+                          style={[styles.pill, active && styles.pillActive]}
+                          onPress={() => handleSelectType(type.value)}
+                        >
+                          <Ionicons name={type.icon} size={16} color={active ? COLORS.white : COLORS.navy} />
+                          <Text style={[styles.pillLabel, active && styles.pillLabelActive]}>{type.label}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
                   </View>
                 )}
               </TouchableOpacity>
@@ -412,23 +417,28 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
                   <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Select a Sport</Text>
                     {sportType && !sportTypeExpanded && (
-                      <Text style={styles.sectionSelectedLabel}>
-                        {SPORT_TYPES.find(t => t.value === sportType)?.emoji}
-                      </Text>
+                      <Ionicons
+                        name={SPORT_TYPES.find(t => t.value === sportType)?.icon || 'ellipse'}
+                        size={18}
+                        color={COLORS.navy}
+                      />
                     )}
                   </View>
                   {sportTypeExpanded && (
                     <View style={styles.pillGrid}>
-                      {SPORT_TYPES.map((type) => (
-                        <TouchableOpacity
-                          key={type.value}
-                          style={[styles.pill, sportType === type.value && styles.pillActive]}
-                          onPress={() => handleSelectSportType(type.value)}
-                        >
-                          <Text style={styles.pillEmoji}>{type.emoji}</Text>
-                          <Text style={[styles.pillLabel, sportType === type.value && styles.pillLabelActive]}>{type.label}</Text>
-                        </TouchableOpacity>
-                      ))}
+                      {SPORT_TYPES.map((type) => {
+                        const active = sportType === type.value;
+                        return (
+                          <TouchableOpacity
+                            key={type.value}
+                            style={[styles.pill, active && styles.pillActive]}
+                            onPress={() => handleSelectSportType(type.value)}
+                          >
+                            <Ionicons name={type.icon} size={16} color={active ? COLORS.white : COLORS.navy} />
+                            <Text style={[styles.pillLabel, active && styles.pillLabelActive]}>{type.label}</Text>
+                          </TouchableOpacity>
+                        );
+                      })}
                     </View>
                   )}
                 </TouchableOpacity>
@@ -705,7 +715,6 @@ const styles = StyleSheet.create({
   pillActive: {
     backgroundColor: COLORS.navy, borderColor: COLORS.navy,
   },
-  pillEmoji: { fontSize: 16 },
   pillLabel: {
     fontFamily: FONTS.medium, fontSize: FONT_SIZES.sm, color: COLORS.navy,
   },
