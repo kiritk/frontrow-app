@@ -8,7 +8,6 @@ import { useAuth } from '../context/AuthContext';
 import { fetchEvents as fetchEventsFromService, removeEvent } from '../lib/eventService';
 import EventCard from '../components/EventCard';
 import FilterDropdown, { DropdownOption } from '../components/FilterDropdown';
-import { continentForEvent, Continent } from '../lib/continents';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
 const PROFILE_STORAGE_KEY = 'frontrow_user_profile';
@@ -39,16 +38,6 @@ const CATEGORIES: DropdownOption[] = [
   { value: 'other', label: 'Other', icon: 'ellipsis-horizontal-outline' },
 ];
 
-const CONTINENT_ORDER: Continent[] = [
-  'North America',
-  'South America',
-  'Europe',
-  'Africa',
-  'Asia',
-  'Oceania',
-  'Antarctica',
-];
-
 const LIST_BOTTOM_PADDING = 110;
 
 export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
@@ -58,7 +47,6 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>('All');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedContinent, setSelectedContinent] = useState<string>('all');
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
   const loadProfileImage = useCallback(async () => {
@@ -114,34 +102,10 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
     }
   }, [visibleCategories, selectedCategory]);
 
-  const categoryFilteredEvents = useMemo(() => {
+  const filteredEvents = useMemo(() => {
     if (selectedCategory === 'all') return yearFilteredEvents;
     return yearFilteredEvents.filter(e => e.type === selectedCategory);
   }, [yearFilteredEvents, selectedCategory]);
-
-  const continentOptions = useMemo<DropdownOption[]>(() => {
-    const present = new Set<Continent>();
-    categoryFilteredEvents.forEach(e => {
-      const c = continentForEvent(e);
-      if (c) present.add(c);
-    });
-    const opts: DropdownOption[] = [{ value: 'all', label: 'All' }];
-    CONTINENT_ORDER.forEach(c => {
-      if (present.has(c)) opts.push({ value: c, label: c });
-    });
-    return opts;
-  }, [categoryFilteredEvents]);
-
-  useEffect(() => {
-    if (selectedContinent !== 'all' && !continentOptions.some(o => o.value === selectedContinent)) {
-      setSelectedContinent('all');
-    }
-  }, [continentOptions, selectedContinent]);
-
-  const filteredEvents = useMemo(() => {
-    if (selectedContinent === 'all') return categoryFilteredEvents;
-    return categoryFilteredEvents.filter(e => continentForEvent(e) === selectedContinent);
-  }, [categoryFilteredEvents, selectedContinent]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -217,13 +181,6 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
           onSelect={setSelectedCategory}
           defaultValue="all"
           showIconOnPill
-        />
-        <FilterDropdown
-          label="Continent"
-          value={selectedContinent}
-          options={continentOptions}
-          onSelect={setSelectedContinent}
-          defaultValue="all"
         />
       </View>
 
