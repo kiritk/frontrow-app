@@ -158,10 +158,10 @@ export default function EventsGlobeImpl({ events }: EventsGlobeImplProps) {
 
         <Mapbox.Atmosphere
           style={{
-            color: '#4da6ff',
-            highColor: '#1a3a6e',
+            color: '#2a6eb5',
+            highColor: '#0a1a3a',
             spaceColor: '#000000',
-            horizonBlend: 0.1,
+            horizonBlend: 0.04,
             starIntensity: 0.3,
           }}
         />
