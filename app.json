@@ -17,7 +17,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "app.frontrow.live",
-      "buildNumber": "16",
+      "buildNumber": "19",
       "config": {
         "usesNonExemptEncryption": false
       },
