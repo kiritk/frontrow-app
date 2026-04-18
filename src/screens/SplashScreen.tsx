@@ -72,10 +72,10 @@ const styles = StyleSheet.create({
     letterSpacing: -2,
   },
   subtitlePill: {
-    backgroundColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: 'rgba(106,106,106,0.9)',
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: '#D1D1D1',
     paddingVertical: 10,
     paddingHorizontal: 20,
     marginTop: 16,
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontFamily: FONT_GEIST_REGULAR,
     fontSize: 16,
-    color: 'rgba(255,255,255,0.9)',
+    color: '#FFFFFF',
     letterSpacing: 0.5,
   },
   bottomContent: {
