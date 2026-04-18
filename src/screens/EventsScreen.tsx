@@ -1,5 +1,8 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, RefreshControl } from 'react-native';
+import {
+  View, Text, StyleSheet, TouchableOpacity, Image, FlatList,
+  RefreshControl, ScrollView,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -7,7 +10,6 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { fetchEvents as fetchEventsFromService, removeEvent } from '../lib/eventService';
 import EventCard from '../components/EventCard';
-import FilterDropdown, { DropdownOption } from '../components/FilterDropdown';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
 const PROFILE_STORAGE_KEY = 'frontrow_user_profile';
@@ -28,14 +30,14 @@ interface Event {
   away_team?: { name: string; city: string; fullName: string };
 }
 
-const CATEGORIES: DropdownOption[] = [
-  { value: 'all', label: 'All', icon: null },
-  { value: 'sports', label: 'Sports', icon: 'trophy-outline' },
-  { value: 'concert', label: 'Concerts', icon: 'musical-notes-outline' },
-  { value: 'theater', label: 'Theater', icon: 'ticket-outline' },
-  { value: 'comedy', label: 'Comedy', icon: 'mic-outline' },
-  { value: 'landmark', label: 'Landmarks', icon: 'location-outline' },
-  { value: 'other', label: 'Other', icon: 'ellipsis-horizontal-outline' },
+const CATEGORIES = [
+  { value: 'all',      label: 'All',       icon: null },
+  { value: 'sports',   label: 'Sports',    icon: 'trophy-outline' as const },
+  { value: 'concert',  label: 'Concerts',  icon: 'musical-notes-outline' as const },
+  { value: 'theater',  label: 'Theater',   icon: 'film-outline' as const },
+  { value: 'comedy',   label: 'Comedy',    icon: 'mic-outline' as const },
+  { value: 'landmark', label: 'Landmarks', icon: 'location-outline' as const },
+  { value: 'other',    label: 'Other',     icon: 'ellipsis-horizontal-outline' as const },
 ];
 
 const LIST_BOTTOM_PADDING = 110;
@@ -80,14 +82,17 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
     fetchEvents();
   }, [fetchEvents, refreshKey, localEventsVersion]);
 
+  const yearTabs = useMemo(() => {
+    const set = new Set<string>();
+    events.forEach(e => set.add(new Date(e.date).getFullYear().toString()));
+    const years = Array.from(set).sort((a, b) => Number(b) - Number(a));
+    return ['Upcoming', 'All', ...years];
+  }, [events]);
+
   const yearFilteredEvents = useMemo(() => {
-    let filtered = [...events];
-    if (selectedYear !== 'All' && selectedYear !== 'Upcoming') {
-      filtered = filtered.filter(e => new Date(e.date).getFullYear().toString() === selectedYear);
-    } else if (selectedYear === 'Upcoming') {
-      filtered = filtered.filter(e => new Date(e.date) >= new Date());
-    }
-    return filtered;
+    if (selectedYear === 'All') return events;
+    if (selectedYear === 'Upcoming') return events.filter(e => new Date(e.date) >= new Date());
+    return events.filter(e => new Date(e.date).getFullYear().toString() === selectedYear);
   }, [events, selectedYear]);
 
   const visibleCategories = useMemo(() => {
@@ -116,28 +121,81 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const handleDeleteEvent = async (eventId: string) => {
     try {
       await removeEvent(eventId, user?.id);
-      setEvents(events.filter(e => e.id !== eventId));
+      setEvents(prev => prev.filter(e => e.id !== eventId));
     } catch (error) {
       console.error('Error deleting event:', error);
     }
   };
-
-  const yearOptions = useMemo<DropdownOption[]>(() => {
-    const set = new Set<string>();
-    events.forEach(e => set.add(new Date(e.date).getFullYear().toString()));
-    const years = Array.from(set).sort((a, b) => Number(b) - Number(a));
-    return [
-      { value: 'All', label: 'All' },
-      { value: 'Upcoming', label: 'Upcoming' },
-      ...years.map(y => ({ value: y, label: y })),
-    ];
-  }, [events]);
 
   const renderEventCard = useCallback(
     ({ item }: { item: Event }) => (
       <EventCard event={item} onDelete={() => handleDeleteEvent(item.id)} onUpdate={fetchEvents} />
     ),
     [fetchEvents, events]
+  );
+
+  const ListHeader = (
+    <>
+      {/* Year tabs */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.yearTabsContent}
+        style={styles.yearTabsScroll}
+      >
+        {yearTabs.map(year => {
+          const active = selectedYear === year;
+          return (
+            <TouchableOpacity
+              key={year}
+              onPress={() => setSelectedYear(year)}
+              style={styles.yearTab}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.yearTabText, active && styles.yearTabTextActive]}>
+                {year}
+              </Text>
+              {active && <View style={styles.yearTabUnderline} />}
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+      <View style={styles.yearTabDivider} />
+
+      {/* Category pills */}
+      {visibleCategories.length > 1 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryPillsContent}
+          style={styles.categoryPillsScroll}
+        >
+          {visibleCategories.map(cat => {
+            const active = selectedCategory === cat.value;
+            return (
+              <TouchableOpacity
+                key={cat.value}
+                onPress={() => setSelectedCategory(cat.value)}
+                style={[styles.categoryPill, active && styles.categoryPillActive]}
+                activeOpacity={0.7}
+              >
+                {cat.icon && (
+                  <Ionicons
+                    name={cat.icon}
+                    size={14}
+                    color={active ? COLORS.navy : COLORS.gray}
+                    style={styles.categoryPillIcon}
+                  />
+                )}
+                <Text style={[styles.categoryPillText, active && styles.categoryPillTextActive]}>
+                  {cat.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
+    </>
   );
 
   return (
@@ -162,29 +220,9 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
         <View style={styles.headerSpacer} />
       </View>
 
-      {/* Page title + filters */}
-      <View style={styles.titleRow}>
-        <Text style={styles.pageTitle}>Events</Text>
-      </View>
-      <View style={styles.dropdownRow}>
-        <FilterDropdown
-          label="Year"
-          value={selectedYear}
-          options={yearOptions}
-          onSelect={setSelectedYear}
-          defaultValue="All"
-        />
-        <FilterDropdown
-          label="Category"
-          value={selectedCategory}
-          options={visibleCategories}
-          onSelect={setSelectedCategory}
-          defaultValue="all"
-          showIconOnPill
-        />
-      </View>
+      <Text style={styles.pageTitle}>Events</Text>
 
-      {/* Event grid */}
+      {/* Event grid with filters in the list header */}
       <FlatList
         data={filteredEvents}
         renderItem={renderEventCard}
@@ -192,6 +230,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
         numColumns={3}
         columnWrapperStyle={filteredEvents.length > 0 ? styles.row : undefined}
         contentContainerStyle={styles.listContent}
+        ListHeaderComponent={ListHeader}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.navy} />
         }
@@ -261,25 +300,92 @@ const styles = StyleSheet.create({
   headerSpacer: {
     width: 38,
   },
-  titleRow: {
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xs,
-  },
   pageTitle: {
     fontFamily: 'GeistMono_700Bold',
     fontSize: 28,
     color: COLORS.navy,
-  },
-  dropdownRow: {
-    flexDirection: 'row',
     paddingHorizontal: SPACING.lg,
-    marginTop: SPACING.md,
-    marginBottom: SPACING.sm,
+    paddingTop: SPACING.xs,
+    paddingBottom: SPACING.sm,
+  },
+  // Year tabs
+  yearTabsScroll: {
+    flexGrow: 0,
+  },
+  yearTabsContent: {
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.lg,
+  },
+  yearTab: {
+    paddingBottom: SPACING.sm,
+    position: 'relative',
+  },
+  yearTabText: {
+    fontFamily: FONTS.medium,
+    fontSize: FONT_SIZES.md,
+    color: COLORS.gray,
+  },
+  yearTabTextActive: {
+    fontFamily: FONTS.semiBold,
+    color: COLORS.navy,
+  },
+  yearTabUnderline: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: COLORS.navy,
+    borderRadius: 1,
+  },
+  yearTabDivider: {
+    height: 1,
+    backgroundColor: COLORS.creamDark,
+    marginBottom: SPACING.md,
+  },
+  // Category pills
+  categoryPillsScroll: {
+    flexGrow: 0,
+    marginBottom: SPACING.md,
+  },
+  categoryPillsContent: {
+    paddingHorizontal: SPACING.lg,
     gap: SPACING.sm,
   },
+  categoryPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    borderRadius: 30,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  categoryPillActive: {
+    backgroundColor: COLORS.cream,
+    borderColor: COLORS.navy,
+  },
+  categoryPillIcon: {
+    marginRight: 5,
+  },
+  categoryPillText: {
+    fontFamily: FONTS.medium,
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.gray,
+  },
+  categoryPillTextActive: {
+    color: COLORS.navy,
+    fontFamily: FONTS.semiBold,
+  },
+  // List
   listContent: {
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.md,
     paddingBottom: LIST_BOTTOM_PADDING,
   },
   row: {
