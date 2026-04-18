@@ -142,7 +142,7 @@ export default function EventsGlobeImpl({ events }: EventsGlobeImplProps) {
     <View style={styles.container}>
       <Mapbox.MapView
         style={styles.map}
-        styleURL={Mapbox.StyleURL.Outdoors}
+        styleURL={Mapbox.StyleURL.SatelliteStreets}
         projection="globe"
         scaleBarEnabled={false}
         attributionEnabled={true}
@@ -158,11 +158,11 @@ export default function EventsGlobeImpl({ events }: EventsGlobeImplProps) {
 
         <Mapbox.Atmosphere
           style={{
-            color: '#a8c8ff',
-            highColor: '#000814',
+            color: '#4da6ff',
+            highColor: '#1a3a6e',
             spaceColor: '#000000',
-            horizonBlend: 0.04,
-            starIntensity: 0.4,
+            horizonBlend: 0.1,
+            starIntensity: 0.3,
           }}
         />
 

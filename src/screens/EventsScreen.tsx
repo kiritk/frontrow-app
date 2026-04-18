@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, RefreshControl, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useAuth } from '../context/AuthContext';
 import { fetchEvents as fetchEventsFromService, removeEvent } from '../lib/eventService';
@@ -67,6 +68,13 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
 
   const sheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ['25%', '45%', '85%'], []);
+
+  // Track the sheet's top-edge Y position so the globe container
+  // height matches exactly the visible area above the sheet.
+  const sheetPosition = useSharedValue(Dimensions.get('window').height * 0.55);
+  const globeStyle = useAnimatedStyle(() => ({
+    height: sheetPosition.value,
+  }));
 
   const loadProfileImage = useCallback(async () => {
     try {
@@ -219,10 +227,10 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
 
   return (
     <View style={styles.container}>
-      {/* Globe fills the whole screen as a background layer */}
-      <View style={StyleSheet.absoluteFill}>
+      {/* Globe sized to the visible area above the bottom sheet */}
+      <Animated.View style={[styles.globeContainer, globeStyle]}>
         <EventsGlobe events={filteredEvents} />
-      </View>
+      </Animated.View>
 
       {/* Header: profile avatar + logo, overlaid on the globe */}
       <SafeAreaView style={styles.headerSafeArea} edges={['top']} pointerEvents="box-none">
@@ -253,6 +261,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
         snapPoints={snapPoints}
         enablePanDownToClose={false}
         enableDynamicSizing={false}
+        animatedPosition={sheetPosition}
         backgroundStyle={styles.sheetBackground}
         handleIndicatorStyle={styles.sheetHandle}
       >
@@ -284,6 +293,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
+  },
+  globeContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
   },
   headerSafeArea: {
     position: 'absolute',
