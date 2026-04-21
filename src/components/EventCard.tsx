@@ -458,15 +458,36 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
     );
   };
 
+  const getTitleFont = () => {
+    switch (event.type) {
+      case 'concert':  return FONTS.audiowide;
+      case 'theater':  return FONTS.limelight;
+      case 'comedy':   return FONTS.modak;
+      case 'landmark': return FONTS.iceland;
+      case 'other':    return FONTS.zain;
+      default:         return FONTS.bold;
+    }
+  };
+
+  const getTitleText = () => {
+    switch (event.type) {
+      case 'concert':
+      case 'theater':
+      case 'landmark':
+        return title.toUpperCase();
+      default:
+        return title;
+    }
+  };
+
   const renderFrontCard = () => {
     const bgSource = getBackgroundSource();
-    const peekBg = isTeamSport && homeTeam
-      ? homeTeam.primaryColor
-      : cardStyle.gradientColors[2];
+    const titleFont = getTitleFont();
+    const displayTitle = getTitleText();
 
     return (
       <View style={styles.stackedCard}>
-        {/* Full-bleed background */}
+        {/* Full-bleed background — extends all the way to the top */}
         {bgSource ? (
           <ImageBackground
             source={bgSource}
@@ -474,8 +495,8 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
             imageStyle={styles.stackedBgImage}
           >
             <LinearGradient
-              colors={['rgba(0,0,0,0.35)', 'transparent', 'rgba(0,0,0,0.65)']}
-              locations={[0, 0.4, 1]}
+              colors={['rgba(0,0,0,0.62)', 'rgba(0,0,0,0.18)', 'rgba(0,0,0,0.68)']}
+              locations={[0, 0.42, 1]}
               style={StyleSheet.absoluteFill}
             />
           </ImageBackground>
@@ -488,20 +509,34 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
           />
         )}
 
-        {/* Peek header */}
-        <View style={[styles.peekHeader, { backgroundColor: peekBg }]}>
-          <Text style={styles.peekTitle} numberOfLines={1}>{title}</Text>
+        {/* Peek header — transparent so background image shows through */}
+        <View style={styles.peekHeader}>
+          {isTeamSport && homeTeam && awayTeam ? (
+            <View style={styles.peekTeamRow}>
+              <Image source={homeTeam.logo} style={styles.peekTeamLogo} />
+              <Text style={styles.peekVs}>vs</Text>
+              <Image source={awayTeam.logo} style={styles.peekTeamLogo} />
+            </View>
+          ) : (
+            <Text style={[styles.peekTitle, { fontFamily: titleFont }]} numberOfLines={1}>
+              {displayTitle}
+            </Text>
+          )}
           <Text style={styles.peekDate}>{month} {day}, {year}</Text>
         </View>
 
         {/* Body */}
         <View style={styles.stackedBody}>
-          {isTeamSport && homeTeam && awayTeam && (
+          {isTeamSport && homeTeam && awayTeam ? (
             <View style={styles.stackedTeamRow}>
               <Image source={homeTeam.logo} style={styles.stackedLogo} />
               <Text style={styles.stackedVs}>VS</Text>
               <Image source={awayTeam.logo} style={styles.stackedLogo} />
             </View>
+          ) : (
+            <Text style={[styles.stackedTitle, { fontFamily: titleFont }]} numberOfLines={2}>
+              {displayTitle}
+            </Text>
           )}
         </View>
 
@@ -571,6 +606,30 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     fontSize: 13,
     color: 'rgba(255,255,255,0.85)',
+  },
+  peekTeamRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  peekTeamLogo: {
+    width: 24,
+    height: 24,
+    resizeMode: 'contain',
+  },
+  peekVs: {
+    fontFamily: FONTS.medium,
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.8)',
+  },
+  stackedTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: 20,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    letterSpacing: 0.5,
+    paddingHorizontal: 16,
   },
   stackedBody: {
     flex: 1,
