@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { fetchEvents as fetchEventsFromService, removeEvent } from '../lib/eventService';
-import EventCard from '../components/EventCard';
+import EventCard, { STACKED_CARD_HEIGHT, PEEK_HEIGHT } from '../components/EventCard';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
 const PROFILE_STORAGE_KEY = 'frontrow_user_profile';
@@ -128,10 +128,18 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   };
 
   const renderEventCard = useCallback(
-    ({ item }: { item: Event }) => (
-      <EventCard event={item} onDelete={() => handleDeleteEvent(item.id)} onUpdate={fetchEvents} />
+    ({ item, index }: { item: Event; index: number }) => (
+      <View
+        style={{
+          zIndex: index + 1,
+          marginTop: index === 0 ? 0 : -(STACKED_CARD_HEIGHT - PEEK_HEIGHT),
+          alignItems: 'center',
+        }}
+      >
+        <EventCard event={item} onDelete={() => handleDeleteEvent(item.id)} onUpdate={fetchEvents} />
+      </View>
     ),
-    [fetchEvents, events]
+    [fetchEvents, events],
   );
 
   const ListHeader = (
@@ -222,13 +230,11 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
 
       <Text style={styles.pageTitle}>Events</Text>
 
-      {/* Event grid with filters in the list header */}
+      {/* Stacked event cards with filters in the list header */}
       <FlatList
         data={filteredEvents}
         renderItem={renderEventCard}
         keyExtractor={item => item.id}
-        numColumns={3}
-        columnWrapperStyle={filteredEvents.length > 0 ? styles.row : undefined}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={ListHeader}
         refreshControl={
@@ -385,12 +391,7 @@ const styles = StyleSheet.create({
   },
   // List
   listContent: {
-    paddingHorizontal: SPACING.lg,
     paddingBottom: LIST_BOTTOM_PADDING,
-  },
-  row: {
-    justifyContent: 'flex-start',
-    gap: 20,
   },
   empty: {
     alignItems: 'center',

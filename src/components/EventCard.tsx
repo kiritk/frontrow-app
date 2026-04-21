@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Alert, useWindowDimensions,
+  View, Text, StyleSheet, TouchableOpacity, Alert,
   ImageBackground, Image, Modal, FlatList, Dimensions, TextInput, Platform,
   KeyboardAvoidingView, TouchableWithoutFeedback, ScrollView, Keyboard, Pressable
 } from 'react-native';
@@ -18,6 +18,9 @@ import { getTeamByName } from '../data/nflTeams';
 import { getMLBTeamByName } from '../data/mlbTeams';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+export const STACKED_CARD_HEIGHT = 230;
+export const PEEK_HEIGHT = 52;
 
 interface EventCardProps {
   event: {
@@ -59,41 +62,7 @@ const OTHER_COLORS = {
 };
 
 export default function EventCard({ event, onDelete, onUpdate }: EventCardProps) {
-  const { width } = useWindowDimensions();
   const { user, isGuest } = useAuth();
-
-  // The card's internal layout (notch size, backgrounds, typography
-  // metrics) was tuned for a 2-column grid.  We keep those "designed"
-  // dimensions so every internal element renders at its native size,
-  // then uniformly shrink the whole card via a single `scale` transform
-  // so three cards fit per row instead of two.
-  const DESIGNED_WIDTH = (width - 48 - 12) / 2;
-  const DESIGNED_HEIGHT = DESIGNED_WIDTH * 1.2;
-  const COL_COUNT = 3;
-  const ACTUAL_WIDTH = (width - 48 - 12 * (COL_COUNT - 1)) / COL_COUNT;
-  const SCALE = ACTUAL_WIDTH / DESIGNED_WIDTH;
-  const ACTUAL_HEIGHT = DESIGNED_HEIGHT * SCALE;
-
-  const CARD_WIDTH = DESIGNED_WIDTH;
-  const CARD_HEIGHT = DESIGNED_HEIGHT;
-  const NOTCH_WIDTH = CARD_WIDTH * 0.22;
-  const NOTCH_HEIGHT = NOTCH_WIDTH / 2;
-  const topNotch = (
-    <View
-      pointerEvents="none"
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: (CARD_WIDTH - NOTCH_WIDTH) / 2,
-        width: NOTCH_WIDTH,
-        height: NOTCH_HEIGHT,
-        backgroundColor: '#FBFCFC',
-        borderBottomLeftRadius: NOTCH_WIDTH / 2,
-        borderBottomRightRadius: NOTCH_WIDTH / 2,
-        zIndex: 100,
-      }}
-    />
-  );
 
   const [showActionModal, setShowActionModal] = useState(false);
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
@@ -253,16 +222,23 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
   const homeTeam = isNFLGame ? getTeamByName(event.home_team!.name) : isMLBGame ? getMLBTeamByName(event.home_team!.name) : null;
   const awayTeam = isNFLGame ? getTeamByName(event.away_team!.name) : isMLBGame ? getMLBTeamByName(event.away_team!.name) : null;
 
-  const coverSource = event.cover_photo ? { uri: event.cover_photo } : null;
-  const getConcertBackground = () => coverSource || require('../../assets/images/concert_bg.png');
-  const getTheaterBackground = () => coverSource || require('../../assets/images/theater_bg.jpg');
-  const getComedyBackground = () => coverSource || require('../../assets/images/comedy_bg.jpg');
-  const getLandmarkBackground = () => coverSource || require('../../assets/images/landmark_bg.jpg');
-  const getOtherBackground = () => coverSource || require('../../assets/images/other_bg.jpg');
-  const getBasketballBackground = () => coverSource || require('../../assets/images/basketball_bg.jpg');
-  const getSoccerBackground = () => coverSource || require('../../assets/images/soccer_bg.jpg');
-  const getTennisBackground = () => coverSource || require('../../assets/images/tennis_bg.jpg');
-  const getOtherSportsBackground = () => coverSource || require('../../assets/images/other_sports_bg.jpg');
+  const getBackgroundSource = () => {
+    if (event.cover_photo) return { uri: event.cover_photo };
+    switch (event.type) {
+      case 'concert': return require('../../assets/images/concert_bg.png');
+      case 'theater': return require('../../assets/images/theater_bg.jpg');
+      case 'comedy': return require('../../assets/images/comedy_bg.jpg');
+      case 'landmark': return require('../../assets/images/landmark_bg.jpg');
+      case 'other': return require('../../assets/images/other_bg.jpg');
+      case 'sports':
+        if (isTeamSport && homeTeam?.stadiumImage) return homeTeam.stadiumImage;
+        if (event.sport === 'nba') return require('../../assets/images/basketball_bg.jpg');
+        if (event.sport === 'soccer') return require('../../assets/images/soccer_bg.jpg');
+        if (event.sport === 'tennis') return require('../../assets/images/tennis_bg.jpg');
+        return require('../../assets/images/other_sports_bg.jpg');
+      default: return null;
+    }
+  };
 
   const renderPhotoViewer = () => (
     <Modal visible={showPhotoViewer} transparent animationType="fade" onRequestClose={() => setShowPhotoViewer(false)}>
@@ -482,238 +458,68 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
     );
   };
 
-  const renderTeamSportCard = () => {
-    const homeColor = homeTeam?.primaryColor || '#2a1a3a';
+  const renderFrontCard = () => {
+    const bgSource = getBackgroundSource();
+    const peekBg = isTeamSport && homeTeam
+      ? homeTeam.primaryColor
+      : cardStyle.gradientColors[2];
+
     return (
-      <View style={[styles.card, { height: CARD_HEIGHT }]}>
-      {topNotch}
-        {topNotch}
-        <View style={[styles.teamBottomColor, { backgroundColor: homeColor }]} />
-        <View style={styles.teamStadiumSection}>
-          <ImageBackground source={coverSource || homeTeam?.stadiumImage} style={styles.teamStadiumImage} imageStyle={styles.teamStadiumImageStyle}>
-            <LinearGradient colors={['transparent', 'rgba(0,0,0,0)', homeColor + '40', homeColor + '80', homeColor + 'CC', homeColor]} locations={[0, 0.3, 0.5, 0.7, 0.85, 1]} style={styles.teamStadiumOverlay} />
+      <View style={styles.stackedCard}>
+        {/* Full-bleed background */}
+        {bgSource ? (
+          <ImageBackground
+            source={bgSource}
+            style={StyleSheet.absoluteFill}
+            imageStyle={styles.stackedBgImage}
+          >
+            <LinearGradient
+              colors={['rgba(0,0,0,0.35)', 'transparent', 'rgba(0,0,0,0.65)']}
+              locations={[0, 0.4, 1]}
+              style={StyleSheet.absoluteFill}
+            />
           </ImageBackground>
+        ) : (
+          <LinearGradient
+            colors={cardStyle.gradientColors}
+            style={StyleSheet.absoluteFill}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+          />
+        )}
+
+        {/* Peek header */}
+        <View style={[styles.peekHeader, { backgroundColor: peekBg }]}>
+          <Text style={styles.peekTitle} numberOfLines={1}>{title}</Text>
+          <Text style={styles.peekDate}>{month} {day}, {year}</Text>
         </View>
-        <View style={styles.teamContentOverlay}>
-          <View style={styles.teamLogosContainer}>
-            {homeTeam && <Image source={homeTeam.logo} style={styles.teamLogo} />}
-            <Text style={styles.teamVsText}>vs</Text>
-            {awayTeam && <Image source={awayTeam.logo} style={styles.teamLogo} />}
-          </View>
-          <View style={styles.teamInfoSection}>
-            <View style={styles.teamDatePill}>
-              <Text style={styles.teamDateMonth}>{month} {day}</Text>
-              <Text style={styles.teamDateYear}>{year}</Text>
+
+        {/* Body */}
+        <View style={styles.stackedBody}>
+          {isTeamSport && homeTeam && awayTeam && (
+            <View style={styles.stackedTeamRow}>
+              <Image source={homeTeam.logo} style={styles.stackedLogo} />
+              <Text style={styles.stackedVs}>VS</Text>
+              <Image source={awayTeam.logo} style={styles.stackedLogo} />
             </View>
-            <View style={styles.teamVenueSection}>
-              <Ionicons name="location-outline" size={12} color="#FFFFFF" />
-              <Text style={styles.teamVenueText} numberOfLines={2}>{venue}</Text>
-            </View>
-          </View>
+          )}
+        </View>
+
+        {/* Footer */}
+        <View style={styles.stackedFooter}>
+          <Ionicons name="location-outline" size={13} color="rgba(255,255,255,0.75)" />
+          <Text style={styles.stackedVenue} numberOfLines={1}>{venue}</Text>
         </View>
       </View>
     );
   };
 
-  const renderConcertCard = () => (
-    <View style={[styles.card, { height: CARD_HEIGHT }]}>
-      {topNotch}
-      <View style={styles.topSection}>
-        <ImageBackground source={getConcertBackground()} style={styles.imageBackground} imageStyle={styles.imageStyle}>
-          <LinearGradient colors={['transparent', 'rgba(26, 26, 46, 0.7)', CONCERT_COLORS.gradientStart]} style={styles.imageOverlay} />
-        </ImageBackground>
-      </View>
-      <View style={styles.bottomSection}>
-        <Text style={styles.concertTitle} numberOfLines={2}>{title.toUpperCase()}</Text>
-        <View style={styles.infoRow}>
-          <View style={styles.concertDatePill}>
-            <Text style={styles.concertDatePillMonth}>{month} {day}</Text>
-            <Text style={styles.concertDatePillYear}>{year}</Text>
-          </View>
-          <View style={styles.venueSection}>
-            <Ionicons name="location-outline" size={12} color={CONCERT_COLORS.accentLight} />
-            <Text style={styles.concertVenueText} numberOfLines={2}>{venue}</Text>
-          </View>
-        </View>
-      </View>
-    </View>
-  );
-
-  const renderTheaterCard = () => (
-    <View style={[styles.card, { height: CARD_HEIGHT }]}>
-      {topNotch}
-      <View style={styles.topSection}>
-        <ImageBackground source={getTheaterBackground()} style={styles.imageBackground} imageStyle={styles.imageStyle}>
-          <LinearGradient colors={['transparent', 'rgba(26, 10, 10, 0.7)', THEATER_COLORS.gradientStart]} style={styles.imageOverlay} />
-        </ImageBackground>
-      </View>
-      <View style={[styles.bottomSection, { backgroundColor: THEATER_COLORS.gradientStart }]}>
-        <Text style={styles.theaterTitle} numberOfLines={2}>{title.toUpperCase()}</Text>
-        <View style={styles.infoRow}>
-          <View style={styles.theaterDatePill}>
-            <Text style={styles.theaterDatePillMonth}>{month} {day}</Text>
-            <Text style={styles.theaterDatePillYear}>{year}</Text>
-          </View>
-          <View style={styles.venueSection}>
-            <Ionicons name="location-outline" size={12} color={THEATER_COLORS.accentLight} />
-            <Text style={styles.theaterVenueText} numberOfLines={2}>{venue}</Text>
-          </View>
-        </View>
-      </View>
-    </View>
-  );
-
-  const renderComedyCard = () => (
-    <View style={[styles.card, { height: CARD_HEIGHT }]}>
-      {topNotch}
-      <View style={styles.topSection}>
-        <ImageBackground source={getComedyBackground()} style={styles.imageBackground} imageStyle={styles.imageStyle}>
-          <LinearGradient colors={['transparent', 'rgba(26, 5, 5, 0.7)', COMEDY_COLORS.gradientStart]} style={styles.imageOverlay} />
-        </ImageBackground>
-      </View>
-      <View style={[styles.bottomSection, { backgroundColor: COMEDY_COLORS.gradientStart }]}>
-        <Text style={styles.comedyTitle} numberOfLines={2}>{title}</Text>
-        <View style={styles.infoRow}>
-          <View style={styles.comedyDatePill}>
-            <Text style={styles.comedyDatePillMonth}>{month} {day}</Text>
-            <Text style={styles.comedyDatePillYear}>{year}</Text>
-          </View>
-          <View style={styles.venueSection}>
-            <Ionicons name="location-outline" size={12} color={COMEDY_COLORS.accentLight} />
-            <Text style={styles.comedyVenueText} numberOfLines={2}>{venue}</Text>
-          </View>
-        </View>
-      </View>
-    </View>
-  );
-
-  const renderLandmarkCard = () => (
-    <View style={[styles.card, { height: CARD_HEIGHT }]}>
-      {topNotch}
-      <View style={styles.topSection}>
-        <ImageBackground source={getLandmarkBackground()} style={styles.imageBackground} imageStyle={styles.imageStyle}>
-          <LinearGradient colors={['transparent', 'rgba(26, 25, 23, 0.7)', LANDMARK_COLORS.gradientStart]} style={styles.imageOverlay} />
-        </ImageBackground>
-      </View>
-      <View style={[styles.bottomSection, { backgroundColor: LANDMARK_COLORS.gradientStart }]}>
-        <Text style={styles.landmarkTitle} numberOfLines={2}>{title.toUpperCase()}</Text>
-        <View style={styles.infoRow}>
-          <View style={styles.landmarkDatePill}>
-            <Text style={styles.landmarkDatePillMonth}>{month} {day}</Text>
-            <Text style={styles.landmarkDatePillYear}>{year}</Text>
-          </View>
-          <View style={styles.venueSection}>
-            <Ionicons name="location-outline" size={12} color={LANDMARK_COLORS.accentLight} />
-            <Text style={styles.landmarkVenueText} numberOfLines={2}>{venue}</Text>
-          </View>
-        </View>
-      </View>
-    </View>
-  );
-
-  const renderOtherCard = () => (
-    <View style={[styles.card, { height: CARD_HEIGHT }]}>
-      {topNotch}
-      <View style={styles.topSection}>
-        <ImageBackground source={getOtherBackground()} style={styles.imageBackground} imageStyle={styles.imageStyle}>
-          <LinearGradient colors={['transparent', 'rgba(42, 21, 16, 0.7)', OTHER_COLORS.gradientStart]} style={styles.imageOverlay} />
-        </ImageBackground>
-      </View>
-      <View style={[styles.bottomSection, { backgroundColor: OTHER_COLORS.gradientStart }]}>
-        <Text style={styles.otherTitle} numberOfLines={2}>{title}</Text>
-        <View style={styles.infoRow}>
-          <View style={styles.otherDatePill}>
-            <Text style={styles.otherDatePillMonth}>{month} {day}</Text>
-            <Text style={styles.otherDatePillYear}>{year}</Text>
-          </View>
-          <View style={styles.venueSection}>
-            <Ionicons name="location-outline" size={12} color={OTHER_COLORS.accentLight} />
-            <Text style={styles.otherVenueText} numberOfLines={2}>{venue}</Text>
-          </View>
-        </View>
-      </View>
-    </View>
-  );
-
-  const renderSportCard = (bgSource: any, gradientFade: string) => (
-    <View style={[styles.card, { height: CARD_HEIGHT }]}>
-      {topNotch}
-      <View style={styles.topSection}>
-        <ImageBackground source={bgSource} style={styles.imageBackground} imageStyle={styles.imageStyle}>
-          <LinearGradient colors={['transparent', gradientFade + '99', gradientFade]} style={styles.imageOverlay} />
-        </ImageBackground>
-      </View>
-      <View style={[styles.bottomSection, { backgroundColor: gradientFade }]}>
-        <Text style={styles.sportCardTitle} numberOfLines={2}>{title.toUpperCase()}</Text>
-        <View style={styles.infoRow}>
-          <View style={[styles.defaultDateBadge, { backgroundColor: cardStyle.accentColor + '20', borderColor: cardStyle.accentColor }]}>
-            <Text style={[styles.defaultDateText, { color: cardStyle.accentColor }]}>{month} {day}</Text>
-            <Text style={[styles.defaultYearText, { color: cardStyle.accentColor + 'CC' }]}>{year}</Text>
-          </View>
-          <View style={styles.venueSection}>
-            <Ionicons name="location-outline" size={12} color={cardStyle.accentColor} />
-            <Text style={[styles.defaultVenueText, { textAlign: 'right', flexShrink: 1 }]} numberOfLines={2}>{venue}</Text>
-          </View>
-        </View>
-      </View>
-    </View>
-  );
-
-  const renderDefaultCard = () => (
-    <View style={[styles.card, { height: CARD_HEIGHT }]}>
-      {topNotch}
-      <LinearGradient colors={cardStyle.gradientColors} style={styles.defaultGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-        <View style={styles.defaultImageArea}>
-          <Text style={styles.defaultTitle} numberOfLines={2}>{title.toUpperCase()}</Text>
-        </View>
-        <View style={styles.defaultInfoSection}>
-          <View style={[styles.defaultDateBadge, { backgroundColor: cardStyle.accentColor + '20', borderColor: cardStyle.accentColor }]}>
-            <Text style={[styles.defaultDateText, { color: cardStyle.accentColor }]}>{month} {day}</Text>
-            <Text style={[styles.defaultYearText, { color: cardStyle.accentColor + 'CC' }]}>{year}</Text>
-          </View>
-          <View style={styles.defaultVenueContainer}>
-            <Ionicons name="location-outline" size={10} color="#fff" />
-            <Text style={styles.defaultVenueText} numberOfLines={2}>{venue}</Text>
-          </View>
-        </View>
-      </LinearGradient>
-    </View>
-  );
-
-  const renderFrontCard = () => {
-    if (event.type === 'concert') return renderConcertCard();
-    if (event.type === 'theater') return renderTheaterCard();
-    if (event.type === 'comedy') return renderComedyCard();
-    if (event.type === 'landmark') return renderLandmarkCard();
-    if (event.type === 'other') return renderOtherCard();
-    if (isTeamSport && homeTeam && awayTeam) return renderTeamSportCard();
-    if (event.sport === 'nba') return renderSportCard(getBasketballBackground(), '#7a3000');
-    if (event.sport === 'soccer') return renderSportCard(getSoccerBackground(), '#003d5c');
-    if (event.sport === 'tennis') return renderSportCard(getTennisBackground(), '#3d5c00');
-    if (event.type === 'sports') return renderSportCard(getOtherSportsBackground(), '#5c0008');
-    return renderDefaultCard();
-  };
-
   return (
-    <View style={{ width: ACTUAL_WIDTH, height: ACTUAL_HEIGHT, marginBottom: 20 }}>
-      {/* The card is rendered at its full "designed" size and then
-          uniformly shrunk via `transform: scale` so every element
-          (background, text, icons, shadows, notch) scales evenly. */}
-      <View
-        style={{
-          position: 'absolute',
-          width: DESIGNED_WIDTH,
-          height: DESIGNED_HEIGHT,
-          left: (ACTUAL_WIDTH - DESIGNED_WIDTH) / 2,
-          top: (ACTUAL_HEIGHT - DESIGNED_HEIGHT) / 2,
-          transform: [{ scale: SCALE }],
-        }}
-      >
-        <View style={[styles.cardWrapper, { width: DESIGNED_WIDTH, height: DESIGNED_HEIGHT, marginBottom: 0 }]}>
-          <TouchableOpacity onPress={handleCardPress} activeOpacity={0.95} style={{ flex: 1 }}>
-            {renderFrontCard()}
-          </TouchableOpacity>
-        </View>
+    <>
+      <View style={styles.stackedCardWrapper}>
+        <TouchableOpacity onPress={handleCardPress} activeOpacity={0.95} style={{ flex: 1 }}>
+          {renderFrontCard()}
+        </TouchableOpacity>
       </View>
 
       {renderActionModal()}
@@ -721,20 +527,84 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
       {renderEditDateModal()}
       {renderEditLocationModal()}
       {renderPhotoViewer()}
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  cardWrapper: {
-    marginBottom: 20,
-    borderRadius: 8,
+  stackedCardWrapper: {
+    width: SCREEN_WIDTH * 0.85,
+    height: STACKED_CARD_HEIGHT,
+    borderRadius: 14,
     backgroundColor: '#1a1a2e',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  stackedCard: {
+    flex: 1,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  stackedBgImage: {
+    resizeMode: 'cover',
+  },
+  peekHeader: {
+    height: PEEK_HEIGHT,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255,255,255,0.15)',
+  },
+  peekTitle: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 15,
+    color: '#FFFFFF',
+    flex: 1,
+    marginRight: 12,
+  },
+  peekDate: {
+    fontFamily: FONTS.medium,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.85)',
+  },
+  stackedBody: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stackedTeamRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  stackedLogo: {
+    width: 56,
+    height: 56,
+    resizeMode: 'contain',
+  },
+  stackedVs: {
+    fontFamily: FONTS.bold,
+    fontSize: 18,
+    color: 'rgba(255,255,255,0.9)',
+  },
+  stackedFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    gap: 6,
+  },
+  stackedVenue: {
+    fontFamily: FONTS.medium,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.75)',
+    flex: 1,
   },
   modalOverlay: {
     flex: 1,
@@ -935,12 +805,6 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.md,
     color: COLORS.navy,
   },
-  card: {
-    borderRadius: 8,
-    overflow: 'hidden',
-    position: 'relative',
-    backgroundColor: '#1a1a2e',
-  },
   photoViewerOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.95)',
@@ -979,63 +843,4 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.md,
     color: COLORS.white,
   },
-  teamBottomColor: { ...StyleSheet.absoluteFillObject },
-  teamStadiumSection: { position: 'absolute', top: 0, left: 0, right: 0, height: '70%' },
-  teamStadiumImage: { flex: 1 },
-  teamStadiumImageStyle: { resizeMode: 'cover' },
-  teamStadiumOverlay: { ...StyleSheet.absoluteFillObject },
-  teamContentOverlay: { ...StyleSheet.absoluteFillObject, padding: 12, justifyContent: 'space-between' },
-  teamLogosContainer: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  teamLogo: { width: 55, height: 55, resizeMode: 'contain' },
-  teamVsText: { fontFamily: FONTS.semiBold, fontSize: 14, color: '#FFFFFF', marginHorizontal: 4 },
-  teamInfoSection: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
-  teamDatePill: { backgroundColor: '#FFFFFF', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, alignItems: 'center' },
-  teamDateMonth: { fontFamily: FONTS.bold, fontSize: 11, letterSpacing: 0.5, color: '#1a1a2e' },
-  teamDateYear: { fontFamily: FONTS.regular, fontSize: 10, color: '#666666' },
-  teamVenueSection: { flexDirection: 'row', alignItems: 'center', flex: 1, justifyContent: 'flex-end', marginLeft: 8, gap: 3 },
-  teamVenueText: { fontFamily: FONTS.medium, fontSize: 11, color: '#FFFFFF', textAlign: 'right', flexShrink: 1 },
-  topSection: { height: '42%', overflow: 'hidden' },
-  imageBackground: { flex: 1 },
-  imageStyle: { resizeMode: 'cover' },
-  imageOverlay: { ...StyleSheet.absoluteFillObject },
-  bottomSection: { flex: 1, backgroundColor: CONCERT_COLORS.gradientStart, paddingHorizontal: 12, paddingTop: 12, paddingBottom: 8, justifyContent: 'space-between' },
-  sportCardTitle: { fontFamily: FONTS.bold, fontSize: 16, color: '#FFFFFF', textAlign: 'center', letterSpacing: 0.5 },
-  concertTitle: { fontFamily: FONTS.audiowide, fontSize: 22.5, color: '#FFFFFF', textAlign: 'center', letterSpacing: 1.5 },
-  infoRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  concertDatePill: { borderWidth: 1, borderColor: CONCERT_COLORS.accent, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, alignItems: 'center' },
-  concertDatePillMonth: { fontFamily: FONTS.bold, fontSize: 11, letterSpacing: 0.5, color: CONCERT_COLORS.accentLight },
-  concertDatePillYear: { fontFamily: FONTS.regular, fontSize: 10, color: CONCERT_COLORS.accent },
-  concertVenueText: { fontFamily: FONTS.medium, fontSize: 11, textAlign: 'right', flexShrink: 1, color: CONCERT_COLORS.accentLight },
-  theaterTitle: { fontFamily: FONTS.limelight, fontSize: 22.5, color: THEATER_COLORS.accent, textAlign: 'center', letterSpacing: 1 },
-  theaterDatePill: { borderWidth: 1, borderColor: THEATER_COLORS.accent, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, alignItems: 'center' },
-  theaterDatePillMonth: { fontFamily: FONTS.bold, fontSize: 11, letterSpacing: 0.5, color: THEATER_COLORS.accentLight },
-  theaterDatePillYear: { fontFamily: FONTS.regular, fontSize: 10, color: THEATER_COLORS.accent },
-  theaterVenueText: { fontFamily: FONTS.medium, fontSize: 11, textAlign: 'right', flexShrink: 1, color: THEATER_COLORS.accentLight },
-  comedyTitle: { fontFamily: FONTS.modak, fontSize: 24, color: COMEDY_COLORS.accent, textAlign: 'center', letterSpacing: 0.5 },
-  comedyDatePill: { borderWidth: 1, borderColor: COMEDY_COLORS.accent, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, alignItems: 'center' },
-  comedyDatePillMonth: { fontFamily: FONTS.bold, fontSize: 11, letterSpacing: 0.5, color: COMEDY_COLORS.accentLight },
-  comedyDatePillYear: { fontFamily: FONTS.regular, fontSize: 10, color: COMEDY_COLORS.accent },
-  comedyVenueText: { fontFamily: FONTS.medium, fontSize: 11, textAlign: 'right', flexShrink: 1, color: COMEDY_COLORS.accentLight },
-  landmarkTitle: { fontFamily: FONTS.iceland, fontSize: 24, color: LANDMARK_COLORS.accent, textAlign: 'center', letterSpacing: 1.5 },
-  landmarkDatePill: { borderWidth: 1, borderColor: LANDMARK_COLORS.accent, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, alignItems: 'center' },
-  landmarkDatePillMonth: { fontFamily: FONTS.bold, fontSize: 11, letterSpacing: 0.5, color: LANDMARK_COLORS.accentLight },
-  landmarkDatePillYear: { fontFamily: FONTS.regular, fontSize: 10, color: LANDMARK_COLORS.accent },
-  landmarkVenueText: { fontFamily: FONTS.medium, fontSize: 11, textAlign: 'right', flexShrink: 1, color: LANDMARK_COLORS.accentLight },
-  otherTitle: { fontFamily: FONTS.zain, fontSize: 20, color: OTHER_COLORS.accent, textAlign: 'center', letterSpacing: 0.5 },
-  otherDatePill: { borderWidth: 1, borderColor: OTHER_COLORS.accent, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, alignItems: 'center' },
-  otherDatePillMonth: { fontFamily: FONTS.bold, fontSize: 11, letterSpacing: 0.5, color: OTHER_COLORS.accentLight },
-  otherDatePillYear: { fontFamily: FONTS.regular, fontSize: 10, color: OTHER_COLORS.accent },
-  otherVenueText: { fontFamily: FONTS.medium, fontSize: 11, textAlign: 'right', flexShrink: 1, color: OTHER_COLORS.accentLight },
-  venueSection: { flexDirection: 'row', alignItems: 'center', flex: 1, justifyContent: 'flex-end', marginLeft: 8, gap: 3 },
-  defaultGradient: { flex: 1, padding: 12, justifyContent: 'space-between' },
-  defaultImageArea: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  defaultImageBg: { width: '100%', height: '100%', justifyContent: 'flex-end' },
-  defaultTitle: { fontFamily: FONTS.bold, fontSize: 15, color: '#FFFFFF', textAlign: 'center', letterSpacing: 0.5 },
-  defaultTitleWithPhoto: { fontFamily: FONTS.bold, fontSize: 14, color: '#FFFFFF', textAlign: 'center', letterSpacing: 0.5, marginTop: 8 },
-  defaultInfoSection: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 8 },
-  defaultDateBadge: { borderWidth: 1, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, alignItems: 'center' },
-  defaultDateText: { fontFamily: FONTS.bold, fontSize: 11, letterSpacing: 0.5 },
-  defaultYearText: { fontFamily: FONTS.regular, fontSize: 10 },
-  defaultVenueContainer: { flexDirection: 'row', alignItems: 'center', flex: 1, justifyContent: 'flex-end', marginLeft: 8, gap: 3 },
-  defaultVenueText: { fontFamily: FONTS.medium, fontSize: 11, color: '#FFFFFF', textAlign: 'right', flexShrink: 1 },
 });
