@@ -49,30 +49,6 @@ const typeColors: Record<string, string> = {
 
 const OFFSET_DISTANCE = 0.003;
 
-const HIDDEN_LABEL_LAYERS = [
-  'continent-label',
-  'country-label',
-  'state-label',
-  'settlement-subdivision-label',
-  'settlement-minor-label',
-  'settlement-major-label',
-  'airport-label',
-  'poi-label',
-  'water-point-label',
-  'water-line-label',
-  'waterway-label',
-  'natural-point-label',
-  'natural-line-label',
-  'transit-label',
-  'road-label',
-  'road-label-simple',
-  'road-number-shield',
-  'road-exit-shield',
-  'path-pedestrian-label',
-  'ferry-aerialway-label',
-  'block-number-label',
-  'contour-label',
-];
 
 export default function EventsGlobeImpl({ events }: EventsGlobeImplProps) {
   const cameraRef = useRef<Mapbox.Camera>(null);
@@ -134,16 +110,15 @@ export default function EventsGlobeImpl({ events }: EventsGlobeImplProps) {
   })();
 
   const initialCamera = {
-    centerCoordinate: [0, 20] as [number, number],
-    zoomLevel: 0,
+    centerCoordinate: [-98.5, 39.8] as [number, number],
+    zoomLevel: 2.5,
   };
 
   return (
     <View style={styles.container}>
       <Mapbox.MapView
         style={styles.map}
-        styleURL={Mapbox.StyleURL.SatelliteStreets}
-        projection="globe"
+        styleURL={Mapbox.StyleURL.Street}
         scaleBarEnabled={false}
         attributionEnabled={true}
         logoEnabled={true}
@@ -155,25 +130,6 @@ export default function EventsGlobeImpl({ events }: EventsGlobeImplProps) {
             zoomLevel: initialCamera.zoomLevel,
           }}
         />
-
-        <Mapbox.Atmosphere
-          style={{
-            color: '#2a6eb5',
-            highColor: '#0a1a3a',
-            spaceColor: '#000000',
-            horizonBlend: 0.04,
-            starIntensity: 0.3,
-          }}
-        />
-
-        {HIDDEN_LABEL_LAYERS.map(layerId => (
-          <Mapbox.SymbolLayer
-            key={layerId}
-            id={layerId}
-            existing
-            style={{ visibility: 'none' }}
-          />
-        ))}
 
         {eventsWithOffsets.map(({ event, displayLat, displayLng, team, isTeamSport }) => (
           <Mapbox.MarkerView
@@ -206,7 +162,7 @@ export default function EventsGlobeImpl({ events }: EventsGlobeImplProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.cream,
   },
   map: {
     flex: 1,
