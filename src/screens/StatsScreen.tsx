@@ -1,40 +1,70 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
-import { getLocalEvents } from '../lib/localStorage';
+import { getLocalEvents, LocalEvent } from '../lib/localStorage';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
+import FanCard from '../components/FanCard';
+
+const PROFILE_STORAGE_KEY = 'frontrow_user_profile';
 
 export default function StatsScreen() {
   const navigation = useNavigation();
   const { user, localEventsVersion } = useAuth();
-  const [eventCount, setEventCount] = useState(0);
+  const [events, setEvents] = useState<LocalEvent[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [profileImage, setProfileImage] = useState<string | null>(null);
 
-  const fetchEventCount = async () => {
+  const loadProfile = useCallback(async () => {
     try {
-      const events = await getLocalEvents();
-      setEventCount(events.length);
+      const stored = await AsyncStorage.getItem(PROFILE_STORAGE_KEY);
+      if (stored) {
+        const profile = JSON.parse(stored);
+        setFirstName(profile.firstName || '');
+        setLastName(profile.lastName || '');
+        setProfileImage(profile.profileImage || null);
+      }
+    } catch (error) {
+      console.log('Error loading profile:', error);
+    }
+  }, []);
+
+  const fetchEvents = useCallback(async () => {
+    try {
+      const all = await getLocalEvents();
+      setEvents(all);
     } catch (error) {
       console.error(error);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchEventCount();
-  }, [user, localEventsVersion]);
+    loadProfile();
+    fetchEvents();
+  }, [user, localEventsVersion, loadProfile, fetchEvents]);
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', fetchEventCount);
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadProfile();
+      fetchEvents();
+    });
     return unsubscribe;
-  }, [navigation]);
+  }, [navigation, loadProfile, fetchEvents]);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchEventCount();
+    await Promise.all([loadProfile(), fetchEvents()]);
     setRefreshing(false);
   };
+
+  const eventCount = events.length;
+  const cityCount = new Set(events.map(e => e.venue_location || e.venue).filter(Boolean)).size;
+  const venueCount = new Set(events.map(e => e.venue).filter(Boolean)).size;
+  const sportsCount = events.filter(e => e.type === 'sports').length;
 
   const getFanLevel = () => {
     if (eventCount >= 50) {
@@ -59,6 +89,20 @@ export default function StatsScreen() {
         }
       >
         <Text style={styles.pageTitle}>Stats</Text>
+
+        {/* Fan Card */}
+        <View style={styles.fanCardContainer}>
+          <FanCard
+            firstName={firstName}
+            lastName={lastName}
+            profileImage={profileImage}
+            fanLevel={fanLevel.level}
+            eventCount={eventCount}
+            cityCount={cityCount}
+            venueCount={venueCount}
+            sportsCount={sportsCount}
+          />
+        </View>
 
         {/* Fan Level Card */}
         <View style={styles.fanLevelCard}>
@@ -127,6 +171,10 @@ const styles = StyleSheet.create({
     fontFamily: 'GeistMono_700Bold',
     fontSize: 32,
     color: COLORS.navy,
+    marginBottom: SPACING.lg,
+  },
+  fanCardContainer: {
+    alignItems: 'center',
     marginBottom: SPACING.lg,
   },
   fanLevelCard: {
