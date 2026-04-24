@@ -1,8 +1,9 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Alert, Image,
   Dimensions, ScrollView, TextInput, Modal, Platform,
   KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Pressable,
+  Animated, PanResponder,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,7 +18,10 @@ import { COLORS, FONTS, SPACING, FONT_SIZES, BORDER_RADIUS } from '../theme/colo
 import EventCard, { EventData } from './EventCard';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const THUMB_SIZE = (SCREEN_WIDTH * 0.9 - 12 * 4) / 5;
+const SHELF_PADDING = SCREEN_WIDTH * 0.05;
+const SLOT_GAP = 12;
+const THUMB_SIZE = (SCREEN_WIDTH * 0.9 - SLOT_GAP * 4) / 5;
+const SLOT_STRIDE = THUMB_SIZE + SLOT_GAP;
 const MAX_PHOTOS = 5;
 
 interface EventDetailViewProps {
@@ -25,9 +29,10 @@ interface EventDetailViewProps {
   onClose: () => void;
   onDelete: () => void;
   onUpdate: () => void;
+  animValue?: Animated.Value;
 }
 
-export default function EventDetailView({ event, onClose, onDelete, onUpdate }: EventDetailViewProps) {
+export default function EventDetailView({ event, onClose, onDelete, onUpdate, animValue }: EventDetailViewProps) {
   const { user } = useAuth();
   const [photos, setPhotos] = useState<string[]>(event.photos || []);
   const [title, setTitle] = useState(event.title);
@@ -38,7 +43,62 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate }: 
   const [editDate, setEditDate] = useState(new Date());
   const [cityQuery, setCityQuery] = useState('');
   const [showCityDropdown, setShowCityDropdown] = useState(false);
+  const [showEditMenu, setShowEditMenu] = useState(false);
+
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dropTarget, setDropTarget] = useState<number | null>(null);
+  const dragAnim = useRef(new Animated.ValueXY()).current;
+  const photosRef = useRef(photos);
+  photosRef.current = photos;
+  const dragIndexRef = useRef<number | null>(null);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, g) =>
+        dragIndexRef.current !== null && (Math.abs(g.dx) > 5 || Math.abs(g.dy) > 5),
+      onPanResponderGrant: () => {},
+      onPanResponderMove: (_, gesture) => {
+        dragAnim.setValue({ x: gesture.dx, y: gesture.dy });
+        const origin = dragIndexRef.current!;
+        const target = Math.round(origin + gesture.dx / SLOT_STRIDE);
+        const clamped = Math.max(0, Math.min(MAX_PHOTOS - 1, target));
+        setDropTarget(clamped !== origin ? clamped : null);
+      },
+      onPanResponderRelease: (_, gesture) => {
+        const origin = dragIndexRef.current!;
+        const target = Math.round(origin + gesture.dx / SLOT_STRIDE);
+        const clamped = Math.max(0, Math.min(MAX_PHOTOS - 1, target));
+
+        if (clamped !== origin) {
+          const currentPhotos = [...photosRef.current];
+          const [moved] = currentPhotos.splice(origin, 1);
+          currentPhotos.splice(clamped, 0, moved);
+          setPhotos(currentPhotos);
+          editEvent(event.id, { photos: currentPhotos }, user?.id).catch(console.error);
+          onUpdate();
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+
+        Animated.spring(dragAnim, {
+          toValue: { x: 0, y: 0 },
+          useNativeDriver: true,
+        }).start();
+        dragIndexRef.current = null;
+        setDragIndex(null);
+        setDropTarget(null);
+      },
+      onPanResponderTerminate: () => {
+        Animated.spring(dragAnim, {
+          toValue: { x: 0, y: 0 },
+          useNativeDriver: true,
+        }).start();
+        dragIndexRef.current = null;
+        setDragIndex(null);
+        setDropTarget(null);
+      },
+    })
+  ).current;
 
   const currentEvent: EventData = { ...event, photos, title, date, venue };
 
@@ -117,26 +177,25 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate }: 
   };
 
   const removePhoto = async (index: number) => {
-    const newPhotos = photos.filter((_, i) => i !== index);
-    setPhotos(newPhotos);
-    await updateEvent({ photos: newPhotos });
+    Alert.alert('Remove Photo', 'Remove this photo?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: async () => {
+          const newPhotos = photos.filter((_, i) => i !== index);
+          setPhotos(newPhotos);
+          await updateEvent({ photos: newPhotos });
+        },
+      },
+    ]);
   };
 
-  const handleThumbPress = (index: number) => {
-    if (dragIndex === null) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      setDragIndex(index);
-    } else if (dragIndex === index) {
-      setDragIndex(null);
-    } else {
-      const newPhotos = [...photos];
-      const [moved] = newPhotos.splice(dragIndex, 1);
-      newPhotos.splice(index, 0, moved);
-      setPhotos(newPhotos);
-      updateEvent({ photos: newPhotos });
-      setDragIndex(null);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }
+  const startDrag = (index: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    dragIndexRef.current = index;
+    setDragIndex(index);
+    dragAnim.setValue({ x: 0, y: 0 });
   };
 
   const confirmDelete = () => {
@@ -146,33 +205,24 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate }: 
     ]);
   };
 
-  const renderEditMenu = () => (
-    <View style={styles.editMenu}>
-      <TouchableOpacity style={styles.editMenuItem} onPress={() => openEditModal('title')}>
-        <Ionicons name="text-outline" size={18} color={COLORS.navy} />
-        <Text style={styles.editMenuText}>Edit Title</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.editMenuItem} onPress={() => openEditModal('date')}>
-        <Ionicons name="calendar-outline" size={18} color={COLORS.navy} />
-        <Text style={styles.editMenuText}>Edit Date</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.editMenuItem} onPress={() => openEditModal('location')}>
-        <Ionicons name="location-outline" size={18} color={COLORS.navy} />
-        <Text style={styles.editMenuText}>Edit Location</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={[styles.editMenuItem, styles.editMenuDeleteItem]} onPress={confirmDelete}>
-        <Ionicons name="trash-outline" size={18} color="#E53935" />
-        <Text style={[styles.editMenuText, { color: '#E53935' }]}>Delete Event</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
-  const [showEditMenu, setShowEditMenu] = useState(false);
+  const containerAnimStyle = animValue ? {
+    opacity: animValue,
+    transform: [{
+      translateY: animValue.interpolate({
+        inputRange: [0, 1],
+        outputRange: [40, 0],
+      }),
+    }],
+  } : {};
 
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, containerAnimStyle]}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          scrollEnabled={dragIndex === null}
+        >
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
@@ -187,7 +237,26 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate }: 
             </TouchableOpacity>
           </View>
 
-          {showEditMenu && renderEditMenu()}
+          {showEditMenu && (
+            <View style={styles.editMenu}>
+              <TouchableOpacity style={styles.editMenuItem} onPress={() => { setShowEditMenu(false); openEditModal('title'); }}>
+                <Ionicons name="text-outline" size={18} color={COLORS.navy} />
+                <Text style={styles.editMenuText}>Edit Title</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.editMenuItem} onPress={() => { setShowEditMenu(false); openEditModal('date'); }}>
+                <Ionicons name="calendar-outline" size={18} color={COLORS.navy} />
+                <Text style={styles.editMenuText}>Edit Date</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.editMenuItem} onPress={() => { setShowEditMenu(false); openEditModal('location'); }}>
+                <Ionicons name="location-outline" size={18} color={COLORS.navy} />
+                <Text style={styles.editMenuText}>Edit Location</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.editMenuItem, styles.editMenuDeleteItem]} onPress={confirmDelete}>
+                <Ionicons name="trash-outline" size={18} color="#E53935" />
+                <Text style={[styles.editMenuText, { color: '#E53935' }]}>Delete Event</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Card */}
           <View style={styles.cardContainer}>
@@ -195,39 +264,58 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate }: 
           </View>
 
           {/* Photo Shelf */}
-          <View style={styles.photoSection}>
+          <View style={styles.photoSection} {...panResponder.panHandlers}>
             <Text style={styles.photoTitle}>Your Pictures</Text>
             <View style={styles.photoShelf}>
               {Array.from({ length: MAX_PHOTOS }).map((_, index) => {
                 const photo = photos[index];
-                const isDragSource = dragIndex === index;
-                const isDragTarget = dragIndex !== null && dragIndex !== index;
+                const isDragging = dragIndex === index;
+                const isDropTarget = dropTarget === index && dragIndex !== index;
 
                 if (photo) {
                   return (
-                    <TouchableOpacity
-                      key={index}
-                      style={[
-                        styles.photoThumb,
-                        isDragSource && styles.photoThumbDragging,
-                        isDragTarget && styles.photoThumbDropTarget,
-                      ]}
-                      onPress={() => handleThumbPress(index)}
-                      onLongPress={() => {
-                        Alert.alert('Remove Photo', 'Remove this photo?', [
-                          { text: 'Cancel', style: 'cancel' },
-                          { text: 'Remove', style: 'destructive', onPress: () => removePhoto(index) },
-                        ]);
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <Image source={{ uri: photo }} style={styles.photoThumbImage} />
-                      {index === 0 && (
-                        <View style={styles.coverBadge}>
-                          <Text style={styles.coverBadgeText}>Cover</Text>
-                        </View>
+                    <View key={index} style={styles.thumbWrapper}>
+                      {isDragging ? (
+                        <Animated.View
+                          style={[
+                            styles.photoThumb,
+                            styles.photoThumbDragging,
+                            { transform: [...dragAnim.getTranslateTransform(), { scale: 1.08 }], zIndex: 50 },
+                          ]}
+                        >
+                          <Image source={{ uri: photo }} style={styles.photoThumbImage} />
+                          {index === 0 && (
+                            <View style={styles.coverBadge}>
+                              <Text style={styles.coverBadgeText}>Cover</Text>
+                            </View>
+                          )}
+                        </Animated.View>
+                      ) : (
+                        <TouchableOpacity
+                          style={[
+                            styles.photoThumb,
+                            isDropTarget && styles.photoThumbDropTarget,
+                          ]}
+                          onLongPress={() => startDrag(index)}
+                          delayLongPress={200}
+                          activeOpacity={0.9}
+                        >
+                          <Image source={{ uri: photo }} style={styles.photoThumbImage} />
+                          {index === 0 && (
+                            <View style={styles.coverBadge}>
+                              <Text style={styles.coverBadgeText}>Cover</Text>
+                            </View>
+                          )}
+                        </TouchableOpacity>
                       )}
-                    </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.deleteIcon}
+                        onPress={() => removePhoto(index)}
+                        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                      >
+                        <Ionicons name="close-circle" size={18} color="#E53935" />
+                      </TouchableOpacity>
+                    </View>
                   );
                 }
 
@@ -235,7 +323,11 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate }: 
                   return (
                     <TouchableOpacity
                       key={index}
-                      style={[styles.photoThumb, styles.addPhotoThumb]}
+                      style={[
+                        styles.photoThumb,
+                        styles.addPhotoThumb,
+                        isDropTarget && styles.photoThumbDropTarget,
+                      ]}
                       onPress={pickImages}
                     >
                       <Ionicons name="add" size={28} color={COLORS.gray} />
@@ -246,14 +338,15 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate }: 
                 return (
                   <View
                     key={index}
-                    style={[styles.photoThumb, styles.emptyPhotoThumb]}
+                    style={[
+                      styles.photoThumb,
+                      styles.emptyPhotoThumb,
+                      isDropTarget && styles.photoThumbDropTarget,
+                    ]}
                   />
                 );
               })}
             </View>
-            {dragIndex !== null && (
-              <Text style={styles.dragHint}>Tap another slot to move the photo</Text>
-            )}
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -363,7 +456,7 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate }: 
           </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
       </Modal>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -444,7 +537,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xl,
   },
   photoSection: {
-    paddingHorizontal: SCREEN_WIDTH * 0.05,
+    paddingHorizontal: SHELF_PADDING,
   },
   photoTitle: {
     fontFamily: FONTS.semiBold,
@@ -454,7 +547,10 @@ const styles = StyleSheet.create({
   },
   photoShelf: {
     flexDirection: 'row',
-    gap: 12,
+    gap: SLOT_GAP,
+  },
+  thumbWrapper: {
+    position: 'relative',
   },
   photoThumb: {
     width: THUMB_SIZE,
@@ -467,10 +563,11 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   photoThumbDragging: {
-    borderWidth: 2,
-    borderColor: COLORS.navy,
-    opacity: 0.7,
-    transform: [{ scale: 0.95 }],
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
   },
   photoThumbDropTarget: {
     borderWidth: 2,
@@ -491,6 +588,18 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: COLORS.white,
   },
+  deleteIcon: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    backgroundColor: COLORS.white,
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
   addPhotoThumb: {
     borderWidth: 2,
     borderColor: '#E5E5E5',
@@ -504,13 +613,6 @@ const styles = StyleSheet.create({
     borderColor: '#E5E5E5',
     borderStyle: 'dashed',
     backgroundColor: 'transparent',
-  },
-  dragHint: {
-    fontFamily: FONTS.regular,
-    fontSize: FONT_SIZES.xs,
-    color: COLORS.gray,
-    marginTop: SPACING.sm,
-    textAlign: 'center',
   },
   modalOverlay: {
     flex: 1,
