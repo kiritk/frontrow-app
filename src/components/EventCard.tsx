@@ -573,7 +573,7 @@ const styles = StyleSheet.create({
   stackedCardWrapper: {
     width: SCREEN_WIDTH * 0.9,
     height: STACKED_CARD_HEIGHT,
-    borderRadius: 14,
+    borderRadius: 20,
     backgroundColor: '#1a1a2e',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
@@ -583,7 +583,7 @@ const styles = StyleSheet.create({
   },
   stackedCard: {
     flex: 1,
-    borderRadius: 14,
+    borderRadius: 20,
     overflow: 'hidden',
   },
   stackedBgImage: {
