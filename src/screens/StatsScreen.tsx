@@ -148,10 +148,6 @@ export default function StatsScreen() {
             </View>
           </View>
 
-          <View style={styles.eventCountContainer}>
-            <Text style={styles.eventCountNumber}>{eventCount}</Text>
-            <Text style={styles.eventCountLabel}>Events Attended</Text>
-          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
