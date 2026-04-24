@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     color: COLORS.navy,
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xs,
+    paddingTop: SPACING.lg,
     paddingBottom: SPACING.sm,
   },
   // Year tabs
@@ -345,14 +345,12 @@ const styles = StyleSheet.create({
     borderRadius: 1,
   },
   yearTabDivider: {
-    height: 1,
-    backgroundColor: COLORS.creamDark,
     marginBottom: SPACING.md,
   },
   // Category pills
   categoryPillsScroll: {
     flexGrow: 0,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.lg,
   },
   categoryPillsContent: {
     paddingHorizontal: SPACING.lg,
