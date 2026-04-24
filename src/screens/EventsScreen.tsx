@@ -4,7 +4,7 @@ import {
   RefreshControl, ScrollView, Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
@@ -34,7 +34,7 @@ const CATEGORIES = [
   { value: 'all',      label: 'All',       icon: null },
   { value: 'sports',   label: 'Sports',    icon: 'trophy-outline' as const },
   { value: 'concert',  label: 'Concerts',  icon: 'musical-notes-outline' as const },
-  { value: 'theater',  label: 'Theater',   icon: 'film-outline' as const },
+  { value: 'theater',  label: 'Theater',   icon: 'drama-masks' as const },
   { value: 'comedy',   label: 'Comedy',    icon: 'mic-outline' as const },
   { value: 'landmark', label: 'Landmarks', icon: 'location-outline' as const },
   { value: 'other',    label: 'Other',     icon: 'ellipsis-horizontal-outline' as const },
@@ -190,12 +190,21 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
                 activeOpacity={0.7}
               >
                 {cat.icon && (
-                  <Ionicons
-                    name={cat.icon}
-                    size={14}
-                    color={active ? COLORS.navy : COLORS.gray}
-                    style={styles.categoryPillIcon}
-                  />
+                  cat.value === 'theater' ? (
+                    <MaterialCommunityIcons
+                      name="drama-masks"
+                      size={14}
+                      color={active ? COLORS.navy : COLORS.gray}
+                      style={styles.categoryPillIcon}
+                    />
+                  ) : (
+                    <Ionicons
+                      name={cat.icon}
+                      size={14}
+                      color={active ? COLORS.navy : COLORS.gray}
+                      style={styles.categoryPillIcon}
+                    />
+                  )
                 )}
                 <Text style={[styles.categoryPillText, active && styles.categoryPillTextActive]}>
                   {cat.label}

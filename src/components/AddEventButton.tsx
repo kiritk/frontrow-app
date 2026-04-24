@@ -16,14 +16,14 @@ import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colo
 import { NFL_TEAMS, NFLTeam } from '../data/nflTeams';
 import { MLB_TEAMS, MLBTeam } from '../data/mlbTeams';
 import { searchCities, City } from '../lib/geonames';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const EVENT_TYPES = [
   { value: 'sports', label: 'Sports', icon: 'trophy-outline' as const },
   { value: 'concert', label: 'Concerts', icon: 'musical-notes-outline' as const },
-  { value: 'theater', label: 'Theater', icon: 'film-outline' as const },
+  { value: 'theater', label: 'Theater', icon: 'drama-masks' as const },
   { value: 'comedy', label: 'Comedy', icon: 'mic-outline' as const },
   { value: 'landmark', label: 'Landmarks', icon: 'location-outline' as const },
   { value: 'other', label: 'Other', icon: 'ellipsis-horizontal-outline' as const },
@@ -398,7 +398,11 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
                           style={[styles.pill, active && styles.pillActive]}
                           onPress={() => handleSelectType(type.value)}
                         >
-                          <Ionicons name={type.icon} size={16} color={active ? COLORS.white : COLORS.navy} />
+                          {type.value === 'theater' ? (
+                            <MaterialCommunityIcons name="drama-masks" size={16} color={active ? COLORS.white : COLORS.navy} />
+                          ) : (
+                            <Ionicons name={type.icon} size={16} color={active ? COLORS.white : COLORS.navy} />
+                          )}
                           <Text style={[styles.pillLabel, active && styles.pillLabelActive]}>{type.label}</Text>
                         </TouchableOpacity>
                       );
