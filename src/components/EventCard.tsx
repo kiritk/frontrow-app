@@ -46,7 +46,7 @@ const CONCERT_COLORS = {
 };
 const THEATER_COLORS = {
   gradientStart: '#1a0a0a', gradientMid: '#3d1a1a', gradientEnd: '#6b1a2e',
-  accent: '#FFD700', accentLight: '#FFECB3',
+  accent: '#003CFF', accentLight: '#FFECB3',
 };
 const COMEDY_COLORS = {
   gradientStart: '#1a0505', gradientMid: '#3d0a0a', gradientEnd: '#6b0101',
@@ -194,12 +194,12 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
       case 'landmark': return { gradientColors: [LANDMARK_COLORS.gradientStart, LANDMARK_COLORS.gradientMid, LANDMARK_COLORS.gradientEnd] as [string, string, string], accentColor: LANDMARK_COLORS.accent };
       case 'other': return { gradientColors: [OTHER_COLORS.gradientStart, OTHER_COLORS.gradientMid, OTHER_COLORS.gradientEnd] as [string, string, string], accentColor: OTHER_COLORS.accent };
       case 'sports':
-        if (event.sport === 'nfl') return { gradientColors: ['#2a1a3a', '#4a2a5a', '#6a3a7a'] as [string, string, string], accentColor: '#c9a0dc' };
-        if (event.sport === 'mlb') return { gradientColors: ['#1a3a1a', '#2a5a2a', '#3a7a3a'] as [string, string, string], accentColor: '#90EE90' };
-        if (event.sport === 'nba') return { gradientColors: ['#7a3000', '#c04e1a', '#f0622d'] as [string, string, string], accentColor: '#ffaa80' };
+        if (event.sport === 'nfl') return { gradientColors: ['#2a1a3a', '#4a2a5a', '#6a3a7a'] as [string, string, string], accentColor: '#BA4813' };
+        if (event.sport === 'mlb') return { gradientColors: ['#1a3a1a', '#2a5a2a', '#3a7a3a'] as [string, string, string], accentColor: '#D90000' };
+        if (event.sport === 'nba') return { gradientColors: ['#7a3000', '#c04e1a', '#f0622d'] as [string, string, string], accentColor: '#FF6B24' };
         if (event.sport === 'soccer') return { gradientColors: ['#003d5c', '#005a8a', '#0077B6'] as [string, string, string], accentColor: '#66b8de' };
         if (event.sport === 'tennis') return { gradientColors: ['#3d5c00', '#4e7a00', '#6b9a00'] as [string, string, string], accentColor: '#a0c300' };
-        return { gradientColors: ['#5c0008', '#900010', '#c30010'] as [string, string, string], accentColor: '#ff6670' };
+        return { gradientColors: ['#5c0008', '#900010', '#c30010'] as [string, string, string], accentColor: '#003FFF' };
       default: return { gradientColors: ['#2c3e50', '#3a4f63', '#4a6278'] as [string, string, string], accentColor: '#85929e' };
     }
   };
@@ -510,7 +510,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
         )}
 
         {/* Peek header — semi-transparent type color */}
-        <View style={[styles.peekHeader, { backgroundColor: cardStyle.gradientColors[0] + 'E6' }]}>
+        <View style={[styles.peekHeader, { backgroundColor: cardStyle.accentColor + 'E6' }]}>
           {isTeamSport && homeTeam && awayTeam ? (
             <View style={styles.peekTeamRow}>
               <Image source={homeTeam.logo} style={styles.peekTeamLogo} />
