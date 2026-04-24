@@ -9,7 +9,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { fetchEvents as fetchEventsFromService, removeEvent } from '../lib/eventService';
-import EventCard, { STACKED_CARD_HEIGHT, PEEK_HEIGHT } from '../components/EventCard';
+import EventCard, { STACKED_CARD_HEIGHT, PEEK_HEIGHT, EventData } from '../components/EventCard';
+import EventDetailView from '../components/EventDetailView';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
 const PROFILE_STORAGE_KEY = 'frontrow_user_profile';
@@ -52,6 +53,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const [selectedYear, setSelectedYear] = useState<string>('All');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   const loadProfileImage = useCallback(async () => {
     try {
@@ -138,10 +140,10 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
           alignItems: 'center',
         }}
       >
-        <EventCard event={item} onDelete={() => handleDeleteEvent(item.id)} onUpdate={fetchEvents} />
+        <EventCard event={item} onPress={() => setSelectedEvent(item)} />
       </View>
     ),
-    [fetchEvents, events],
+    [events],
   );
 
   const ListHeader = (
@@ -216,6 +218,17 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
       )}
     </>
   );
+
+  if (selectedEvent) {
+    return (
+      <EventDetailView
+        event={selectedEvent}
+        onClose={() => { setSelectedEvent(null); fetchEvents(); }}
+        onDelete={() => handleDeleteEvent(selectedEvent.id)}
+        onUpdate={fetchEvents}
+      />
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
