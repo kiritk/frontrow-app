@@ -568,7 +568,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
 
 const styles = StyleSheet.create({
   stackedCardWrapper: {
-    width: SCREEN_WIDTH * 0.85,
+    width: SCREEN_WIDTH * 0.9,
     height: STACKED_CARD_HEIGHT,
     borderRadius: 14,
     backgroundColor: '#1a1a2e',

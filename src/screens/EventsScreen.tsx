@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Image, FlatList,
-  RefreshControl, ScrollView,
+  RefreshControl, ScrollView, Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -40,6 +40,8 @@ const CATEGORIES = [
   { value: 'other',    label: 'Other',     icon: 'ellipsis-horizontal-outline' as const },
 ];
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const SIDE_PADDING = SCREEN_WIDTH * 0.05;
 const LIST_BOTTOM_PADDING = 110;
 
 export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
@@ -261,7 +263,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SIDE_PADDING,
     paddingVertical: SPACING.sm,
   },
   profileButton: {
@@ -310,7 +312,7 @@ const styles = StyleSheet.create({
     fontFamily: 'GeistMono_700Bold',
     fontSize: 28,
     color: COLORS.navy,
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SIDE_PADDING,
     paddingTop: SPACING.lg,
     paddingBottom: SPACING.sm,
   },
@@ -319,7 +321,7 @@ const styles = StyleSheet.create({
     flexGrow: 0,
   },
   yearTabsContent: {
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SIDE_PADDING,
     gap: SPACING.lg,
   },
   yearTab: {
@@ -353,7 +355,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   categoryPillsContent: {
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SIDE_PADDING,
     gap: SPACING.sm,
   },
   categoryPill: {
@@ -394,7 +396,7 @@ const styles = StyleSheet.create({
   empty: {
     alignItems: 'center',
     paddingTop: 40,
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SIDE_PADDING,
   },
   emptyEmoji: {
     fontSize: 56,
