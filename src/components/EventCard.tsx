@@ -509,8 +509,11 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
           />
         )}
 
-        {/* Peek header — semi-transparent type color */}
-        <View style={[styles.peekHeader, { backgroundColor: cardStyle.accentColor + 'E6' }]}>
+        {/* Accent band — top 75px at 90% opacity */}
+        <View style={[styles.accentBand, { backgroundColor: cardStyle.accentColor + 'E6' }]} />
+
+        {/* Peek header — sits on top of accent band */}
+        <View style={styles.peekHeader}>
           {isTeamSport && homeTeam && awayTeam ? (
             <View style={styles.peekTeamRow}>
               <Image source={homeTeam.logo} style={styles.peekTeamLogo} />
@@ -585,6 +588,13 @@ const styles = StyleSheet.create({
   },
   stackedBgImage: {
     resizeMode: 'cover',
+  },
+  accentBand: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 75,
   },
   peekHeader: {
     height: PEEK_HEIGHT,
