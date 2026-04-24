@@ -510,11 +510,16 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
         )}
 
         {/* Accent gradient — 100% → 70% → 0% over 60px */}
-        <LinearGradient
-          colors={[cardStyle.accentColor + 'FF', cardStyle.accentColor + 'B3', cardStyle.accentColor + '00']}
-          locations={[0, 0.667, 1]}
-          style={styles.accentBand}
-        />
+        {(() => {
+          const bandColor = (isTeamSport && homeTeam) ? homeTeam.primaryColor : cardStyle.accentColor;
+          return (
+            <LinearGradient
+              colors={[bandColor + 'FF', bandColor + 'B3', bandColor + '00']}
+              locations={[0, 0.667, 1]}
+              style={styles.accentBand}
+            />
+          );
+        })()}
 
         {/* Peek header — sits on top of accent band */}
         <View style={styles.peekHeader}>
