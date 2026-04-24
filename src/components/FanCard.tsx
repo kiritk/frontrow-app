@@ -5,7 +5,7 @@ import { FONTS } from '../theme/colors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH - 32;
-const CARD_ASPECT = 1.3;
+const CARD_ASPECT = 0.975;
 
 interface FanCardProps {
   firstName: string;
@@ -66,10 +66,7 @@ export default function FanCard({
           <View style={styles.statusBadge}>
             <Text style={styles.statusText}>{fanLevel.toUpperCase()}</Text>
           </View>
-          <View style={styles.eventNumberContainer}>
-            <Text style={styles.eventNumberHash}>#{eventCount}</Text>
-            <Text style={styles.eventNumberLabel}>events</Text>
-          </View>
+          <Text style={styles.eventNumberHash}>#{eventCount}</Text>
         </View>
 
         {/* Left vertical text */}
@@ -148,7 +145,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    padding: 20,
+    padding: 15,
     justifyContent: 'space-between',
     borderWidth: 1.5,
     borderColor: 'rgba(90,120,180,0.25)',
@@ -196,21 +193,15 @@ const styles = StyleSheet.create({
   },
   eventNumberHash: {
     fontFamily: FONTS.bold,
-    fontSize: 36,
+    fontSize: 27,
     color: '#7b9ed6',
-    lineHeight: 38,
-  },
-  eventNumberLabel: {
-    fontFamily: FONTS.medium,
-    fontSize: 13,
-    color: 'rgba(123,158,214,0.6)',
-    marginTop: -2,
+    lineHeight: 30,
   },
   verticalTextContainer: {
     position: 'absolute',
-    left: 20,
-    top: 80,
-    bottom: 100,
+    left: 15,
+    top: 60,
+    bottom: 75,
     alignItems: 'center',
     width: 16,
   },
@@ -246,16 +237,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   avatarImage: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
+    width: 82,
+    height: 82,
+    borderRadius: 41,
     borderWidth: 2,
     borderColor: 'rgba(90,120,180,0.5)',
   },
   avatarPlaceholder: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
+    width: 82,
+    height: 82,
+    borderRadius: 41,
     backgroundColor: 'rgba(30,58,95,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -264,7 +255,7 @@ const styles = StyleSheet.create({
   },
   avatarInitials: {
     fontFamily: FONTS.bold,
-    fontSize: 36,
+    fontSize: 27,
     color: '#7b9ed6',
   },
   dropPhotoText: {
@@ -275,20 +266,20 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
   nameContainer: {
-    marginBottom: 12,
+    marginBottom: 9,
   },
   firstName: {
     fontFamily: FONTS.bold,
-    fontSize: 38,
+    fontSize: 28,
     color: '#FFFFFF',
-    lineHeight: 42,
+    lineHeight: 31,
     letterSpacing: 1,
   },
   lastName: {
     fontFamily: FONTS.bold,
-    fontSize: 38,
+    fontSize: 28,
     color: '#7b9ed6',
-    lineHeight: 42,
+    lineHeight: 31,
     letterSpacing: 1,
   },
   statsRow: {
@@ -305,12 +296,12 @@ const styles = StyleSheet.create({
   },
   statDivider: {
     width: 1,
-    height: 30,
+    height: 22,
     backgroundColor: 'rgba(90,120,180,0.2)',
   },
   statNumber: {
     fontFamily: FONTS.bold,
-    fontSize: 22,
+    fontSize: 16,
     color: '#FFFFFF',
   },
   statLabel: {

@@ -512,7 +512,7 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
         {/* Accent gradient — 100% → 70% → 0% over 60px */}
         <LinearGradient
           colors={[cardStyle.accentColor + 'FF', cardStyle.accentColor + 'B3', cardStyle.accentColor + '00']}
-          locations={[0, 0.5, 1]}
+          locations={[0, 0.667, 1]}
           style={styles.accentBand}
         />
 
@@ -606,8 +606,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.15)',
+
   },
   peekTitle: {
     fontFamily: FONTS.semiBold,
