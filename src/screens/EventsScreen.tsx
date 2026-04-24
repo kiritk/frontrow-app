@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Image, FlatList,
-  RefreshControl, ScrollView, Dimensions,
+  RefreshControl, ScrollView, Dimensions, Animated, Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -54,6 +54,9 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [detailVisible, setDetailVisible] = useState(false);
+  const listAnim = useRef(new Animated.Value(1)).current;
+  const detailAnim = useRef(new Animated.Value(0)).current;
 
   const loadProfileImage = useCallback(async () => {
     try {
@@ -131,6 +134,47 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
     }
   };
 
+  const openDetail = useCallback((event: Event) => {
+    setSelectedEvent(event);
+    setDetailVisible(true);
+    detailAnim.setValue(0);
+    Animated.parallel([
+      Animated.timing(listAnim, {
+        toValue: 0,
+        duration: 300,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(detailAnim, {
+        toValue: 1,
+        duration: 350,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [listAnim, detailAnim]);
+
+  const closeDetail = useCallback(() => {
+    Animated.parallel([
+      Animated.timing(detailAnim, {
+        toValue: 0,
+        duration: 250,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(listAnim, {
+        toValue: 1,
+        duration: 300,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setDetailVisible(false);
+      setSelectedEvent(null);
+      fetchEvents();
+    });
+  }, [detailAnim, listAnim, fetchEvents]);
+
   const renderEventCard = useCallback(
     ({ item, index }: { item: Event; index: number }) => (
       <View
@@ -140,10 +184,10 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
           alignItems: 'center',
         }}
       >
-        <EventCard event={item} onPress={() => setSelectedEvent(item)} />
+        <EventCard event={item} onPress={() => openDetail(item)} />
       </View>
     ),
-    [events],
+    [openDetail],
   );
 
   const ListHeader = (
@@ -219,19 +263,22 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
     </>
   );
 
-  if (selectedEvent) {
-    return (
-      <EventDetailView
-        event={selectedEvent}
-        onClose={() => { setSelectedEvent(null); fetchEvents(); }}
-        onDelete={() => handleDeleteEvent(selectedEvent.id)}
-        onUpdate={fetchEvents}
-      />
-    );
-  }
-
   return (
+    <View style={{ flex: 1 }}>
     <SafeAreaView style={styles.container} edges={['top']}>
+      <Animated.View
+        style={{
+          flex: 1,
+          opacity: listAnim,
+          transform: [{
+            translateY: listAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [20, 0],
+            }),
+          }],
+        }}
+        pointerEvents={detailVisible ? 'none' : 'auto'}
+      >
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -272,7 +319,18 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
           </View>
         }
       />
+      </Animated.View>
     </SafeAreaView>
+    {detailVisible && selectedEvent && (
+      <EventDetailView
+        event={selectedEvent}
+        onClose={closeDetail}
+        onDelete={() => handleDeleteEvent(selectedEvent.id)}
+        onUpdate={fetchEvents}
+        animValue={detailAnim}
+      />
+    )}
+    </View>
   );
 }
 

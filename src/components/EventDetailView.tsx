@@ -29,9 +29,10 @@ interface EventDetailViewProps {
   onClose: () => void;
   onDelete: () => void;
   onUpdate: () => void;
+  animValue?: Animated.Value;
 }
 
-export default function EventDetailView({ event, onClose, onDelete, onUpdate }: EventDetailViewProps) {
+export default function EventDetailView({ event, onClose, onDelete, onUpdate, animValue }: EventDetailViewProps) {
   const { user } = useAuth();
   const [photos, setPhotos] = useState<string[]>(event.photos || []);
   const [title, setTitle] = useState(event.title);
@@ -204,8 +205,18 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate }: 
     ]);
   };
 
+  const containerAnimStyle = animValue ? {
+    opacity: animValue,
+    transform: [{
+      translateY: animValue.interpolate({
+        inputRange: [0, 1],
+        outputRange: [40, 0],
+      }),
+    }],
+  } : {};
+
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, containerAnimStyle]}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -445,7 +456,7 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate }: 
           </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
       </Modal>
-    </View>
+    </Animated.View>
   );
 }
 
