@@ -509,8 +509,8 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
           />
         )}
 
-        {/* Peek header — transparent so background image shows through */}
-        <View style={styles.peekHeader}>
+        {/* Peek header — semi-transparent type color */}
+        <View style={[styles.peekHeader, { backgroundColor: cardStyle.gradientColors[0] + 'E6' }]}>
           {isTeamSport && homeTeam && awayTeam ? (
             <View style={styles.peekTeamRow}>
               <Image source={homeTeam.logo} style={styles.peekTeamLogo} />
