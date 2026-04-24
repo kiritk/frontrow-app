@@ -509,8 +509,12 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
           />
         )}
 
-        {/* Accent band — top 75px at 90% opacity */}
-        <View style={[styles.accentBand, { backgroundColor: cardStyle.accentColor + 'E6' }]} />
+        {/* Accent gradient — 100% → 70% → 0% over 60px */}
+        <LinearGradient
+          colors={[cardStyle.accentColor + 'FF', cardStyle.accentColor + 'B3', cardStyle.accentColor + '00']}
+          locations={[0, 0.5, 1]}
+          style={styles.accentBand}
+        />
 
         {/* Peek header — sits on top of accent band */}
         <View style={styles.peekHeader}>
@@ -573,7 +577,7 @@ const styles = StyleSheet.create({
   stackedCardWrapper: {
     width: SCREEN_WIDTH * 0.9,
     height: STACKED_CARD_HEIGHT,
-    borderRadius: 14,
+    borderRadius: 20,
     backgroundColor: '#1a1a2e',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
@@ -583,7 +587,7 @@ const styles = StyleSheet.create({
   },
   stackedCard: {
     flex: 1,
-    borderRadius: 14,
+    borderRadius: 20,
     overflow: 'hidden',
   },
   stackedBgImage: {
@@ -594,7 +598,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 75,
+    height: 60,
   },
   peekHeader: {
     height: PEEK_HEIGHT,
