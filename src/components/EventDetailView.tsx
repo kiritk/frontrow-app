@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Alert, Image,
   Dimensions, ScrollView, TextInput, Modal, Platform,
-  KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Pressable,
+  KeyboardAvoidingView, Keyboard, Pressable,
   Animated, PanResponder,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -38,12 +38,12 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
   const [title, setTitle] = useState(event.title);
   const [date, setDate] = useState(event.date);
   const [venue, setVenue] = useState(event.venue);
-  const [showEditModal, setShowEditModal] = useState<'title' | 'date' | 'location' | null>(null);
-  const [editValue, setEditValue] = useState('');
-  const [editDate, setEditDate] = useState(new Date());
-  const [cityQuery, setCityQuery] = useState('');
-  const [showCityDropdown, setShowCityDropdown] = useState(false);
-  const [showEditMenu, setShowEditMenu] = useState(false);
+  const [showEditSheet, setShowEditSheet] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editCityQuery, setEditCityQuery] = useState('');
+  const [editShowCityDropdown, setEditShowCityDropdown] = useState(false);
+  const [editDateObj, setEditDateObj] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropTarget, setDropTarget] = useState<number | null>(null);
@@ -111,27 +111,48 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
     }
   };
 
-  const openEditModal = (field: 'title' | 'date' | 'location') => {
-    if (field === 'title') setEditValue(title);
-    else if (field === 'date') setEditDate(new Date(date));
-    else { setCityQuery(venue); setShowCityDropdown(false); }
-    setShowEditModal(field);
+  const isTeamSport = (event.sport === 'nfl' || event.sport === 'mlb') && event.home_team && event.away_team;
+
+  const openEditSheet = () => {
+    setEditTitle(title);
+    setEditCityQuery(venue);
+    const parts = date.slice(0, 10).split('-');
+    setEditDateObj(new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])));
+    setEditShowCityDropdown(false);
+    setShowDatePicker(false);
+    setShowEditSheet(true);
   };
 
-  const closeEditModal = () => setShowEditModal(null);
-
-  const saveTitle = async () => {
-    if (!editValue.trim()) return;
-    setTitle(editValue.trim());
-    await updateEvent({ title: editValue.trim() });
-    closeEditModal();
+  const closeEditSheet = () => {
+    Keyboard.dismiss();
+    setShowEditSheet(false);
+    setShowDatePicker(false);
   };
 
-  const saveDate = async (selectedDate: Date) => {
-    const isoDate = selectedDate.toISOString();
-    setEditDate(selectedDate);
-    setDate(isoDate);
-    await updateEvent({ date: isoDate });
+  const formatDisplayDate = (d: Date) =>
+    d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  const formatDateForDB = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  const hasChanges = (() => {
+    if (!isTeamSport && editTitle !== title) return true;
+    if (editCityQuery !== venue) return true;
+    if (formatDateForDB(editDateObj) !== date.slice(0, 10)) return true;
+    return false;
+  })();
+
+  const saveEdits = async () => {
+    const updates: Record<string, any> = {};
+    if (!isTeamSport && editTitle !== title) { updates.title = editTitle; setTitle(editTitle); }
+    if (editCityQuery !== venue) { updates.venue = editCityQuery; setVenue(editCityQuery); }
+    const newDateStr = formatDateForDB(editDateObj);
+    if (newDateStr !== date.slice(0, 10)) { updates.date = newDateStr; setDate(newDateStr); }
+    if (Object.keys(updates).length > 0) {
+      await updateEvent(updates);
+    }
+    setShowEditSheet(false);
+    setShowDatePicker(false);
   };
 
   const getFilteredCities = (query: string) => {
@@ -143,13 +164,10 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
     ).slice(0, 5);
   };
 
-  const selectCity = async (city: USCity) => {
-    setVenue(city.displayName);
-    setCityQuery(city.displayName);
-    setShowCityDropdown(false);
-    await updateEvent({ venue: city.displayName });
+  const selectEditCity = (city: USCity) => {
+    setEditCityQuery(city.displayName);
+    setEditShowCityDropdown(false);
     Keyboard.dismiss();
-    closeEditModal();
   };
 
   const pickImages = async () => {
@@ -230,33 +248,12 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.editButton}
-              onPress={() => setShowEditMenu(!showEditMenu)}
+              onPress={openEditSheet}
             >
               <Text style={styles.editButtonText}>Edit</Text>
               <Ionicons name="pencil-outline" size={16} color={COLORS.navy} />
             </TouchableOpacity>
           </View>
-
-          {showEditMenu && (
-            <View style={styles.editMenu}>
-              <TouchableOpacity style={styles.editMenuItem} onPress={() => { setShowEditMenu(false); openEditModal('title'); }}>
-                <Ionicons name="text-outline" size={18} color={COLORS.navy} />
-                <Text style={styles.editMenuText}>Edit Title</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.editMenuItem} onPress={() => { setShowEditMenu(false); openEditModal('date'); }}>
-                <Ionicons name="calendar-outline" size={18} color={COLORS.navy} />
-                <Text style={styles.editMenuText}>Edit Date</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.editMenuItem} onPress={() => { setShowEditMenu(false); openEditModal('location'); }}>
-                <Ionicons name="location-outline" size={18} color={COLORS.navy} />
-                <Text style={styles.editMenuText}>Edit Location</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.editMenuItem, styles.editMenuDeleteItem]} onPress={confirmDelete}>
-                <Ionicons name="trash-outline" size={18} color="#E53935" />
-                <Text style={[styles.editMenuText, { color: '#E53935' }]}>Delete Event</Text>
-              </TouchableOpacity>
-            </View>
-          )}
 
           {/* Card */}
           <View style={styles.cardContainer}>
@@ -351,109 +348,105 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
         </ScrollView>
       </SafeAreaView>
 
-      {/* Edit Title Modal */}
-      <Modal visible={showEditModal === 'title'} transparent animationType="fade" onRequestClose={closeEditModal}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-          <TouchableWithoutFeedback onPress={closeEditModal}>
-            <View style={styles.modalOverlay}>
-              <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-                <View style={styles.modalContent}>
-                  <Text style={styles.modalTitle}>Edit Title</Text>
+      {/* Edit Sheet Modal */}
+      <Modal visible={showEditSheet} animationType="slide" presentationStyle="pageSheet" onRequestClose={closeEditSheet}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <View style={styles.editSheetRoot}>
+            <View style={styles.editSheetHeader}>
+              <TouchableOpacity style={styles.editSheetCloseBtn} onPress={closeEditSheet}>
+                <Ionicons name="close" size={20} color={COLORS.navy} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              style={styles.editSheetBody}
+              contentContainerStyle={styles.editSheetBodyContent}
+              keyboardShouldPersistTaps="handled"
+            >
+              {!isTeamSport && (
+                <View style={styles.editFieldRow}>
+                  <Ionicons name="star-outline" size={20} color={COLORS.navy} style={styles.editFieldIcon} />
                   <TextInput
-                    style={[styles.modalInput, { marginBottom: SPACING.lg }]}
-                    value={editValue}
-                    onChangeText={setEditValue}
-                    autoFocus
-                    placeholder="Enter title"
+                    style={styles.editFieldInput}
+                    value={editTitle}
+                    onChangeText={setEditTitle}
+                    placeholder="Event title"
+                    placeholderTextColor={COLORS.gray}
+                  />
+                  <Ionicons name="pencil-outline" size={18} color={COLORS.gray} />
+                </View>
+              )}
+
+              <View style={[styles.editFieldRow, { zIndex: 10 }]}>
+                <Ionicons name="location-outline" size={20} color={COLORS.navy} style={styles.editFieldIcon} />
+                <View style={{ flex: 1 }}>
+                  <TextInput
+                    style={styles.editFieldInput}
+                    value={editCityQuery}
+                    onChangeText={(t) => {
+                      setEditCityQuery(t);
+                      setEditShowCityDropdown(true);
+                    }}
+                    onFocus={() => setEditShowCityDropdown(true)}
+                    placeholder="Location"
                     placeholderTextColor={COLORS.gray}
                     returnKeyType="done"
-                    onSubmitEditing={saveTitle}
+                    onSubmitEditing={() => {
+                      const filtered = getFilteredCities(editCityQuery);
+                      if (filtered.length > 0) selectEditCity(filtered[0]);
+                      else { setEditShowCityDropdown(false); Keyboard.dismiss(); }
+                    }}
                   />
-                  <View style={styles.modalButtons}>
-                    <TouchableOpacity style={styles.cancelButton} onPress={closeEditModal}>
-                      <Text style={styles.cancelText}>Cancel</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.saveButton} onPress={saveTitle}>
-                      <Text style={styles.saveText}>Save</Text>
-                    </TouchableOpacity>
-                  </View>
+                  {editShowCityDropdown && getFilteredCities(editCityQuery).length > 0 && (
+                    <View style={styles.editDropdown}>
+                      <ScrollView keyboardShouldPersistTaps="always" nestedScrollEnabled style={{ maxHeight: 200 }}>
+                        {getFilteredCities(editCityQuery).map((city, index) => (
+                          <TouchableOpacity
+                            key={`${city.city}-${city.stateCode}`}
+                            style={[styles.editDropdownItem, index === 0 && { borderTopWidth: 0 }]}
+                            onPress={() => selectEditCity(city)}
+                          >
+                            <Text style={styles.editDropdownText}>{city.displayName}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    </View>
+                  )}
                 </View>
-              </TouchableWithoutFeedback>
-            </View>
-          </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
-      </Modal>
-
-      {/* Edit Date Modal */}
-      <Modal visible={showEditModal === 'date'} transparent animationType="fade" onRequestClose={closeEditModal}>
-        <TouchableWithoutFeedback onPress={closeEditModal}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>Edit Date</Text>
-                <CalendarPicker
-                  selectedDate={editDate}
-                  onDateChange={(d) => saveDate(d)}
-                  maximumDate={new Date(2030, 11, 31)}
-                  minimumDate={new Date(1950, 0, 1)}
-                />
-                <Pressable style={styles.saveButton} onPress={closeEditModal}>
-                  <Text style={styles.saveText}>Done</Text>
-                </Pressable>
+                <Ionicons name="pencil-outline" size={18} color={COLORS.gray} />
               </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
 
-      {/* Edit Location Modal */}
-      <Modal visible={showEditModal === 'location'} transparent animationType="fade" onRequestClose={closeEditModal}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-          <TouchableWithoutFeedback onPress={closeEditModal}>
-            <View style={styles.modalOverlay}>
-              <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-                <View style={styles.modalContent}>
-                  <Text style={styles.modalTitle}>Edit Location</Text>
-                  <View style={styles.locationInputWrapper}>
-                    <TextInput
-                      style={styles.modalInput}
-                      value={cityQuery}
-                      onChangeText={(t) => { setCityQuery(t); setShowCityDropdown(true); }}
-                      autoFocus
-                      placeholder="Search cities..."
-                      placeholderTextColor={COLORS.gray}
-                      onFocus={() => setShowCityDropdown(true)}
-                      returnKeyType="done"
-                      onSubmitEditing={() => {
-                        const filtered = getFilteredCities(cityQuery);
-                        if (filtered.length > 0) selectCity(filtered[0]);
-                      }}
-                    />
-                    {showCityDropdown && getFilteredCities(cityQuery).length > 0 && (
-                      <View style={styles.cityDropdown}>
-                        <ScrollView keyboardShouldPersistTaps="always" nestedScrollEnabled style={{ maxHeight: 200 }}>
-                          {getFilteredCities(cityQuery).map((city, index) => (
-                            <TouchableOpacity
-                              key={`${city.city}-${city.stateCode}`}
-                              style={[styles.cityDropdownItem, index === 0 && { borderTopWidth: 0 }]}
-                              onPress={() => selectCity(city)}
-                            >
-                              <Text style={styles.cityDropdownText}>{city.displayName}</Text>
-                            </TouchableOpacity>
-                          ))}
-                        </ScrollView>
-                      </View>
-                    )}
-                  </View>
-                  <View style={styles.modalButtons}>
-                    <TouchableOpacity style={styles.cancelButton} onPress={closeEditModal}>
-                      <Text style={styles.cancelText}>Cancel</Text>
-                    </TouchableOpacity>
-                  </View>
+              <Pressable style={styles.editFieldRow} onPress={() => setShowDatePicker(!showDatePicker)}>
+                <Ionicons name="calendar-outline" size={20} color={COLORS.navy} style={styles.editFieldIcon} />
+                <Text style={styles.editFieldText}>{formatDisplayDate(editDateObj)}</Text>
+                <Ionicons name="pencil-outline" size={18} color={COLORS.gray} />
+              </Pressable>
+
+              {showDatePicker && (
+                <View style={styles.editCalendarContainer}>
+                  <CalendarPicker
+                    selectedDate={editDateObj}
+                    onDateChange={(d) => setEditDateObj(d)}
+                    maximumDate={new Date(2030, 11, 31)}
+                    minimumDate={new Date(1950, 0, 1)}
+                  />
                 </View>
-              </TouchableWithoutFeedback>
+              )}
+            </ScrollView>
+
+            <View style={styles.editSheetBottomBar}>
+              <TouchableOpacity
+                style={[styles.editSheetSaveBtn, !hasChanges && styles.editSheetSaveBtnDisabled]}
+                onPress={saveEdits}
+                disabled={!hasChanges}
+              >
+                <Text style={styles.editSheetSaveBtnText}>Edit Event</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.editSheetDeleteBtn} onPress={() => { closeEditSheet(); setTimeout(confirmDelete, 300); }}>
+                <Text style={styles.editSheetDeleteBtnText}>Delete Event</Text>
+              </TouchableOpacity>
             </View>
-          </TouchableWithoutFeedback>
+          </View>
         </KeyboardAvoidingView>
       </Modal>
     </Animated.View>
@@ -503,32 +496,6 @@ const styles = StyleSheet.create({
   editButtonText: {
     fontFamily: FONTS.medium,
     fontSize: FONT_SIZES.sm,
-    color: COLORS.navy,
-  },
-  editMenu: {
-    marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.md,
-    backgroundColor: COLORS.white,
-    borderRadius: BORDER_RADIUS.lg,
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
-    overflow: 'hidden',
-  },
-  editMenuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: SPACING.lg,
-    gap: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.cream,
-  },
-  editMenuDeleteItem: {
-    borderBottomWidth: 0,
-  },
-  editMenuText: {
-    fontFamily: FONTS.medium,
-    fontSize: FONT_SIZES.md,
     color: COLORS.navy,
   },
   cardContainer: {
@@ -614,85 +581,125 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     backgroundColor: 'transparent',
   },
-  modalOverlay: {
+  editSheetRoot: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: COLORS.cream,
+  },
+  editSheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.md,
+  },
+  editSheetCloseBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
   },
-  modalContent: {
+  editSheetBody: {
+    flex: 1,
+  },
+  editSheetBodyContent: {
+    paddingHorizontal: SPACING.lg,
+  },
+  editFieldRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: COLORS.white,
     borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.lg,
-    width: SCREEN_WIDTH - 64,
-    maxWidth: 340,
-  },
-  modalTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: FONT_SIZES.lg,
-    color: COLORS.navy,
+    paddingVertical: 14,
+    paddingHorizontal: SPACING.md,
     marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
   },
-  modalInput: {
+  editFieldIcon: {
+    marginRight: SPACING.md,
+  },
+  editFieldInput: {
     fontFamily: FONTS.regular,
     fontSize: FONT_SIZES.md,
     color: COLORS.navy,
-    borderWidth: 1,
-    borderColor: COLORS.cream,
-    borderRadius: BORDER_RADIUS.md,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
+    flex: 1,
   },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: SPACING.sm,
-  },
-  cancelButton: {
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.lg,
-    borderRadius: BORDER_RADIUS.md,
-    backgroundColor: COLORS.cream,
-  },
-  cancelText: {
-    fontFamily: FONTS.medium,
-    fontSize: FONT_SIZES.sm,
+  editFieldText: {
+    fontFamily: FONTS.regular,
+    fontSize: FONT_SIZES.md,
     color: COLORS.navy,
+    flex: 1,
   },
-  saveButton: {
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.lg,
-    borderRadius: BORDER_RADIUS.md,
-    backgroundColor: COLORS.navy,
-  },
-  saveText: {
-    fontFamily: FONTS.medium,
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.white,
-    textAlign: 'center',
-  },
-  locationInputWrapper: {
-    position: 'relative',
-    zIndex: 10,
-    marginBottom: SPACING.lg,
-  },
-  cityDropdown: {
+  editDropdown: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
     backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.cream,
     borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
     marginTop: 4,
-    overflow: 'hidden',
+    maxHeight: 200,
+    zIndex: 1000,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  cityDropdownItem: {
+  editDropdownItem: {
     paddingVertical: 12,
     paddingHorizontal: SPACING.md,
     borderTopWidth: 1,
     borderTopColor: COLORS.cream,
   },
-  cityDropdownText: {
+  editDropdownText: {
     fontFamily: FONTS.medium,
     fontSize: FONT_SIZES.md,
     color: COLORS.navy,
+  },
+  editCalendarContainer: {
+    backgroundColor: COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+  },
+  editSheetBottomBar: {
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.xl,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5E5',
+  },
+  editSheetSaveBtn: {
+    backgroundColor: COLORS.navy,
+    borderRadius: BORDER_RADIUS.lg,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  editSheetSaveBtnDisabled: {
+    opacity: 0.4,
+  },
+  editSheetSaveBtnText: {
+    fontFamily: FONTS.medium,
+    fontSize: FONT_SIZES.md,
+    color: COLORS.white,
+  },
+  editSheetDeleteBtn: {
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    marginTop: SPACING.sm,
+  },
+  editSheetDeleteBtnText: {
+    fontFamily: FONTS.medium,
+    fontSize: FONT_SIZES.md,
+    color: '#E53935',
   },
 });
