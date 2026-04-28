@@ -176,12 +176,12 @@ export default function EventCard({ event, onPress }: EventCardProps) {
           })()}
 
           <View style={styles.peekHeader}>
-            {isTeamSport && homeTeam && awayTeam ? (
-              <View style={styles.peekTeamRow}>
-                <Image source={homeTeam.logo} style={styles.peekTeamLogo} />
-                <Text style={styles.peekVs}>vs</Text>
-                <Image source={awayTeam.logo} style={styles.peekTeamLogo} />
-              </View>
+            {event.type === 'sports' ? (
+              <Text style={styles.peekSportsTitle} numberOfLines={1}>
+                {isTeamSport && event.home_team && event.away_team
+                  ? `${event.home_team.name} vs ${event.away_team.name}`
+                  : event.title}
+              </Text>
             ) : (
               <Text style={[styles.peekTitle, { fontFamily: titleFont }]} numberOfLines={1}>
                 {displayTitle}
@@ -255,26 +255,17 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 12,
   },
+  peekSportsTitle: {
+    fontFamily: FONTS.tourney,
+    fontSize: 15,
+    color: '#FFFFFF',
+    flex: 1,
+    marginRight: 12,
+  },
   peekDate: {
     fontFamily: FONTS.medium,
     fontSize: 13,
     color: 'rgba(255,255,255,0.85)',
-  },
-  peekTeamRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flex: 1,
-  },
-  peekTeamLogo: {
-    width: 24,
-    height: 24,
-    resizeMode: 'contain',
-  },
-  peekVs: {
-    fontFamily: FONTS.medium,
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.8)',
   },
   stackedTitle: {
     fontFamily: FONTS.bold,

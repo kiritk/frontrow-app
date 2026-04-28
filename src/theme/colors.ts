@@ -31,6 +31,7 @@ export const FONTS = {
   iceland: 'Iceland_400Regular',
   zain: 'Zain_400Regular',
   vt323: 'VT323_400Regular',
+  tourney: 'Tourney_900Black',
 };
 
 export const FONT_SIZES = {

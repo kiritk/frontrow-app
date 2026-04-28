@@ -13,6 +13,7 @@ import { Modak_400Regular } from '@expo-google-fonts/modak';
 import { Iceland_400Regular } from '@expo-google-fonts/iceland';
 import { Zain_400Regular } from '@expo-google-fonts/zain';
 import { VT323_400Regular } from '@expo-google-fonts/vt323';
+import { Tourney_900Black } from '@expo-google-fonts/tourney';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthProvider } from './src/context/AuthContext';
 import EventsScreen from './src/screens/EventsScreen';
@@ -131,6 +132,7 @@ export default function App() {
     Iceland_400Regular,
     Zain_400Regular,
     VT323_400Regular,
+    Tourney_900Black,
     GeistMono_400Regular: require('./assets/fonts/GeistMono_400Regular.ttf'),
     GeistMono_500Medium: require('./assets/fonts/GeistMono_500Medium.ttf'),
     GeistMono_700Bold: require('./assets/fonts/GeistMono_700Bold.ttf'),
