@@ -349,12 +349,15 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
       </SafeAreaView>
 
       {/* Edit Sheet Modal */}
-      <Modal visible={showEditSheet} animationType="slide" presentationStyle="pageSheet" onRequestClose={closeEditSheet}>
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <View style={styles.editSheetRoot}>
+      <Modal visible={showEditSheet} animationType="slide" transparent onRequestClose={closeEditSheet}>
+        <Pressable style={styles.editSheetOverlay} onPress={closeEditSheet}>
+          <Pressable style={styles.editSheetRoot} onPress={(e) => e.stopPropagation()}>
             <View style={styles.editSheetHeader}>
               <TouchableOpacity style={styles.editSheetCloseBtn} onPress={closeEditSheet}>
                 <Ionicons name="close" size={20} color={COLORS.navy} />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.editSheetTrashBtn} onPress={() => { closeEditSheet(); setTimeout(confirmDelete, 300); }}>
+                <Ionicons name="trash-outline" size={18} color="#E53935" />
               </TouchableOpacity>
             </View>
 
@@ -442,12 +445,9 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
               >
                 <Text style={styles.editSheetSaveBtnText}>Edit Event</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.editSheetDeleteBtn} onPress={() => { closeEditSheet(); setTimeout(confirmDelete, 300); }}>
-                <Text style={styles.editSheetDeleteBtnText}>Delete Event</Text>
-              </TouchableOpacity>
             </View>
-          </View>
-        </KeyboardAvoidingView>
+          </Pressable>
+        </Pressable>
       </Modal>
     </Animated.View>
   );
@@ -581,18 +581,36 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     backgroundColor: 'transparent',
   },
-  editSheetRoot: {
+  editSheetOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  editSheetRoot: {
     backgroundColor: COLORS.cream,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '45%',
   },
   editSheetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.lg,
     paddingBottom: SPACING.md,
   },
   editSheetCloseBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+  },
+  editSheetTrashBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
@@ -691,15 +709,5 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     fontSize: FONT_SIZES.md,
     color: COLORS.white,
-  },
-  editSheetDeleteBtn: {
-    alignItems: 'center',
-    paddingVertical: SPACING.md,
-    marginTop: SPACING.sm,
-  },
-  editSheetDeleteBtnText: {
-    fontFamily: FONTS.medium,
-    fontSize: FONT_SIZES.md,
-    color: '#E53935',
   },
 });

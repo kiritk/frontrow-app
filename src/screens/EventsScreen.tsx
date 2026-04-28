@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import { fetchEvents as fetchEventsFromService, removeEvent } from '../lib/eventService';
 import EventCard, { STACKED_CARD_HEIGHT, PEEK_HEIGHT, EventData } from '../components/EventCard';
 import EventDetailView from '../components/EventDetailView';
+import * as Haptics from 'expo-haptics';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
 const PROFILE_STORAGE_KEY = 'frontrow_user_profile';
@@ -135,6 +136,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   };
 
   const openDetail = useCallback((event: Event) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedEvent(event);
     setDetailVisible(true);
     detailAnim.setValue(0);
