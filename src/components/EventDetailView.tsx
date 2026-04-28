@@ -45,6 +45,8 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
   const [editDateObj, setEditDateObj] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const sheetAnim = useRef(new Animated.Value(0)).current;
+  const titleInputRef = useRef<TextInput>(null);
+  const cityInputRef = useRef<TextInput>(null);
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropTarget, setDropTarget] = useState<number | null>(null);
@@ -372,6 +374,11 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
           <Animated.View style={[styles.editSheetOverlay, { opacity: sheetAnim }]}>
             <Pressable style={StyleSheet.absoluteFill} onPress={() => closeEditSheet()} />
           </Animated.View>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.editSheetKAV}
+            pointerEvents="box-none"
+          >
           <Animated.View style={[styles.editSheetRoot, {
             transform: [{
               translateY: sheetAnim.interpolate({
@@ -395,13 +402,16 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
                 <View style={styles.editFieldRow}>
                   <Ionicons name="star-outline" size={20} color={COLORS.navy} style={styles.editFieldIcon} />
                   <TextInput
+                    ref={titleInputRef}
                     style={styles.editFieldInput}
                     value={editTitle}
                     onChangeText={setEditTitle}
                     placeholder="Event title"
                     placeholderTextColor={COLORS.gray}
                   />
-                  <Ionicons name="pencil-outline" size={18} color={COLORS.gray} />
+                  <TouchableOpacity onPress={() => titleInputRef.current?.focus()}>
+                    <Ionicons name="pencil-outline" size={18} color={COLORS.gray} />
+                  </TouchableOpacity>
                 </View>
               )}
 
@@ -409,6 +419,7 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
                 <Ionicons name="location-outline" size={20} color={COLORS.navy} style={styles.editFieldIcon} />
                 <View style={{ flex: 1 }}>
                   <TextInput
+                    ref={cityInputRef}
                     style={styles.editFieldInput}
                     value={editCityQuery}
                     onChangeText={(t) => {
@@ -441,14 +452,28 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
                     </View>
                   )}
                 </View>
-                <Ionicons name="pencil-outline" size={18} color={COLORS.gray} />
+                <TouchableOpacity onPress={() => cityInputRef.current?.focus()}>
+                  <Ionicons name="pencil-outline" size={18} color={COLORS.gray} />
+                </TouchableOpacity>
               </View>
 
               <Pressable style={styles.editFieldRow} onPress={() => setShowDatePicker(!showDatePicker)}>
                 <Ionicons name="calendar-outline" size={20} color={COLORS.navy} style={styles.editFieldIcon} />
                 <Text style={styles.editFieldText}>{formatDisplayDate(editDateObj)}</Text>
-                <Ionicons name="pencil-outline" size={18} color={COLORS.gray} />
+                <TouchableOpacity onPress={() => setShowDatePicker(!showDatePicker)}>
+                  <Ionicons name="pencil-outline" size={18} color={COLORS.gray} />
+                </TouchableOpacity>
               </Pressable>
+
+              {showDatePicker && (
+                <CalendarPicker
+                  selectedDate={editDateObj}
+                  onDateChange={(d) => {
+                    setEditDateObj(d);
+                    setShowDatePicker(false);
+                  }}
+                />
+              )}
             </View>
 
             <View style={styles.editSheetBottomBar}>
@@ -461,6 +486,7 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
               </TouchableOpacity>
             </View>
           </Animated.View>
+          </KeyboardAvoidingView>
       </Modal>
     </Animated.View>
   );
@@ -598,11 +624,13 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.4)',
   },
-  editSheetRoot: {
+  editSheetKAV: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
+  },
+  editSheetRoot: {
     backgroundColor: COLORS.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
