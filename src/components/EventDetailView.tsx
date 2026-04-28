@@ -44,6 +44,7 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
   const [editShowCityDropdown, setEditShowCityDropdown] = useState(false);
   const [editDateObj, setEditDateObj] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const sheetAnim = useRef(new Animated.Value(0)).current;
 
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropTarget, setDropTarget] = useState<number | null>(null);
@@ -121,12 +122,25 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
     setEditShowCityDropdown(false);
     setShowDatePicker(false);
     setShowEditSheet(true);
+    sheetAnim.setValue(0);
+    Animated.timing(sheetAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
   };
 
-  const closeEditSheet = () => {
+  const closeEditSheet = (onComplete?: () => void) => {
     Keyboard.dismiss();
-    setShowEditSheet(false);
     setShowDatePicker(false);
+    Animated.timing(sheetAnim, {
+      toValue: 0,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowEditSheet(false);
+      onComplete?.();
+    });
   };
 
   const formatDisplayDate = (d: Date) =>
@@ -151,8 +165,7 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
     if (Object.keys(updates).length > 0) {
       await updateEvent(updates);
     }
-    setShowEditSheet(false);
-    setShowDatePicker(false);
+    closeEditSheet();
   };
 
   const getFilteredCities = (query: string) => {
@@ -348,24 +361,31 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
         </ScrollView>
       </SafeAreaView>
 
-      {/* Edit Sheet Modal */}
-      <Modal visible={showEditSheet} animationType="slide" transparent onRequestClose={closeEditSheet}>
-        <Pressable style={styles.editSheetOverlay} onPress={closeEditSheet}>
-          <Pressable style={styles.editSheetRoot} onPress={(e) => e.stopPropagation()}>
+      {/* Edit Sheet */}
+      {showEditSheet && (
+        <>
+          <Animated.View style={[styles.editSheetOverlay, { opacity: sheetAnim }]}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={() => closeEditSheet()} />
+          </Animated.View>
+          <Animated.View style={[styles.editSheetRoot, {
+            transform: [{
+              translateY: sheetAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [400, 0],
+              }),
+            }],
+          }]}>
+            <View style={styles.editSheetHandle} />
             <View style={styles.editSheetHeader}>
-              <TouchableOpacity style={styles.editSheetCloseBtn} onPress={closeEditSheet}>
+              <TouchableOpacity style={styles.editSheetCloseBtn} onPress={() => closeEditSheet()}>
                 <Ionicons name="close" size={20} color={COLORS.navy} />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.editSheetTrashBtn} onPress={() => { closeEditSheet(); setTimeout(confirmDelete, 300); }}>
+              <TouchableOpacity style={styles.editSheetTrashBtn} onPress={() => closeEditSheet(confirmDelete)}>
                 <Ionicons name="trash-outline" size={18} color="#E53935" />
               </TouchableOpacity>
             </View>
 
-            <ScrollView
-              style={styles.editSheetBody}
-              contentContainerStyle={styles.editSheetBodyContent}
-              keyboardShouldPersistTaps="handled"
-            >
+            <View style={styles.editSheetBodyContent}>
               {!isTeamSport && (
                 <View style={styles.editFieldRow}>
                   <Ionicons name="star-outline" size={20} color={COLORS.navy} style={styles.editFieldIcon} />
@@ -424,18 +444,7 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
                 <Text style={styles.editFieldText}>{formatDisplayDate(editDateObj)}</Text>
                 <Ionicons name="pencil-outline" size={18} color={COLORS.gray} />
               </Pressable>
-
-              {showDatePicker && (
-                <View style={styles.editCalendarContainer}>
-                  <CalendarPicker
-                    selectedDate={editDateObj}
-                    onDateChange={(d) => setEditDateObj(d)}
-                    maximumDate={new Date(2030, 11, 31)}
-                    minimumDate={new Date(1950, 0, 1)}
-                  />
-                </View>
-              )}
-            </ScrollView>
+            </View>
 
             <View style={styles.editSheetBottomBar}>
               <TouchableOpacity
@@ -446,9 +455,9 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
                 <Text style={styles.editSheetSaveBtnText}>Edit Event</Text>
               </TouchableOpacity>
             </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+          </Animated.View>
+        </>
+      )}
     </Animated.View>
   );
 }
@@ -582,23 +591,34 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   editSheetOverlay: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'flex-end',
   },
   editSheetRoot: {
-    backgroundColor: COLORS.cream,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: COLORS.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '45%',
+    paddingBottom: 34,
+  },
+  editSheetHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#D1D1D6',
+    alignSelf: 'center',
+    marginTop: SPACING.sm,
   },
   editSheetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.lg,
-    paddingBottom: SPACING.md,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.sm,
   },
   editSheetCloseBtn: {
     width: 36,
@@ -619,9 +639,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#E5E5E5',
-  },
-  editSheetBody: {
-    flex: 1,
   },
   editSheetBodyContent: {
     paddingHorizontal: SPACING.lg,
