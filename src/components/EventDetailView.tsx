@@ -362,8 +362,13 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
       </SafeAreaView>
 
       {/* Edit Sheet */}
-      {showEditSheet && (
-        <>
+      <Modal
+        visible={showEditSheet}
+        transparent
+        animationType="none"
+        statusBarTranslucent
+        onRequestClose={() => closeEditSheet()}
+      >
           <Animated.View style={[styles.editSheetOverlay, { opacity: sheetAnim }]}>
             <Pressable style={StyleSheet.absoluteFill} onPress={() => closeEditSheet()} />
           </Animated.View>
@@ -456,8 +461,7 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
               </TouchableOpacity>
             </View>
           </Animated.View>
-        </>
-      )}
+      </Modal>
     </Animated.View>
   );
 }
