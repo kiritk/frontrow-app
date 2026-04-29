@@ -2,21 +2,18 @@ import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
   TextInput, Image, Modal, Platform, Alert,
-  KeyboardAvoidingView, TouchableWithoutFeedback,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
-const ACCENT_COLOR = '#5B4FCF';
 const UPDATE_BTN_COLOR = '#3B35B4';
 
 interface EditProfileData {
   firstName: string;
   lastName: string;
-  dateOfBirth: string | null;
   profileImage: string | null;
 }
 
@@ -24,7 +21,6 @@ interface EditProfileScreenProps {
   visible: boolean;
   firstName: string;
   lastName: string;
-  dateOfBirth: string | null;
   profileImage: string | null;
   onClose: () => void;
   onSave: (data: EditProfileData) => void;
@@ -34,24 +30,18 @@ export default function EditProfileScreen({
   visible,
   firstName: initialFirstName,
   lastName: initialLastName,
-  dateOfBirth: initialDOB,
   profileImage: initialProfileImage,
   onClose,
   onSave,
 }: EditProfileScreenProps) {
   const [firstName, setFirstName] = useState(initialFirstName);
   const [lastName, setLastName] = useState(initialLastName);
-  const [dateOfBirth, setDateOfBirth] = useState<Date | null>(
-    initialDOB ? new Date(initialDOB) : null,
-  );
   const [profileImage, setProfileImage] = useState<string | null>(initialProfileImage);
-  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
     if (visible) {
       setFirstName(initialFirstName);
       setLastName(initialLastName);
-      setDateOfBirth(initialDOB ? new Date(initialDOB) : null);
       setProfileImage(initialProfileImage);
     }
   }, [visible]);
@@ -73,22 +63,8 @@ export default function EditProfileScreen({
     }
   };
 
-  const formatDate = (date: Date | null) => {
-    if (!date) return '';
-    return date.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
   const handleSave = () => {
-    onSave({
-      firstName,
-      lastName,
-      dateOfBirth: dateOfBirth ? dateOfBirth.toISOString() : null,
-      profileImage,
-    });
+    onSave({ firstName, lastName, profileImage });
   };
 
   return (
@@ -146,56 +122,12 @@ export default function EditProfileScreen({
                 placeholderTextColor={COLORS.grayLight}
               />
 
-              <TouchableOpacity
-                style={styles.pickerInput}
-                onPress={() => setShowDatePicker(true)}
-              >
-                <Text style={[styles.pickerText, !dateOfBirth && styles.placeholderText]}>
-                  {formatDate(dateOfBirth) || 'What is your date of birth?'}
-                </Text>
-                <Ionicons name="calendar-outline" size={18} color={ACCENT_COLOR} />
-              </TouchableOpacity>
-
               <TouchableOpacity style={styles.updateButton} onPress={handleSave}>
                 <Text style={styles.updateButtonText}>Update Profile</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
-
-        {/* Date Picker Sheet */}
-        <Modal
-          visible={showDatePicker}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setShowDatePicker(false)}
-        >
-          <TouchableWithoutFeedback onPress={() => setShowDatePicker(false)}>
-            <View style={styles.sheetOverlay}>
-              <TouchableWithoutFeedback>
-                <View style={styles.dateSheet}>
-                  <View style={styles.dateSheetHeader}>
-                    <Text style={styles.genderSheetTitle}>Date of Birth</Text>
-                    <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                      <Text style={styles.doneText}>Done</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <DateTimePicker
-                    value={dateOfBirth || new Date(2000, 0, 1)}
-                    mode="date"
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    maximumDate={new Date()}
-                    onChange={(_, date) => {
-                      if (Platform.OS === 'android') setShowDatePicker(false);
-                      if (date) setDateOfBirth(date);
-                    }}
-                    style={styles.datePicker}
-                  />
-                </View>
-              </TouchableWithoutFeedback>
-            </View>
-          </TouchableWithoutFeedback>
-        </Modal>
       </View>
     </Modal>
   );
@@ -281,24 +213,6 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.md,
     color: COLORS.grayDark,
   },
-  pickerInput: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: BORDER_RADIUS.lg,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  pickerText: {
-    fontFamily: FONTS.regular,
-    fontSize: FONT_SIZES.md,
-    color: COLORS.grayDark,
-    flex: 1,
-  },
-  placeholderText: {
-    color: COLORS.grayLight,
-  },
   updateButton: {
     backgroundColor: UPDATE_BTN_COLOR,
     borderRadius: BORDER_RADIUS.full,
@@ -310,35 +224,5 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     fontSize: FONT_SIZES.md,
     color: COLORS.white,
-  },
-  sheetOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'flex-end',
-  },
-  dateSheet: {
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: SPACING.lg,
-    paddingBottom: 40,
-  },
-  dateSheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: SPACING.xl,
-    marginBottom: SPACING.sm,
-    position: 'relative',
-  },
-  doneText: {
-    position: 'absolute',
-    right: SPACING.xl,
-    fontFamily: FONTS.semiBold,
-    fontSize: FONT_SIZES.md,
-    color: ACCENT_COLOR,
-  },
-  datePicker: {
-    width: '100%',
   },
 });
