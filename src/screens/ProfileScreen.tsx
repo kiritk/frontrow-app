@@ -19,7 +19,6 @@ const ICON_BG_COLOR = 'rgba(91, 79, 207, 0.12)';
 interface UserProfile {
   firstName: string;
   lastName: string;
-  gender: string;
   dateOfBirth: string | null;
   profileImage: string | null;
 }
@@ -61,7 +60,6 @@ export default function ProfileScreen({ navigation }: any) {
   const { user, signOut } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [gender, setGender] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState<string | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -82,7 +80,6 @@ export default function ProfileScreen({ navigation }: any) {
         const profile: UserProfile = JSON.parse(stored);
         setFirstName(profile.firstName || '');
         setLastName(profile.lastName || '');
-        setGender(profile.gender || '');
         setDateOfBirth(profile.dateOfBirth || null);
         setProfileImage(profile.profileImage || null);
       }
@@ -96,7 +93,6 @@ export default function ProfileScreen({ navigation }: any) {
       await AsyncStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(data));
       setFirstName(data.firstName);
       setLastName(data.lastName);
-      setGender(data.gender);
       setDateOfBirth(data.dateOfBirth);
       setProfileImage(data.profileImage);
       setEditModalVisible(false);
@@ -219,7 +215,6 @@ export default function ProfileScreen({ navigation }: any) {
         visible={editModalVisible}
         firstName={firstName}
         lastName={lastName}
-        gender={gender}
         dateOfBirth={dateOfBirth}
         profileImage={profileImage}
         onClose={() => setEditModalVisible(false)}

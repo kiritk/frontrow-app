@@ -16,7 +16,6 @@ const UPDATE_BTN_COLOR = '#3B35B4';
 interface EditProfileData {
   firstName: string;
   lastName: string;
-  gender: string;
   dateOfBirth: string | null;
   profileImage: string | null;
 }
@@ -25,20 +24,16 @@ interface EditProfileScreenProps {
   visible: boolean;
   firstName: string;
   lastName: string;
-  gender: string;
   dateOfBirth: string | null;
   profileImage: string | null;
   onClose: () => void;
   onSave: (data: EditProfileData) => void;
 }
 
-const GENDER_OPTIONS = ['Male', 'Female', 'Non-binary', 'Prefer not to say'];
-
 export default function EditProfileScreen({
   visible,
   firstName: initialFirstName,
   lastName: initialLastName,
-  gender: initialGender,
   dateOfBirth: initialDOB,
   profileImage: initialProfileImage,
   onClose,
@@ -46,19 +41,16 @@ export default function EditProfileScreen({
 }: EditProfileScreenProps) {
   const [firstName, setFirstName] = useState(initialFirstName);
   const [lastName, setLastName] = useState(initialLastName);
-  const [gender, setGender] = useState(initialGender);
   const [dateOfBirth, setDateOfBirth] = useState<Date | null>(
     initialDOB ? new Date(initialDOB) : null,
   );
   const [profileImage, setProfileImage] = useState<string | null>(initialProfileImage);
-  const [showGenderPicker, setShowGenderPicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
     if (visible) {
       setFirstName(initialFirstName);
       setLastName(initialLastName);
-      setGender(initialGender);
       setDateOfBirth(initialDOB ? new Date(initialDOB) : null);
       setProfileImage(initialProfileImage);
     }
@@ -94,7 +86,6 @@ export default function EditProfileScreen({
     onSave({
       firstName,
       lastName,
-      gender,
       dateOfBirth: dateOfBirth ? dateOfBirth.toISOString() : null,
       profileImage,
     });
@@ -157,16 +148,6 @@ export default function EditProfileScreen({
 
               <TouchableOpacity
                 style={styles.pickerInput}
-                onPress={() => setShowGenderPicker(true)}
-              >
-                <Text style={[styles.pickerText, !gender && styles.placeholderText]}>
-                  {gender || 'Select your gender'}
-                </Text>
-                <Ionicons name="chevron-down" size={18} color={COLORS.grayLight} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.pickerInput}
                 onPress={() => setShowDatePicker(true)}
               >
                 <Text style={[styles.pickerText, !dateOfBirth && styles.placeholderText]}>
@@ -181,46 +162,6 @@ export default function EditProfileScreen({
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
-
-        {/* Gender Picker Sheet */}
-        <Modal
-          visible={showGenderPicker}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setShowGenderPicker(false)}
-        >
-          <TouchableWithoutFeedback onPress={() => setShowGenderPicker(false)}>
-            <View style={styles.sheetOverlay}>
-              <TouchableWithoutFeedback>
-                <View style={styles.genderSheet}>
-                  <Text style={styles.genderSheetTitle}>Select your gender</Text>
-                  {GENDER_OPTIONS.map((option) => (
-                    <TouchableOpacity
-                      key={option}
-                      style={styles.genderOption}
-                      onPress={() => {
-                        setGender(option);
-                        setShowGenderPicker(false);
-                      }}
-                    >
-                      <Text
-                        style={[
-                          styles.genderOptionText,
-                          gender === option && styles.genderOptionSelected,
-                        ]}
-                      >
-                        {option}
-                      </Text>
-                      {gender === option && (
-                        <Ionicons name="checkmark" size={18} color={ACCENT_COLOR} />
-                      )}
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </TouchableWithoutFeedback>
-            </View>
-          </TouchableWithoutFeedback>
-        </Modal>
 
         {/* Date Picker Sheet */}
         <Modal
@@ -374,37 +315,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'flex-end',
-  },
-  genderSheet: {
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: SPACING.xl,
-    paddingBottom: 40,
-  },
-  genderSheetTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: FONT_SIZES.lg,
-    color: COLORS.grayDark,
-    marginBottom: SPACING.lg,
-    textAlign: 'center',
-  },
-  genderOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  genderOptionText: {
-    fontFamily: FONTS.regular,
-    fontSize: FONT_SIZES.md,
-    color: COLORS.grayDark,
-  },
-  genderOptionSelected: {
-    fontFamily: FONTS.semiBold,
-    color: ACCENT_COLOR,
   },
   dateSheet: {
     backgroundColor: COLORS.white,
