@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -11,7 +11,7 @@ import FanCard from '../components/FanCard';
 const PROFILE_STORAGE_KEY = 'frontrow_user_profile';
 
 export default function StatsScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const { user, localEventsVersion } = useAuth();
   const [events, setEvents] = useState<LocalEvent[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -102,6 +102,14 @@ export default function StatsScreen() {
             venueCount={venueCount}
             sportsCount={sportsCount}
           />
+          {!firstName && (
+            <TouchableOpacity
+              style={styles.editProfileButton}
+              onPress={() => navigation.navigate('Profile')}
+            >
+              <Text style={styles.editProfileButtonText}>Edit Profile</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Fan Level Card */}
@@ -172,6 +180,19 @@ const styles = StyleSheet.create({
   fanCardContainer: {
     alignItems: 'center',
     marginBottom: SPACING.lg,
+  },
+  editProfileButton: {
+    marginTop: SPACING.md,
+    paddingVertical: 10,
+    paddingHorizontal: SPACING.xl,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1.5,
+    borderColor: COLORS.navy,
+  },
+  editProfileButtonText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.navy,
   },
   fanLevelCard: {
     backgroundColor: COLORS.white,

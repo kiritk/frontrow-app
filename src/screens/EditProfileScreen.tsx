@@ -4,7 +4,6 @@ import {
   TextInput, Image, Modal, Platform, Alert,
   KeyboardAvoidingView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
@@ -71,10 +70,11 @@ export default function EditProfileScreen({
     <Modal
       visible={visible}
       animationType="slide"
+      presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
       <View style={styles.container}>
-        <SafeAreaView edges={['top']} style={styles.headerSafe}>
+        <View style={styles.headerSafe}>
           <View style={styles.headerRow}>
             <TouchableOpacity style={styles.backButton} onPress={onClose}>
               <Ionicons name="chevron-back" size={22} color={COLORS.grayDark} />
@@ -82,7 +82,7 @@ export default function EditProfileScreen({
             <Text style={styles.headerTitle}>Edit profile</Text>
             <View style={{ width: 40 }} />
           </View>
-        </SafeAreaView>
+        </View>
 
         <KeyboardAvoidingView
           style={{ flex: 1 }}
