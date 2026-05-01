@@ -172,12 +172,6 @@ export default function ProfileScreen({ navigation }: any) {
           <Text style={styles.sectionLabel}>More</Text>
           <View style={styles.menuCard}>
             <MenuItem
-              icon="notifications-outline"
-              title="Help & Support"
-              onPress={() => {}}
-            />
-            <View style={styles.divider} />
-            <MenuItem
               icon="heart-outline"
               title="About App"
               onPress={() => {}}
