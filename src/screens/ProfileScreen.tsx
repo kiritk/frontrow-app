@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import AuthScreen from './AuthScreen';
 import EditProfileScreen from './EditProfileScreen';
+import AboutScreen from './AboutScreen';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
 const PROFILE_STORAGE_KEY = 'frontrow_user_profile';
@@ -62,6 +63,7 @@ export default function ProfileScreen({ navigation }: any) {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [authModalVisible, setAuthModalVisible] = useState(false);
+  const [aboutModalVisible, setAboutModalVisible] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -174,7 +176,7 @@ export default function ProfileScreen({ navigation }: any) {
             <MenuItem
               icon="heart-outline"
               title="About App"
-              onPress={() => {}}
+              onPress={() => setAboutModalVisible(true)}
             />
           </View>
         </View>
@@ -199,6 +201,11 @@ export default function ProfileScreen({ navigation }: any) {
           </SafeAreaView>
         </View>
       </Modal>
+
+      <AboutScreen
+        visible={aboutModalVisible}
+        onClose={() => setAboutModalVisible(false)}
+      />
 
       {/* Edit Profile full-screen */}
       <EditProfileScreen
