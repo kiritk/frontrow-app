@@ -7,8 +7,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
-const DARK_YELLOW = '#B8860B';
-
 export default function AuthScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,8 +20,11 @@ export default function AuthScreen() {
     password.length > 0 &&
     (!isSignUp || confirmPassword.length > 0);
 
-  const toggleMode = () => {
-    setIsSignUp(prev => !prev);
+  const switchTab = (toSignUp: boolean) => {
+    if (toSignUp === isSignUp) return;
+    setIsSignUp(toSignUp);
+    setEmail('');
+    setPassword('');
     setConfirmPassword('');
   };
 
@@ -43,8 +44,7 @@ export default function AuthScreen() {
         Alert.alert('Error', error.message);
       } else if (isSignUp) {
         Alert.alert('Success', 'Account created! You can now sign in.');
-        setIsSignUp(false);
-        setConfirmPassword('');
+        switchTab(false);
       }
     } finally { setLoading(false); }
   };
@@ -56,11 +56,34 @@ export default function AuthScreen() {
           <Text style={styles.title}>Front Row</Text>
           <Text style={styles.subtitle}>Never forget that moment</Text>
         </View>
+
+        {/* Side-by-side tab headers */}
+        <View style={styles.tabBar}>
+          <TouchableOpacity
+            style={styles.tab}
+            onPress={() => switchTab(false)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.tabText, !isSignUp && styles.tabTextActive]}>SIGN IN</Text>
+            {!isSignUp && <View style={styles.tabUnderline} />}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.tab}
+            onPress={() => switchTab(true)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.tabText, isSignUp && styles.tabTextActive]}>CREATE ACCOUNT</Text>
+            {isSignUp && <View style={styles.tabUnderline} />}
+          </TouchableOpacity>
+        </View>
+        <View style={styles.tabDivider} />
+
+        {/* Form */}
         <View style={styles.form}>
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Email</Text>
             <TextInput
-              style={[styles.input, isSignUp && styles.inputSignUp]}
+              style={styles.input}
               placeholder="your@email.com"
               placeholderTextColor={COLORS.grayLight}
               value={email}
@@ -72,8 +95,8 @@ export default function AuthScreen() {
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Password</Text>
             <TextInput
-              style={[styles.input, isSignUp && styles.inputSignUp]}
-              placeholder="••••••••"
+              style={styles.input}
+              placeholder={isSignUp ? 'Min 8 characters' : '••••••••'}
               placeholderTextColor={COLORS.grayLight}
               value={password}
               onChangeText={setPassword}
@@ -87,10 +110,7 @@ export default function AuthScreen() {
               <TextInput
                 style={[
                   styles.input,
-                  styles.inputSignUp,
-                  confirmPassword.length > 0 &&
-                    password !== confirmPassword &&
-                    styles.inputError,
+                  confirmPassword.length > 0 && password !== confirmPassword && styles.inputError,
                 ]}
                 placeholder="••••••••"
                 placeholderTextColor={COLORS.grayLight}
@@ -105,7 +125,7 @@ export default function AuthScreen() {
             </View>
           )}
           <TouchableOpacity
-            style={styles.button}
+            style={[styles.button, fieldsFilled && styles.buttonFilled]}
             onPress={handleSubmit}
             disabled={loading}
             activeOpacity={0.85}
@@ -114,14 +134,9 @@ export default function AuthScreen() {
               <ActivityIndicator color={COLORS.white} />
             ) : (
               <Text style={[styles.buttonText, fieldsFilled ? styles.buttonTextFilled : styles.buttonTextEmpty]}>
-                {isSignUp ? 'Create Account' : 'Sign In'}
+                {isSignUp ? 'CREATE ACCOUNT' : 'SIGN IN'} →
               </Text>
             )}
-          </TouchableOpacity>
-          <TouchableOpacity onPress={toggleMode} style={styles.toggleButton}>
-            <Text style={styles.toggleText}>
-              {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-            </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -145,6 +160,37 @@ const styles = StyleSheet.create({
     color: COLORS.grayDark,
     textAlign: 'center',
   },
+  tabBar: {
+    flexDirection: 'row',
+  },
+  tab: {
+    flex: 1,
+    alignItems: 'center',
+    paddingBottom: SPACING.sm,
+  },
+  tabText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: FONT_SIZES.sm,
+    letterSpacing: 1.5,
+    color: COLORS.gray,
+  },
+  tabTextActive: {
+    color: COLORS.navy,
+  },
+  tabUnderline: {
+    position: 'absolute',
+    bottom: 0,
+    left: SPACING.lg,
+    right: SPACING.lg,
+    height: 2.5,
+    backgroundColor: COLORS.gold,
+    borderRadius: BORDER_RADIUS.full,
+  },
+  tabDivider: {
+    height: 1,
+    backgroundColor: COLORS.creamDark,
+    marginBottom: SPACING.xxl,
+  },
   form: { width: '100%' },
   inputContainer: { marginBottom: SPACING.lg },
   label: {
@@ -164,9 +210,6 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.md,
     color: COLORS.navy,
   },
-  inputSignUp: {
-    borderColor: DARK_YELLOW,
-  },
   inputError: {
     borderColor: COLORS.error,
   },
@@ -177,26 +220,27 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
   },
   button: {
-    backgroundColor: COLORS.navy,
     borderRadius: BORDER_RADIUS.lg,
     paddingVertical: SPACING.md,
     alignItems: 'center',
     marginTop: SPACING.md,
+    borderWidth: 1.5,
+    borderColor: COLORS.navy,
+    backgroundColor: COLORS.white,
+  },
+  buttonFilled: {
+    backgroundColor: COLORS.navy,
+    borderColor: COLORS.navy,
   },
   buttonText: {
     fontFamily: FONTS.semiBold,
     fontSize: FONT_SIZES.lg,
+    letterSpacing: 1,
   },
   buttonTextEmpty: {
-    color: COLORS.gray,
+    color: COLORS.grayLight,
   },
   buttonTextFilled: {
     color: COLORS.white,
-  },
-  toggleButton: { marginTop: SPACING.lg, alignItems: 'center' },
-  toggleText: {
-    fontFamily: FONTS.regular,
-    fontSize: FONT_SIZES.sm,
-    color: DARK_YELLOW,
   },
 });
