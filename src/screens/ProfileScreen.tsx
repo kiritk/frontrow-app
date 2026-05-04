@@ -99,88 +99,96 @@ export default function ProfileScreen({ navigation }: any) {
     }
   };
 
+  const handleClose = () => navigation.goBack();
+
   const getDisplayName = () => {
-    if (firstName || lastName) {
-      return `${firstName} ${lastName}`.trim();
-    }
+    if (firstName || lastName) return `${firstName} ${lastName}`.trim();
     return 'Welcome!';
   };
 
   return (
-    <View style={styles.container}>
-      {/* Dark header */}
-      <View style={styles.header}>
-        <SafeAreaView edges={['top']} style={styles.headerSafeArea}>
-          <View style={styles.headerTopRow}>
-            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-              <Ionicons name="chevron-back" size={20} color={COLORS.white} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Profile</Text>
-            <View style={{ width: 36 }} />
-          </View>
-        </SafeAreaView>
+    <>
+      <Modal
+        visible={true}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={handleClose}
+      >
+        <View style={styles.modalRoot}>
+          {/* Dark header with avatar */}
+          <View style={styles.header}>
+            <SafeAreaView edges={['top']} style={styles.headerSafeArea}>
+              <View style={styles.headerTopRow}>
+                <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
+                  <Text style={styles.cancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Profile</Text>
+                <View style={styles.cancelButton} />
+              </View>
+            </SafeAreaView>
 
-        <View style={styles.avatarContainer}>
-          {profileImage ? (
-            <Image source={{ uri: profileImage }} style={styles.avatarImage} />
-          ) : (
-            <View style={styles.avatarPlaceholder} />
-          )}
+            <View style={styles.avatarContainer}>
+              {profileImage ? (
+                <Image source={{ uri: profileImage }} style={styles.avatarImage} />
+              ) : (
+                <View style={styles.avatarPlaceholder} />
+              )}
+            </View>
+            <Text style={styles.userName}>{getDisplayName()}</Text>
+            <View style={{ height: SPACING.xl }} />
+          </View>
+
+          <ScrollView contentContainerStyle={styles.scrollContent} bounces={false}>
+            <View style={styles.contentArea}>
+              {/* Primary actions card */}
+              <View style={styles.menuCard}>
+                <MenuItem
+                  icon="pencil-outline"
+                  title="Edit profile"
+                  onPress={() => setEditModalVisible(true)}
+                />
+                <View style={styles.divider} />
+                {user ? (
+                  <MenuItem
+                    icon="log-out-outline"
+                    title="Log Out"
+                    titleColor={COLORS.error}
+                    iconBgColor="rgba(239, 68, 68, 0.12)"
+                    iconColor={COLORS.error}
+                    onPress={() =>
+                      Alert.alert(
+                        'Log out',
+                        'Are you sure you want to log out?',
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          { text: 'Log out', style: 'destructive', onPress: () => signOut() },
+                        ],
+                      )
+                    }
+                  />
+                ) : (
+                  <MenuItem
+                    icon="link-outline"
+                    title="Create an Account"
+                    subtitle="Save your experiences across devices"
+                    onPress={() => setAuthModalVisible(true)}
+                  />
+                )}
+              </View>
+
+              {/* More section */}
+              <Text style={styles.sectionLabel}>More</Text>
+              <View style={styles.menuCard}>
+                <MenuItem
+                  icon="heart-outline"
+                  title="About App"
+                  onPress={() => setAboutModalVisible(true)}
+                />
+              </View>
+            </View>
+          </ScrollView>
         </View>
-
-        <Text style={styles.userName}>{getDisplayName()}</Text>
-        <View style={{ height: SPACING.xl }} />
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scrollContent} bounces={false}>
-        <View style={styles.contentArea}>
-          {/* Primary actions card */}
-          <View style={styles.menuCard}>
-            <MenuItem
-              icon="pencil-outline"
-              title="Edit profile"
-              onPress={() => setEditModalVisible(true)}
-            />
-            <View style={styles.divider} />
-            {user ? (
-              <MenuItem
-                icon="log-out-outline"
-                title="Log Out"
-                titleColor={COLORS.error}
-                iconBgColor="rgba(239, 68, 68, 0.12)"
-                iconColor={COLORS.error}
-                onPress={() =>
-                  Alert.alert(
-                    'Log out',
-                    'Are you sure you want to log out?',
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      { text: 'Log out', style: 'destructive', onPress: () => signOut() },
-                    ],
-                  )
-                }
-              />
-            ) : (
-              <MenuItem
-                icon="link-outline"
-                title="Create an Account"
-                subtitle="Save your experiences across devices"
-                onPress={() => setAuthModalVisible(true)}
-              />
-            )}
-          </View>
-
-          {/* More section */}
-          <Text style={styles.sectionLabel}>More</Text>
-          <View style={styles.menuCard}>
-            <MenuItem
-              icon="heart-outline"
-              title="About App"
-              onPress={() => setAboutModalVisible(true)}
-            />
-          </View>
-        </View>
-      </ScrollView>
+      </Modal>
 
       {/* Sign in / sign up sheet */}
       <Modal
@@ -207,7 +215,6 @@ export default function ProfileScreen({ navigation }: any) {
         onClose={() => setAboutModalVisible(false)}
       />
 
-      {/* Edit Profile full-screen */}
       <EditProfileScreen
         visible={editModalVisible}
         firstName={firstName}
@@ -216,12 +223,12 @@ export default function ProfileScreen({ navigation }: any) {
         onClose={() => setEditModalVisible(false)}
         onSave={handleSaveProfile}
       />
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  modalRoot: {
     flex: 1,
     backgroundColor: '#F5F7FA',
   },
@@ -237,19 +244,25 @@ const styles = StyleSheet.create({
   headerTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
   },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  cancelButton: {
+    minWidth: 80,
+  },
+  cancelText: {
+    fontFamily: FONTS.medium,
+    fontSize: FONT_SIZES.md,
+    color: 'rgba(255,255,255,0.85)',
     backgroundColor: 'rgba(255,255,255,0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: BORDER_RADIUS.full,
+    overflow: 'hidden',
+    textAlign: 'center',
   },
   headerTitle: {
-    flex: 1,
     fontFamily: FONTS.semiBold,
     fontSize: FONT_SIZES.lg,
     color: COLORS.white,
