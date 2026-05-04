@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import { getLocalEvents, LocalEvent } from '../lib/localStorage';
@@ -88,7 +89,17 @@ export default function StatsScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.navy} />
         }
       >
-        <Text style={styles.pageTitle}>Stats</Text>
+        {/* Header row */}
+        <View style={styles.pageHeader}>
+          <Text style={styles.pageTitle}>Stats</Text>
+          <TouchableOpacity
+            style={styles.editProfileButton}
+            onPress={() => navigation.navigate('Profile')}
+          >
+            <Ionicons name="pencil" size={13} color={COLORS.navy} />
+            <Text style={styles.editProfileButtonText}>Edit</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Fan Card */}
         <View style={styles.fanCardContainer}>
@@ -102,14 +113,6 @@ export default function StatsScreen() {
             venueCount={venueCount}
             sportsCount={sportsCount}
           />
-          {!firstName && (
-            <TouchableOpacity
-              style={styles.editProfileButton}
-              onPress={() => navigation.navigate('Profile')}
-            >
-              <Text style={styles.editProfileButtonText}>Edit Profile</Text>
-            </TouchableOpacity>
-          )}
         </View>
 
         {/* Fan Level Card */}
@@ -171,20 +174,23 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
     paddingBottom: 100,
   },
+  pageHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.lg,
+  },
   pageTitle: {
-    fontFamily: 'GeistMono_700Bold',
+    fontFamily: FONTS.bold,
     fontSize: 32,
     color: COLORS.navy,
-    marginBottom: SPACING.lg,
-  },
-  fanCardContainer: {
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
   },
   editProfileButton: {
-    marginTop: SPACING.md,
-    paddingVertical: 10,
-    paddingHorizontal: SPACING.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 7,
+    paddingHorizontal: SPACING.md,
     borderRadius: BORDER_RADIUS.full,
     borderWidth: 1.5,
     borderColor: COLORS.navy,
@@ -193,6 +199,10 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.semiBold,
     fontSize: FONT_SIZES.sm,
     color: COLORS.navy,
+  },
+  fanCardContainer: {
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
   },
   fanLevelCard: {
     backgroundColor: COLORS.white,

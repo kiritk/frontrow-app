@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { fetchEvents as fetchEventsFromService } from '../lib/eventService';
 import EventsGlobe from '../components/EventsGlobe';
-import { COLORS, SPACING } from '../theme/colors';
+import { COLORS, SPACING, FONTS } from '../theme/colors';
 
 interface Event {
   id: string;
@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cream,
   },
   pageTitle: {
-    fontFamily: 'GeistMono_700Bold',
+    fontFamily: FONTS.bold,
     fontSize: 32,
     color: COLORS.navy,
     paddingHorizontal: SPACING.lg,

@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
     width: 38,
   },
   pageTitle: {
-    fontFamily: 'GeistMono_700Bold',
+    fontFamily: FONTS.bold,
     fontSize: 28,
     color: COLORS.navy,
     paddingHorizontal: SIDE_PADDING,
