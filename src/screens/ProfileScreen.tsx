@@ -237,6 +237,11 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
     alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.7,
+    shadowRadius: 20,
+    elevation: 12,
   },
   headerSafeArea: {
     alignSelf: 'stretch',
