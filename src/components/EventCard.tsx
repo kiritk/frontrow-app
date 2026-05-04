@@ -73,27 +73,39 @@ export const getCardStyle = (type: string, sport?: string) => {
   }
 };
 
-// Layer 2: event-type colored gradient overlay for identity and depth
+// Layer 2: event-type colored gradient overlay — mirrors the existing getCardStyle palette
 const getEventOverlayColors = (type: string, sport?: string): [string, string, string] => {
   switch (type) {
+    // Concert: purple  (#1a1a2e → #2d1f3d → #4a1a6b)
     case 'concert':
-      return ['rgba(55,0,90,0.75)', 'rgba(25,0,55,0.30)', 'rgba(70,0,110,0.82)'];
+      return ['rgba(26,26,46,0.78)', 'rgba(45,31,61,0.35)', 'rgba(74,26,107,0.85)'];
+    // Theater: navy blue (accent #003CFF)
     case 'theater':
-      return ['rgba(65,18,0,0.75)', 'rgba(45,12,0,0.30)', 'rgba(38,8,0,0.82)'];
+      return ['rgba(0,30,120,0.78)', 'rgba(0,20,80,0.35)', 'rgba(0,40,160,0.85)'];
+    // Comedy: deep red (#1a0505 → #6b0101)
     case 'comedy':
-      return ['rgba(75,0,0,0.75)', 'rgba(55,0,0,0.30)', 'rgba(45,0,0,0.82)'];
+      return ['rgba(61,10,10,0.78)', 'rgba(26,5,5,0.35)', 'rgba(107,1,1,0.85)'];
+    // Landmark: warm charcoal (#1a1917 → #3b3734)
     case 'landmark':
-      return ['rgba(35,28,18,0.75)', 'rgba(28,22,14,0.30)', 'rgba(22,17,10,0.82)'];
-    case 'sports':
-      if (sport === 'nba') return ['rgba(0,8,28,0.72)', 'rgba(90,45,0,0.38)', 'rgba(0,5,22,0.84)'];
-      if (sport === 'nfl') return ['rgba(18,0,38,0.72)', 'rgba(8,0,22,0.30)', 'rgba(12,0,30,0.84)'];
-      if (sport === 'mlb') return ['rgba(0,18,5,0.72)', 'rgba(0,28,8,0.30)', 'rgba(0,12,4,0.84)'];
-      if (sport === 'soccer') return ['rgba(0,12,45,0.72)', 'rgba(0,22,55,0.30)', 'rgba(0,8,35,0.84)'];
-      return ['rgba(48,0,5,0.72)', 'rgba(38,0,5,0.30)', 'rgba(28,0,4,0.84)'];
+      return ['rgba(26,25,23,0.78)', 'rgba(45,43,40,0.35)', 'rgba(59,55,52,0.85)'];
+    // Other: burnt orange (#2a1510 → #e6563b)
     case 'other':
-      return ['rgba(28,8,4,0.75)', 'rgba(18,6,3,0.30)', 'rgba(22,7,3,0.82)'];
+      return ['rgba(42,21,16,0.78)', 'rgba(77,42,31,0.35)', 'rgba(230,86,59,0.85)'];
+    case 'sports':
+      // NBA: orange (#7a3000 → #f0622d)
+      if (sport === 'nba')    return ['rgba(122,48,0,0.75)', 'rgba(192,78,26,0.38)', 'rgba(240,98,45,0.85)'];
+      // NFL: brown (accent #BA4813)
+      if (sport === 'nfl')    return ['rgba(80,30,8,0.75)', 'rgba(50,20,5,0.35)', 'rgba(100,40,10,0.85)'];
+      // MLB: green (#1a3a1a → #3a7a3a)
+      if (sport === 'mlb')    return ['rgba(26,58,26,0.75)', 'rgba(42,90,42,0.35)', 'rgba(58,122,58,0.85)'];
+      // Soccer: ocean blue (#003d5c → #0077B6)
+      if (sport === 'soccer') return ['rgba(0,61,92,0.75)', 'rgba(0,90,138,0.35)', 'rgba(0,119,182,0.85)'];
+      // Tennis: green (#3d5c00 → #6b9a00)
+      if (sport === 'tennis') return ['rgba(61,92,0,0.75)', 'rgba(78,122,0,0.35)', 'rgba(107,154,0,0.85)'];
+      // Generic sports: red (#5c0008 → #c30010)
+      return ['rgba(92,0,8,0.75)', 'rgba(144,0,16,0.35)', 'rgba(195,0,16,0.85)'];
     default:
-      return ['rgba(0,0,0,0.62)', 'rgba(0,0,0,0.18)', 'rgba(0,0,0,0.68)'];
+      return ['rgba(44,62,80,0.75)', 'rgba(58,79,99,0.35)', 'rgba(74,98,120,0.85)'];
   }
 };
 
