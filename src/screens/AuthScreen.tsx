@@ -41,7 +41,10 @@ export default function AuthScreen() {
     try {
       const { error } = isSignUp ? await signUp(email, password) : await signIn(email, password);
       if (error) {
-        Alert.alert('Error', error.message);
+        const message = error.message?.toLowerCase().includes('network')
+          ? 'Unable to connect. Please check your internet connection and try again.'
+          : error.message;
+        Alert.alert('Error', message);
       } else if (isSignUp) {
         Alert.alert('Success', 'Account created! You can now sign in.');
         switchTab(false);
