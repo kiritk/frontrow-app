@@ -178,18 +178,31 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   }, [detailAnim, listAnim, fetchEvents]);
 
   const renderEventCard = useCallback(
-    ({ item, index }: { item: Event; index: number }) => (
-      <View
-        style={{
-          zIndex: index + 1,
-          marginTop: index === 0 ? 0 : -(STACKED_CARD_HEIGHT - PEEK_HEIGHT),
-          alignItems: 'center',
-        }}
-      >
-        <EventCard event={item} onPress={() => openDetail(item)} />
-      </View>
-    ),
-    [openDetail],
+    ({ item, index }: { item: Event; index: number }) => {
+      const total = filteredEvents.length;
+      const indexFromFront = total - 1 - index; // 0 = front/top card
+      const isFront = indexFromFront === 0;
+
+      // Wallet stack: scale down and fade cards further behind the front
+      const cardScale = Math.max(0.92, 1 - indexFromFront * 0.04);
+      const cardOpacity = Math.max(0.60, 1 - indexFromFront * 0.20);
+      const cardTranslateY = indexFromFront * 12;
+
+      return (
+        <View
+          style={{
+            zIndex: index + 1,
+            marginTop: index === 0 ? 0 : -(STACKED_CARD_HEIGHT - PEEK_HEIGHT),
+            alignItems: 'center',
+            transform: [{ scale: cardScale }, { translateY: cardTranslateY }],
+            opacity: cardOpacity,
+          }}
+        >
+          <EventCard event={item} onPress={() => openDetail(item)} isFront={isFront} />
+        </View>
+      );
+    },
+    [openDetail, filteredEvents.length],
   );
 
   const ListHeader = (
