@@ -381,11 +381,15 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>Select an Event type</Text>
                   {eventType && !eventTypeExpanded && (
-                    <Ionicons
-                      name={EVENT_TYPES.find(t => t.value === eventType)?.icon || 'ellipse'}
-                      size={18}
-                      color={COLORS.navy}
-                    />
+                    eventType === 'theater' ? (
+                      <MaterialCommunityIcons name="drama-masks" size={18} color={COLORS.navy} />
+                    ) : (
+                      <Ionicons
+                        name={EVENT_TYPES.find(t => t.value === eventType)?.icon || 'ellipse'}
+                        size={18}
+                        color={COLORS.navy}
+                      />
+                    )
                   )}
                 </View>
                 {eventTypeExpanded && (

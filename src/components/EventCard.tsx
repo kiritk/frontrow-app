@@ -242,7 +242,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false }
               style={StyleSheet.absoluteFill}
               imageStyle={styles.stackedBgImage}
             >
-              <View style={[StyleSheet.absoluteFill, styles.imageDarken]} />
+              {isFront && <View style={[StyleSheet.absoluteFill, styles.imageDarken]} />}
               {isFront ? (
                 // Front card: semi-transparent gradient so the image shows through
                 <LinearGradient
@@ -251,8 +251,8 @@ export default React.memo(function EventCard({ event, onPress, isFront = false }
                   style={StyleSheet.absoluteFill}
                 />
               ) : (
-                // Peeking card: solid flat color — 100% opaque, no gradient
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: solidColor }]} />
+                // Peeking card: 90% opaque flat color — lets background image subtly show
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: solidColor, opacity: 0.9 }]} />
               )}
             </ImageBackground>
           ) : (
@@ -260,31 +260,31 @@ export default React.memo(function EventCard({ event, onPress, isFront = false }
             <View style={[StyleSheet.absoluteFill, { backgroundColor: solidColor }]} />
           )}
 
-          {/* Layer 3: Glass highlight — top edge sheen (premium ticket feel) */}
-          <View style={styles.glassHighlight} />
-
-          {/* Layer 4: Grain simulation */}
-          <LinearGradient
-            colors={['rgba(255,255,255,0.04)', 'rgba(0,0,0,0.04)', 'rgba(255,255,255,0.03)', 'rgba(0,0,0,0.03)']}
-            locations={[0, 0.33, 0.66, 1]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-          <LinearGradient
-            colors={['rgba(0,0,0,0.03)', 'rgba(255,255,255,0.03)', 'rgba(0,0,0,0.03)', 'rgba(255,255,255,0.02)']}
-            locations={[0, 0.33, 0.66, 1]}
-            start={{ x: 1, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-
-          {/* Bottom-edge darkening for peek-card separation */}
-          <LinearGradient
-            colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.55)']}
-            style={styles.peekBottomEdge}
-            pointerEvents="none"
-          />
+          {/* Layer 3 + 4: Glass highlight and grain — front card only */}
+          {isFront && (
+            <>
+              <View style={styles.glassHighlight} />
+              <LinearGradient
+                colors={['rgba(255,255,255,0.04)', 'rgba(0,0,0,0.04)', 'rgba(255,255,255,0.03)', 'rgba(0,0,0,0.03)']}
+                locations={[0, 0.33, 0.66, 1]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+              <LinearGradient
+                colors={['rgba(0,0,0,0.03)', 'rgba(255,255,255,0.03)', 'rgba(0,0,0,0.03)', 'rgba(255,255,255,0.02)']}
+                locations={[0, 0.33, 0.66, 1]}
+                start={{ x: 1, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+              <LinearGradient
+                colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.55)']}
+                style={styles.peekBottomEdge}
+                pointerEvents="none"
+              />
+            </>
+          )}
 
           {isFront ? (
             // ── Front card: full expanded layout ─────────────────────────
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     backgroundColor: '#1a1a2e',
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.20)',
+    borderColor: 'rgba(255,255,255,0.50)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.15,
