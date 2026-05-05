@@ -61,55 +61,58 @@ const OTHER_COLORS = {
 
 export const getCardStyle = (type: string, sport?: string) => {
   switch (type) {
-    case 'concert': return { gradientColors: [CONCERT_COLORS.gradientStart, CONCERT_COLORS.gradientMid, CONCERT_COLORS.gradientEnd] as [string, string, string], accentColor: CONCERT_COLORS.accent };
-    case 'theater': return { gradientColors: [THEATER_COLORS.gradientStart, THEATER_COLORS.gradientMid, THEATER_COLORS.gradientEnd] as [string, string, string], accentColor: THEATER_COLORS.accent };
-    case 'comedy': return { gradientColors: [COMEDY_COLORS.gradientStart, COMEDY_COLORS.gradientMid, COMEDY_COLORS.gradientEnd] as [string, string, string], accentColor: COMEDY_COLORS.accent };
+    case 'concert':  return { gradientColors: ['#6a1178', '#8C169E', '#aa1ac0'] as [string, string, string], accentColor: '#8C169E' };
+    case 'theater':  return { gradientColors: ['#182847', '#223766', '#2a4480'] as [string, string, string], accentColor: '#223766' };
+    case 'comedy':   return { gradientColors: [COMEDY_COLORS.gradientStart,  COMEDY_COLORS.gradientMid,  COMEDY_COLORS.gradientEnd]  as [string, string, string], accentColor: COMEDY_COLORS.accent };
     case 'landmark': return { gradientColors: [LANDMARK_COLORS.gradientStart, LANDMARK_COLORS.gradientMid, LANDMARK_COLORS.gradientEnd] as [string, string, string], accentColor: LANDMARK_COLORS.accent };
-    case 'other': return { gradientColors: [OTHER_COLORS.gradientStart, OTHER_COLORS.gradientMid, OTHER_COLORS.gradientEnd] as [string, string, string], accentColor: OTHER_COLORS.accent };
+    case 'other':    return { gradientColors: [OTHER_COLORS.gradientStart,    OTHER_COLORS.gradientMid,    OTHER_COLORS.gradientEnd]    as [string, string, string], accentColor: OTHER_COLORS.accent };
     case 'sports':
-      if (sport === 'nfl') return { gradientColors: ['#2a1a3a', '#4a2a5a', '#6a3a7a'] as [string, string, string], accentColor: '#BA4813' };
-      if (sport === 'mlb') return { gradientColors: ['#1a3a1a', '#2a5a2a', '#3a7a3a'] as [string, string, string], accentColor: '#D90000' };
-      if (sport === 'nba') return { gradientColors: ['#7a3000', '#c04e1a', '#f0622d'] as [string, string, string], accentColor: '#FF6B24' };
-      if (sport === 'soccer') return { gradientColors: ['#003d5c', '#005a8a', '#0077B6'] as [string, string, string], accentColor: '#66b8de' };
-      if (sport === 'tennis') return { gradientColors: ['#3d5c00', '#4e7a00', '#6b9a00'] as [string, string, string], accentColor: '#a0c300' };
+      if (sport === 'nfl')    return { gradientColors: ['#2a1a3a', '#4a2a5a', '#6a3a7a'] as [string, string, string], accentColor: '#BA4813' };
+      if (sport === 'mlb')    return { gradientColors: ['#6a1818', '#8D2222', '#b02828'] as [string, string, string], accentColor: '#8D2222' };
+      if (sport === 'nba')    return { gradientColors: ['#6a2f18', '#8D4022', '#b05028'] as [string, string, string], accentColor: '#8D4022' };
+      if (sport === 'soccer') return { gradientColors: ['#184e68', '#22698D', '#2a80ae'] as [string, string, string], accentColor: '#22698D' };
+      if (sport === 'tennis') return { gradientColors: ['#186830', '#228D40', '#2ab050'] as [string, string, string], accentColor: '#228D40' };
       return { gradientColors: ['#5c0008', '#900010', '#c30010'] as [string, string, string], accentColor: '#003FFF' };
     default: return { gradientColors: ['#2c3e50', '#3a4f63', '#4a6278'] as [string, string, string], accentColor: '#85929e' };
   }
 };
 
-// Layer 2: event-type colored gradient overlay — mirrors the existing getCardStyle palette
+// Solid flat background color for peeking cards (100% opaque, no gradient)
+const getEventSolidColor = (type: string, sport?: string): string => {
+  switch (type) {
+    case 'concert':  return '#8C169E';
+    case 'theater':  return '#223766';
+    case 'comedy':   return '#6b0101';
+    case 'landmark': return '#3b3734';
+    case 'other':    return '#e6563b';
+    case 'sports':
+      if (sport === 'nba')    return '#8D4022';
+      if (sport === 'nfl')    return '#BA4813';
+      if (sport === 'mlb')    return '#8D2222';
+      if (sport === 'soccer') return '#22698D';
+      if (sport === 'tennis') return '#228D40';
+      return '#c30010';
+    default: return '#2c3e50';
+  }
+};
+
+// Semi-transparent gradient overlay for the front card (lets background image show through)
 const getEventOverlayColors = (type: string, sport?: string): [string, string, string] => {
   switch (type) {
-    // Concert: purple  (#1a1a2e → #2d1f3d → #4a1a6b)
-    case 'concert':
-      return ['rgba(26,26,46,0.78)', 'rgba(45,31,61,0.35)', 'rgba(74,26,107,0.85)'];
-    // Theater: navy blue (accent #003CFF)
-    case 'theater':
-      return ['rgba(0,30,120,0.78)', 'rgba(0,20,80,0.35)', 'rgba(0,40,160,0.85)'];
-    // Comedy: deep red (#1a0505 → #6b0101)
-    case 'comedy':
-      return ['rgba(61,10,10,0.78)', 'rgba(26,5,5,0.35)', 'rgba(107,1,1,0.85)'];
-    // Landmark: warm charcoal (#1a1917 → #3b3734)
-    case 'landmark':
-      return ['rgba(26,25,23,0.78)', 'rgba(45,43,40,0.35)', 'rgba(59,55,52,0.85)'];
-    // Other: burnt orange (#2a1510 → #e6563b)
-    case 'other':
-      return ['rgba(42,21,16,0.78)', 'rgba(77,42,31,0.35)', 'rgba(230,86,59,0.85)'];
+    case 'concert':  return ['rgba(140,22,158,0.72)', 'rgba(140,22,158,0.35)', 'rgba(140,22,158,0.82)'];
+    case 'theater':  return ['rgba(34,55,102,0.72)',  'rgba(34,55,102,0.35)',  'rgba(34,55,102,0.82)'];
+    case 'comedy':   return ['rgba(61,10,10,0.72)',   'rgba(61,10,10,0.35)',   'rgba(107,1,1,0.82)'];
+    case 'landmark': return ['rgba(26,25,23,0.72)',   'rgba(45,43,40,0.35)',   'rgba(59,55,52,0.82)'];
+    case 'other':    return ['rgba(42,21,16,0.72)',   'rgba(77,42,31,0.35)',   'rgba(230,86,59,0.82)'];
     case 'sports':
-      // NBA: orange (#7a3000 → #f0622d)
-      if (sport === 'nba')    return ['rgba(122,48,0,0.75)', 'rgba(192,78,26,0.38)', 'rgba(240,98,45,0.85)'];
-      // NFL: brown (accent #BA4813)
-      if (sport === 'nfl')    return ['rgba(80,30,8,0.75)', 'rgba(50,20,5,0.35)', 'rgba(100,40,10,0.85)'];
-      // MLB: green (#1a3a1a → #3a7a3a)
-      if (sport === 'mlb')    return ['rgba(26,58,26,0.75)', 'rgba(42,90,42,0.35)', 'rgba(58,122,58,0.85)'];
-      // Soccer: ocean blue (#003d5c → #0077B6)
-      if (sport === 'soccer') return ['rgba(0,61,92,0.75)', 'rgba(0,90,138,0.35)', 'rgba(0,119,182,0.85)'];
-      // Tennis: green (#3d5c00 → #6b9a00)
-      if (sport === 'tennis') return ['rgba(61,92,0,0.75)', 'rgba(78,122,0,0.35)', 'rgba(107,154,0,0.85)'];
-      // Generic sports: red (#5c0008 → #c30010)
-      return ['rgba(92,0,8,0.75)', 'rgba(144,0,16,0.35)', 'rgba(195,0,16,0.85)'];
+      if (sport === 'nba')    return ['rgba(141,64,34,0.72)',  'rgba(141,64,34,0.38)',  'rgba(141,64,34,0.82)'];
+      if (sport === 'nfl')    return ['rgba(80,30,8,0.72)',    'rgba(50,20,5,0.35)',    'rgba(100,40,10,0.82)'];
+      if (sport === 'mlb')    return ['rgba(141,34,34,0.72)',  'rgba(141,34,34,0.35)',  'rgba(141,34,34,0.82)'];
+      if (sport === 'soccer') return ['rgba(34,105,141,0.72)', 'rgba(34,105,141,0.35)', 'rgba(34,105,141,0.82)'];
+      if (sport === 'tennis') return ['rgba(34,141,64,0.72)',  'rgba(34,141,64,0.35)',  'rgba(34,141,64,0.82)'];
+      return ['rgba(92,0,8,0.72)', 'rgba(144,0,16,0.35)', 'rgba(195,0,16,0.82)'];
     default:
-      return ['rgba(44,62,80,0.75)', 'rgba(58,79,99,0.35)', 'rgba(74,98,120,0.85)'];
+      return ['rgba(44,62,80,0.72)', 'rgba(58,79,99,0.35)', 'rgba(74,98,120,0.82)'];
   }
 };
 
@@ -203,6 +206,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false }
   const titleFont = getTitleFont(event.type);
   const displayTitle = getTitleText(event.title, event.type);
   const accentColor = (isTeamSport && homeTeam) ? homeTeam.primaryColor : cardStyle.accentColor;
+  const solidColor = getEventSolidColor(event.type, event.sport);
 
   // Press spring animation
   const pressScale = useSharedValue(1);
@@ -231,37 +235,30 @@ export default React.memo(function EventCard({ event, onPress, isFront = false }
       >
         <View style={styles.stackedCard}>
 
-          {/* Layer 1: Full-bleed background image */}
+          {/* Layer 1 + 2: Background + color overlay */}
           {bgSource ? (
             <ImageBackground
               source={bgSource}
               style={StyleSheet.absoluteFill}
               imageStyle={styles.stackedBgImage}
             >
-              {/* Slight darkening for readability */}
               <View style={[StyleSheet.absoluteFill, styles.imageDarken]} />
-              {/* Layer 2: Event-type colored gradient */}
-              <LinearGradient
-                colors={overlayColors}
-                locations={[0, 0.42, 1]}
-                style={StyleSheet.absoluteFill}
-              />
+              {isFront ? (
+                // Front card: semi-transparent gradient so the image shows through
+                <LinearGradient
+                  colors={overlayColors}
+                  locations={[0, 0.42, 1]}
+                  style={StyleSheet.absoluteFill}
+                />
+              ) : (
+                // Peeking card: solid flat color — 100% opaque, no gradient
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: solidColor }]} />
+              )}
             </ImageBackground>
           ) : (
-            <LinearGradient
-              colors={cardStyle.gradientColors}
-              style={StyleSheet.absoluteFill}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0.5, y: 1 }}
-            />
+            // No image: solid event color
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: solidColor }]} />
           )}
-
-          {/* Accent color band from top */}
-          <LinearGradient
-            colors={[accentColor + 'CC', accentColor + '80', accentColor + '00']}
-            locations={[0, 0.5, 1]}
-            style={styles.accentBand}
-          />
 
           {/* Layer 3: Glass highlight — top edge sheen (premium ticket feel) */}
           <View style={styles.glassHighlight} />
@@ -360,9 +357,6 @@ export default React.memo(function EventCard({ event, onPress, isFront = false }
         </View>
       </TouchableOpacity>
 
-      {/* Ticket cutout circles — positioned at midpoint, visible only on front card */}
-      <View style={styles.cutoutLeft} />
-      <View style={styles.cutoutRight} />
     </Animated.View>
   );
 });
@@ -391,13 +385,6 @@ const styles = StyleSheet.create({
   },
   imageDarken: {
     backgroundColor: 'rgba(0,0,0,0.25)',
-  },
-  accentBand: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 60,
   },
   glassHighlight: {
     position: 'absolute',
@@ -581,23 +568,4 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
-  // ── Ticket cutout circles ─────────────────────────────────────────────
-  cutoutLeft: {
-    position: 'absolute',
-    left: -10,
-    top: '50%',
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: COLORS.cream,
-  },
-  cutoutRight: {
-    position: 'absolute',
-    right: -10,
-    top: '50%',
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: COLORS.cream,
-  },
 });
