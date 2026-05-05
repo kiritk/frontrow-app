@@ -225,6 +225,13 @@ export default function EventCard({ event, onPress }: EventCardProps) {
             style={styles.glassReflection}
           />
 
+          {/* Bottom-edge darkening — the dark line at the base of each peeking card's visible strip */}
+          <LinearGradient
+            colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.55)']}
+            style={styles.peekBottomEdge}
+            pointerEvents="none"
+          />
+
           {/* Layer 4: Micro-texture grain simulation via cross-hatched gradient pair */}
           <LinearGradient
             colors={['rgba(255,255,255,0.04)', 'rgba(0,0,0,0.04)', 'rgba(255,255,255,0.03)', 'rgba(0,0,0,0.03)']}
@@ -286,16 +293,19 @@ const styles = StyleSheet.create({
     height: STACKED_CARD_HEIGHT,
     borderRadius: 24,
     backgroundColor: '#1a1a2e',
-    // Deeper shadow for a lifted, premium feel
+    // Visible rim that reads as a card edge
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.20)',
+    // Tighter, more defined shadow so depth reads clearly between stacked cards
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.38,
-    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.45,
+    shadowRadius: 10,
     elevation: 14,
   },
   stackedCard: {
     flex: 1,
-    borderRadius: 24,
+    borderRadius: 23,
     overflow: 'hidden',
   },
   stackedBgImage: {
@@ -314,6 +324,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 88,
+  },
+  peekBottomEdge: {
+    position: 'absolute',
+    top: PEEK_HEIGHT - 18,
+    left: 0,
+    right: 0,
+    height: 18,
   },
   grainLayer: {
     opacity: 1,
