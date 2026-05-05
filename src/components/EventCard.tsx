@@ -73,6 +73,42 @@ export const getCardStyle = (type: string, sport?: string) => {
   }
 };
 
+// Layer 2: event-type colored gradient overlay — mirrors the existing getCardStyle palette
+const getEventOverlayColors = (type: string, sport?: string): [string, string, string] => {
+  switch (type) {
+    // Concert: purple  (#1a1a2e → #2d1f3d → #4a1a6b)
+    case 'concert':
+      return ['rgba(26,26,46,0.78)', 'rgba(45,31,61,0.35)', 'rgba(74,26,107,0.85)'];
+    // Theater: navy blue (accent #003CFF)
+    case 'theater':
+      return ['rgba(0,30,120,0.78)', 'rgba(0,20,80,0.35)', 'rgba(0,40,160,0.85)'];
+    // Comedy: deep red (#1a0505 → #6b0101)
+    case 'comedy':
+      return ['rgba(61,10,10,0.78)', 'rgba(26,5,5,0.35)', 'rgba(107,1,1,0.85)'];
+    // Landmark: warm charcoal (#1a1917 → #3b3734)
+    case 'landmark':
+      return ['rgba(26,25,23,0.78)', 'rgba(45,43,40,0.35)', 'rgba(59,55,52,0.85)'];
+    // Other: burnt orange (#2a1510 → #e6563b)
+    case 'other':
+      return ['rgba(42,21,16,0.78)', 'rgba(77,42,31,0.35)', 'rgba(230,86,59,0.85)'];
+    case 'sports':
+      // NBA: orange (#7a3000 → #f0622d)
+      if (sport === 'nba')    return ['rgba(122,48,0,0.75)', 'rgba(192,78,26,0.38)', 'rgba(240,98,45,0.85)'];
+      // NFL: brown (accent #BA4813)
+      if (sport === 'nfl')    return ['rgba(80,30,8,0.75)', 'rgba(50,20,5,0.35)', 'rgba(100,40,10,0.85)'];
+      // MLB: green (#1a3a1a → #3a7a3a)
+      if (sport === 'mlb')    return ['rgba(26,58,26,0.75)', 'rgba(42,90,42,0.35)', 'rgba(58,122,58,0.85)'];
+      // Soccer: ocean blue (#003d5c → #0077B6)
+      if (sport === 'soccer') return ['rgba(0,61,92,0.75)', 'rgba(0,90,138,0.35)', 'rgba(0,119,182,0.85)'];
+      // Tennis: green (#3d5c00 → #6b9a00)
+      if (sport === 'tennis') return ['rgba(61,92,0,0.75)', 'rgba(78,122,0,0.35)', 'rgba(107,154,0,0.85)'];
+      // Generic sports: red (#5c0008 → #c30010)
+      return ['rgba(92,0,8,0.75)', 'rgba(144,0,16,0.35)', 'rgba(195,0,16,0.85)'];
+    default:
+      return ['rgba(44,62,80,0.75)', 'rgba(58,79,99,0.35)', 'rgba(74,98,120,0.85)'];
+  }
+};
+
 export const getBackgroundSource = (event: EventData, homeTeam: any) => {
   const photos = event.photos || [];
   if (photos.length > 0 && photos[0]) return { uri: photos[0] };
@@ -127,6 +163,7 @@ const formatDate = (dateString: string) => {
 export default function EventCard({ event, onPress }: EventCardProps) {
   const { month, day, year } = formatDate(event.date);
   const cardStyle = getCardStyle(event.type, event.sport);
+  const overlayColors = getEventOverlayColors(event.type, event.sport);
 
   const isNFLGame = event.sport === 'nfl' && event.home_team && event.away_team;
   const isMLBGame = event.sport === 'mlb' && event.home_team && event.away_team;
@@ -143,14 +180,17 @@ export default function EventCard({ event, onPress }: EventCardProps) {
     <View style={styles.stackedCardWrapper}>
       <TouchableOpacity onPress={onPress} activeOpacity={0.95} style={{ flex: 1 }}>
         <View style={styles.stackedCard}>
+
+          {/* Layer 1: Rich background image (slightly dimmed) */}
           {bgSource ? (
             <ImageBackground
               source={bgSource}
               style={StyleSheet.absoluteFill}
               imageStyle={styles.stackedBgImage}
             >
+              {/* Layer 2: Event-type colored gradient overlay */}
               <LinearGradient
-                colors={['rgba(0,0,0,0.62)', 'rgba(0,0,0,0.18)', 'rgba(0,0,0,0.68)']}
+                colors={overlayColors}
                 locations={[0, 0.42, 1]}
                 style={StyleSheet.absoluteFill}
               />
@@ -164,16 +204,42 @@ export default function EventCard({ event, onPress }: EventCardProps) {
             />
           )}
 
+          {/* Accent band with team/event color */}
           {(() => {
             const bandColor = (isTeamSport && homeTeam) ? homeTeam.primaryColor : cardStyle.accentColor;
             return (
               <LinearGradient
-                colors={[bandColor + 'FF', bandColor + 'B3', bandColor + '00']}
-                locations={[0, 0.667, 1]}
+                colors={[bandColor + 'CC', bandColor + '80', bandColor + '00']}
+                locations={[0, 0.5, 1]}
                 style={styles.accentBand}
               />
             );
           })()}
+
+          {/* Layer 3: Glass reflection — top-edge sheen for premium materiality */}
+          <LinearGradient
+            colors={['rgba(255,255,255,0.18)', 'rgba(255,255,255,0.06)', 'rgba(255,255,255,0.00)']}
+            locations={[0, 0.45, 1]}
+            start={{ x: 0.1, y: 0 }}
+            end={{ x: 0.9, y: 1 }}
+            style={styles.glassReflection}
+          />
+
+          {/* Layer 4: Micro-texture grain simulation via cross-hatched gradient pair */}
+          <LinearGradient
+            colors={['rgba(255,255,255,0.04)', 'rgba(0,0,0,0.04)', 'rgba(255,255,255,0.03)', 'rgba(0,0,0,0.03)']}
+            locations={[0, 0.33, 0.66, 1]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[StyleSheet.absoluteFill, styles.grainLayer]}
+          />
+          <LinearGradient
+            colors={['rgba(0,0,0,0.03)', 'rgba(255,255,255,0.03)', 'rgba(0,0,0,0.03)', 'rgba(255,255,255,0.02)']}
+            locations={[0, 0.33, 0.66, 1]}
+            start={{ x: 1, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={[StyleSheet.absoluteFill, styles.grainLayer]}
+          />
 
           <View style={styles.peekHeader}>
             {event.type === 'sports' ? (
@@ -218,17 +284,18 @@ const styles = StyleSheet.create({
   stackedCardWrapper: {
     width: SCREEN_WIDTH * 0.9,
     height: STACKED_CARD_HEIGHT,
-    borderRadius: 20,
+    borderRadius: 24,
     backgroundColor: '#1a1a2e',
+    // Deeper shadow for a lifted, premium feel
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.38,
+    shadowRadius: 18,
+    elevation: 14,
   },
   stackedCard: {
     flex: 1,
-    borderRadius: 20,
+    borderRadius: 24,
     overflow: 'hidden',
   },
   stackedBgImage: {
@@ -240,6 +307,16 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 60,
+  },
+  glassReflection: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 88,
+  },
+  grainLayer: {
+    opacity: 1,
   },
   peekHeader: {
     height: PEEK_HEIGHT,
@@ -300,7 +377,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: 'rgba(0,0,0,0.42)',
     gap: 6,
   },
   stackedVenue: {
