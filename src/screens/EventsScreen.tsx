@@ -116,8 +116,10 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   }, [visibleCategories, selectedCategory]);
 
   const filteredEvents = useMemo(() => {
-    if (selectedCategory === 'all') return yearFilteredEvents;
-    return yearFilteredEvents.filter(e => e.type === selectedCategory);
+    const base = selectedCategory === 'all'
+      ? yearFilteredEvents
+      : yearFilteredEvents.filter(e => e.type === selectedCategory);
+    return [...base].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [yearFilteredEvents, selectedCategory]);
 
   const onRefresh = async () => {
