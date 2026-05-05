@@ -252,7 +252,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false }
                 />
               ) : (
                 // Peeking card: 90% opaque flat color — lets background image subtly show
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: solidColor, opacity: 0.9 }]} />
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: solidColor, opacity: 1.0 }]} />
               )}
             </ImageBackground>
           ) : (
