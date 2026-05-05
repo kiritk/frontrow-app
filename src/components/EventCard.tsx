@@ -251,8 +251,8 @@ export default React.memo(function EventCard({ event, onPress, isFront = false }
                   style={StyleSheet.absoluteFill}
                 />
               ) : (
-                // Peeking card: 90% opaque flat color — lets background image subtly show
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: solidColor, opacity: 1.0 }]} />
+                // Peeking card: color overlay at 90% so the card's own image subtly shows through
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: solidColor, opacity: 0.90 }]} />
               )}
             </ImageBackground>
           ) : (
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
   stackedCardWrapper: {
     width: SCREEN_WIDTH * 0.9,
     height: STACKED_CARD_HEIGHT,
-    borderRadius: 28,
+    borderRadius: 20,
     backgroundColor: '#1a1a2e',
     borderWidth: 1.5,
     borderColor: 'rgba(255,255,255,0.50)',
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
   },
   stackedCard: {
     flex: 1,
-    borderRadius: 27,
+    borderRadius: 19,
     overflow: 'hidden',
   },
   stackedBgImage: {
@@ -393,8 +393,8 @@ const styles = StyleSheet.create({
     right: 0,
     height: 60,
     backgroundColor: 'rgba(255,255,255,0.08)',
-    borderTopLeftRadius: 27,
-    borderTopRightRadius: 27,
+    borderTopLeftRadius: 19,
+    borderTopRightRadius: 19,
   },
   peekBottomEdge: {
     position: 'absolute',
