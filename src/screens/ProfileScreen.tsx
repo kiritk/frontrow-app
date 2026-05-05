@@ -99,7 +99,13 @@ export default function ProfileScreen({ navigation }: any) {
     }
   };
 
-  const handleClose = () => navigation.goBack();
+  const handleClose = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      (navigation as any).navigate('Events');
+    }
+  };
 
   const getDisplayName = () => {
     if (firstName || lastName) return `${firstName} ${lastName}`.trim();
