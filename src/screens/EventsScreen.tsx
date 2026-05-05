@@ -253,14 +253,14 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
                     <MaterialCommunityIcons
                       name="drama-masks"
                       size={14}
-                      color={active ? COLORS.navy : COLORS.gray}
+                      color={active ? COLORS.white : COLORS.gray}
                       style={styles.categoryPillIcon}
                     />
                   ) : (
                     <Ionicons
                       name={cat.icon}
                       size={14}
-                      color={active ? COLORS.navy : COLORS.gray}
+                      color={active ? COLORS.white : COLORS.gray}
                       style={styles.categoryPillIcon}
                     />
                   )
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
   // Category pills
   categoryPillsScroll: {
     flexGrow: 0,
-    marginBottom: SPACING.lg,
+    marginBottom: 8,
   },
   categoryPillsContent: {
     paddingHorizontal: SIDE_PADDING,
@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   categoryPillActive: {
-    backgroundColor: COLORS.cream,
+    backgroundColor: COLORS.navy,
     borderColor: COLORS.navy,
   },
   categoryPillIcon: {
@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
     color: COLORS.gray,
   },
   categoryPillTextActive: {
-    color: COLORS.navy,
+    color: COLORS.white,
     fontFamily: FONTS.semiBold,
   },
   // List
