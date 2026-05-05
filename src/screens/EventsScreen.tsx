@@ -185,7 +185,6 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
 
       // Wallet stack: scale down cards further behind the front (no opacity — preserves bold colors)
       const cardScale = Math.max(0.92, 1 - indexFromFront * 0.02);
-      const cardTranslateY = indexFromFront * 12;
 
       return (
         <View
@@ -193,7 +192,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
             zIndex: index + 1,
             marginTop: index === 0 ? 0 : -(STACKED_CARD_HEIGHT - PEEK_HEIGHT),
             alignItems: 'center',
-            transform: [{ scale: cardScale }, { translateY: cardTranslateY }],
+            transform: [{ scale: cardScale }],
           }}
         >
           <EventCard event={item} onPress={() => openDetail(item)} isFront={isFront} />
