@@ -58,6 +58,9 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const [detailVisible, setDetailVisible] = useState(false);
   const listAnim = useRef(new Animated.Value(1)).current;
   const detailAnim = useRef(new Animated.Value(0)).current;
+  const flatListRef = useRef<FlatList>(null);
+  const pendingScrollToEnd = useRef(true);
+  const filteredEventsRef = useRef<Event[]>([]);
 
   const loadProfileImage = useCallback(async () => {
     try {
@@ -121,6 +124,29 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
       : yearFilteredEvents.filter(e => e.type === selectedCategory);
     return [...base].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [yearFilteredEvents, selectedCategory]);
+
+  // Keep ref in sync so the focus listener always sees the latest list
+  filteredEventsRef.current = filteredEvents;
+
+  // Scroll to end when data first arrives after a cold load / focus
+  useEffect(() => {
+    if (filteredEvents.length > 0 && pendingScrollToEnd.current) {
+      pendingScrollToEnd.current = false;
+      flatListRef.current?.scrollToEnd({ animated: false });
+    }
+  }, [filteredEvents]);
+
+  // Mark scroll pending on every screen focus (app open + tab tap)
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (filteredEventsRef.current.length > 0) {
+        flatListRef.current?.scrollToEnd({ animated: false });
+      } else {
+        pendingScrollToEnd.current = true;
+      }
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -204,9 +230,47 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
     [openDetail, filteredEvents.length],
   );
 
-  const ListHeader = (
-    <>
-      {/* Year tabs */}
+  return (
+    <View style={{ flex: 1 }}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <Animated.View
+        style={{
+          flex: 1,
+          opacity: listAnim,
+          transform: [{
+            translateY: listAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [20, 0],
+            }),
+          }],
+        }}
+        pointerEvents={detailVisible ? 'none' : 'auto'}
+      >
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.profileButton}
+          onPress={() => (navigation as any).navigate('Profile')}
+        >
+          {profileImage ? (
+            <Image source={{ uri: profileImage }} style={styles.profileButtonImage} />
+          ) : (
+            <View style={styles.profileButtonPlaceholder}>
+              <Ionicons name="person" size={18} color={COLORS.navy} />
+            </View>
+          )}
+        </TouchableOpacity>
+        <View style={styles.logoPill}>
+          <Text style={styles.logoText}>Front Row</Text>
+        </View>
+        <TouchableOpacity style={styles.shareButton}>
+          <Ionicons name="share-outline" size={18} color={COLORS.navy} />
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.pageTitle}>Events</Text>
+
+      {/* Year tabs — fixed above the scrolling card list */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -232,7 +296,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
       </ScrollView>
       <View style={styles.yearTabDivider} />
 
-      {/* Category pills */}
+      {/* Category pills — fixed above the scrolling card list */}
       {visibleCategories.length > 1 && (
         <ScrollView
           horizontal
@@ -274,54 +338,14 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
           })}
         </ScrollView>
       )}
-    </>
-  );
 
-  return (
-    <View style={{ flex: 1 }}>
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <Animated.View
-        style={{
-          flex: 1,
-          opacity: listAnim,
-          transform: [{
-            translateY: listAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [20, 0],
-            }),
-          }],
-        }}
-        pointerEvents={detailVisible ? 'none' : 'auto'}
-      >
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.profileButton}
-          onPress={() => (navigation as any).navigate('Profile')}
-        >
-          {profileImage ? (
-            <Image source={{ uri: profileImage }} style={styles.profileButtonImage} />
-          ) : (
-            <View style={styles.profileButtonPlaceholder}>
-              <Ionicons name="person" size={18} color={COLORS.navy} />
-            </View>
-          )}
-        </TouchableOpacity>
-        <View style={styles.logoPill}>
-          <Text style={styles.logoText}>Front Row</Text>
-        </View>
-        <View style={styles.headerSpacer} />
-      </View>
-
-      <Text style={styles.pageTitle}>Events</Text>
-
-      {/* Stacked event cards with filters in the list header */}
+      {/* Stacked event cards */}
       <FlatList
+        ref={flatListRef}
         data={filteredEvents}
         renderItem={renderEventCard}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
-        ListHeaderComponent={ListHeader}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.navy} />
         }
@@ -390,17 +414,24 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     paddingHorizontal: SPACING.md,
     paddingVertical: 4,
-    borderRadius: BORDER_RADIUS.xl,
+    borderRadius: BORDER_RADIUS.md,
     borderWidth: 1,
     borderColor: COLORS.creamDark,
   },
   logoText: {
-    fontFamily: FONTS.vt323,
-    fontSize: 26,
+    fontFamily: FONTS.geistMonoBold,
+    fontSize: 18,
     color: COLORS.navy,
   },
-  headerSpacer: {
+  shareButton: {
     width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: COLORS.creamDark,
   },
   pageTitle: {
     fontFamily: FONTS.bold,

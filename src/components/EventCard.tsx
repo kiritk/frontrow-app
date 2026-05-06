@@ -36,6 +36,7 @@ interface EventCardProps {
   event: EventData;
   onPress?: () => void;
   isFront?: boolean;
+  hideViewTicket?: boolean;
 }
 
 const CONCERT_COLORS = {
@@ -185,11 +186,11 @@ const formatDate = (dateString: string) => {
   const month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
   const day = d.getDate();
   const year = d.getFullYear();
-  const weekday = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+  const weekday = d.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
   return { month, day, year, weekday };
 };
 
-export default React.memo(function EventCard({ event, onPress, isFront = false }: EventCardProps) {
+export default React.memo(function EventCard({ event, onPress, isFront = false, hideViewTicket = false }: EventCardProps) {
   const { month, day, year, weekday } = formatDate(event.date);
   const cardStyle = getCardStyle(event.type, event.sport);
   const overlayColors = getEventOverlayColors(event.type, event.sport);
@@ -279,7 +280,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false }
                 style={StyleSheet.absoluteFill}
               />
               <LinearGradient
-                colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.55)']}
+                colors={['rgba(0,0,0,0.55)', 'rgba(0,0,0,0)']}
                 style={styles.peekBottomEdge}
                 pointerEvents="none"
               />
@@ -330,10 +331,12 @@ export default React.memo(function EventCard({ event, onPress, isFront = false }
                     <Text style={styles.venueLocation} numberOfLines={1}>{event.venue_location.split(',')[0].trim()}</Text>
                   ) : null}
                 </View>
-                <TouchableOpacity style={styles.viewTicketButton} activeOpacity={0.85} onPress={onPress}>
-                  <Ionicons name="ticket-outline" size={14} color="#FFFFFF" />
-                  <Text style={styles.viewTicketText}>View Ticket</Text>
-                </TouchableOpacity>
+                {!hideViewTicket && (
+                  <TouchableOpacity style={styles.viewTicketButton} activeOpacity={0.85} onPress={onPress}>
+                    <Ionicons name="ticket-outline" size={14} color="#FFFFFF" />
+                    <Text style={styles.viewTicketText}>View Ticket</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </>
           ) : (
@@ -395,10 +398,10 @@ const styles = StyleSheet.create({
   },
   peekBottomEdge: {
     position: 'absolute',
-    top: PEEK_HEIGHT - 18,
+    top: 0,
     left: 0,
     right: 0,
-    height: 18,
+    height: PEEK_HEIGHT - 18,
   },
 
   // ── Peeking card styles ────────────────────────────────────────────────
