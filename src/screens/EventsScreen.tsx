@@ -390,8 +390,8 @@ const styles = StyleSheet.create({
     borderColor: COLORS.creamDark,
   },
   logoText: {
-    fontFamily: FONTS.vt323,
-    fontSize: 26,
+    fontFamily: FONTS.geistMonoBold,
+    fontSize: 18,
     color: COLORS.navy,
   },
   headerSpacer: {

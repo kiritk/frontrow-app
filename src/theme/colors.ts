@@ -32,6 +32,8 @@ export const FONTS = {
   zain: 'Zain_400Regular',
   vt323: 'VT323_400Regular',
   tourney: 'Tourney_900Black',
+  geistMono: 'GeistMono_400Regular',
+  geistMonoBold: 'GeistMono_700Bold',
 };
 
 export const FONT_SIZES = {
