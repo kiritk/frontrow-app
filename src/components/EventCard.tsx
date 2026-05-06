@@ -264,7 +264,10 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
           {/* Layer 3 + 4: Glass highlight and grain — front card only */}
           {isFront && (
             <>
-              <View style={styles.glassHighlight} />
+              <LinearGradient
+                colors={['rgba(255,255,255,0.08)', 'rgba(255,255,255,0)']}
+                style={styles.glassHighlight}
+              />
               <LinearGradient
                 colors={['rgba(255,255,255,0.04)', 'rgba(0,0,0,0.04)', 'rgba(255,255,255,0.03)', 'rgba(0,0,0,0.03)']}
                 locations={[0, 0.33, 0.66, 1]}
@@ -279,13 +282,15 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
                 end={{ x: 0, y: 1 }}
                 style={StyleSheet.absoluteFill}
               />
-              <LinearGradient
-                colors={['rgba(0,0,0,0.55)', 'rgba(0,0,0,0)']}
-                style={styles.peekBottomEdge}
-                pointerEvents="none"
-              />
             </>
           )}
+
+          {/* Top shadow gradient — all cards */}
+          <LinearGradient
+            colors={['rgba(0,0,0,0.55)', 'rgba(0,0,0,0)']}
+            style={styles.peekBottomEdge}
+            pointerEvents="none"
+          />
 
           {isFront ? (
             // ── Front card: full expanded layout ─────────────────────────
