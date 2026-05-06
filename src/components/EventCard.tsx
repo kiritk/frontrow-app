@@ -330,8 +330,12 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
                           : ''}
                     </Text>
                   </View>
-                  {event.venue && event.venue_location ? (
-                    <Text style={styles.venueLocation} numberOfLines={1}>{event.venue_location.split(',')[0].trim()}</Text>
+                  {event.venue_location ? (
+                    <Text style={styles.venueLocation} numberOfLines={1}>
+                      {event.venue
+                        ? event.venue_location.split(',')[0].trim()
+                        : (event.venue_location.split(',')[2] || '').trim()}
+                    </Text>
                   ) : null}
                 </View>
                 {!hideViewTicket && (
