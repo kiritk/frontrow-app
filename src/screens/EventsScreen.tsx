@@ -61,6 +61,17 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const flatListRef = useRef<FlatList>(null);
   const pendingScrollToEnd = useRef(true);
   const filteredEventsRef = useRef<Event[]>([]);
+  const listLayoutHeight = useRef(0);
+
+  // Scroll so the last card's bottom sits 160px above the viewport bottom (clears tab bar)
+  const scrollToLastCard = useCallback(() => {
+    const n = filteredEventsRef.current.length;
+    if (n === 0 || listLayoutHeight.current === 0) return;
+    const lastCardLayoutBottom = STACKED_CARD_HEIGHT + Math.max(0, n - 1) * PEEK_HEIGHT;
+    const TAB_CLEARANCE = 160;
+    const offset = Math.max(0, lastCardLayoutBottom - listLayoutHeight.current + TAB_CLEARANCE);
+    flatListRef.current?.scrollToOffset({ offset, animated: false });
+  }, []);
 
   const loadProfileImage = useCallback(async () => {
     try {
@@ -128,25 +139,25 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   // Keep ref in sync so the focus listener always sees the latest list
   filteredEventsRef.current = filteredEvents;
 
-  // Scroll to end when data first arrives after a cold load / focus
+  // Scroll to last card when data first arrives after a cold load / focus
   useEffect(() => {
     if (filteredEvents.length > 0 && pendingScrollToEnd.current) {
       pendingScrollToEnd.current = false;
-      flatListRef.current?.scrollToEnd({ animated: false });
+      scrollToLastCard();
     }
-  }, [filteredEvents]);
+  }, [filteredEvents, scrollToLastCard]);
 
   // Mark scroll pending on every screen focus (app open + tab tap)
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       if (filteredEventsRef.current.length > 0) {
-        flatListRef.current?.scrollToEnd({ animated: false });
+        scrollToLastCard();
       } else {
         pendingScrollToEnd.current = true;
       }
     });
     return unsubscribe;
-  }, [navigation]);
+  }, [navigation, scrollToLastCard]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -347,6 +358,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
         renderItem={renderEventCard}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
+        onLayout={e => { listLayoutHeight.current = e.nativeEvent.layout.height; }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.navy} />
         }
