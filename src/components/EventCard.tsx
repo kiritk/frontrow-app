@@ -186,7 +186,7 @@ const formatDate = (dateString: string) => {
   const month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
   const day = d.getDate();
   const year = d.getFullYear();
-  const weekday = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+  const weekday = d.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
   return { month, day, year, weekday };
 };
 
