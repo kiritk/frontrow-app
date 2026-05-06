@@ -244,16 +244,12 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
               imageStyle={styles.stackedBgImage}
             >
               {isFront && <View style={[StyleSheet.absoluteFill, styles.imageDarken]} />}
-              {isFront ? (
-                // Front card: semi-transparent gradient so the image shows through
+              {isFront && (
                 <LinearGradient
                   colors={overlayColors}
                   locations={[0, 0.42, 1]}
                   style={StyleSheet.absoluteFill}
                 />
-              ) : (
-                // Peeking card: color overlay at 90% so the card's own image subtly shows through
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: solidColor, opacity: 0.90 }]} />
               )}
             </ImageBackground>
           ) : (
@@ -261,13 +257,9 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
             <View style={[StyleSheet.absoluteFill, { backgroundColor: solidColor }]} />
           )}
 
-          {/* Layer 3 + 4: Glass highlight and grain — front card only */}
+          {/* Grain — front card only */}
           {isFront && (
             <>
-              <LinearGradient
-                colors={['rgba(255,255,255,0.08)', 'rgba(255,255,255,0)']}
-                style={styles.glassHighlight}
-              />
               <LinearGradient
                 colors={['rgba(255,255,255,0.04)', 'rgba(0,0,0,0.04)', 'rgba(255,255,255,0.03)', 'rgba(0,0,0,0.03)']}
                 locations={[0, 0.33, 0.66, 1]}
