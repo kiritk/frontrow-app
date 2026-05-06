@@ -44,7 +44,8 @@ const CATEGORIES = [
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SIDE_PADDING = SCREEN_WIDTH * 0.05;
-const LIST_BOTTOM_PADDING = 220;
+const TAB_CLEARANCE = 120;
+const LIST_BOTTOM_PADDING = TAB_CLEARANCE;
 
 export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const { user, localEventsVersion } = useAuth();
@@ -68,7 +69,6 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
     const n = filteredEventsRef.current.length;
     if (n === 0 || listLayoutHeight.current === 0) return;
     const lastCardLayoutBottom = STACKED_CARD_HEIGHT + Math.max(0, n - 1) * PEEK_HEIGHT;
-    const TAB_CLEARANCE = 160;
     const offset = Math.max(0, lastCardLayoutBottom - listLayoutHeight.current + TAB_CLEARANCE);
     flatListRef.current?.scrollToOffset({ offset, animated: false });
   }, []);
