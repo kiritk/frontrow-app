@@ -44,7 +44,7 @@ const CATEGORIES = [
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SIDE_PADDING = SCREEN_WIDTH * 0.05;
-const LIST_BOTTOM_PADDING = 110;
+const LIST_BOTTOM_PADDING = 160;
 
 export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const { user, localEventsVersion } = useAuth();
@@ -342,6 +342,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
       {/* Stacked event cards */}
       <FlatList
         ref={flatListRef}
+        style={{ flex: 1 }}
         data={filteredEvents}
         renderItem={renderEventCard}
         keyExtractor={item => item.id}
@@ -477,10 +478,12 @@ const styles = StyleSheet.create({
   // Category pills
   categoryPillsScroll: {
     flexGrow: 0,
+    flexShrink: 0,
     marginBottom: 8,
   },
   categoryPillsContent: {
     paddingHorizontal: SIDE_PADDING,
+    paddingVertical: 4,
     gap: SPACING.sm,
   },
   categoryPill: {
