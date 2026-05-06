@@ -186,7 +186,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
       const isFront = indexFromFront === 0;
 
       // Wallet stack: scale down cards further behind the front (no opacity — preserves bold colors)
-      const cardScale = Math.max(0.92, 1 - indexFromFront * 0.02);
+      const cardScale = Math.max(0.95, 1 - indexFromFront * 0.01);
 
       return (
         <View
