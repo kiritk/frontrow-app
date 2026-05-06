@@ -44,7 +44,7 @@ const CATEGORIES = [
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SIDE_PADDING = SCREEN_WIDTH * 0.05;
-const LIST_BOTTOM_PADDING = 160;
+const LIST_BOTTOM_PADDING = 220;
 
 export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const { user, localEventsVersion } = useAuth();
