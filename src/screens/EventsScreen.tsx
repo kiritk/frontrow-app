@@ -342,6 +342,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
       {/* Stacked event cards */}
       <FlatList
         ref={flatListRef}
+        style={{ flex: 1 }}
         data={filteredEvents}
         renderItem={renderEventCard}
         keyExtractor={item => item.id}
@@ -477,10 +478,12 @@ const styles = StyleSheet.create({
   // Category pills
   categoryPillsScroll: {
     flexGrow: 0,
+    flexShrink: 0,
     marginBottom: 8,
   },
   categoryPillsContent: {
     paddingHorizontal: SIDE_PADDING,
+    paddingVertical: 4,
     gap: SPACING.sm,
   },
   categoryPill: {
