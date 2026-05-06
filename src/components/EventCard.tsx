@@ -243,7 +243,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
               style={StyleSheet.absoluteFill}
               imageStyle={styles.stackedBgImage}
             >
-              {isFront && <View style={[StyleSheet.absoluteFill, styles.imageDarken]} />}
+              <View style={[StyleSheet.absoluteFill, styles.imageDarken]} />
               {isFront && (
                 <LinearGradient
                   colors={overlayColors}
@@ -322,10 +322,20 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
                 <View style={styles.venueBlock}>
                   <View style={styles.venueRow}>
                     <Ionicons name="location-outline" size={13} color="rgba(255,255,255,0.75)" />
-                    <Text style={styles.venueName} numberOfLines={1}>{event.venue}</Text>
+                    <Text style={styles.venueName} numberOfLines={1}>
+                      {event.venue
+                        ? event.venue
+                        : event.venue_location
+                          ? event.venue_location.split(',').slice(0, 2).map(s => s.trim()).join(', ')
+                          : ''}
+                    </Text>
                   </View>
                   {event.venue_location ? (
-                    <Text style={styles.venueLocation} numberOfLines={1}>{event.venue_location.split(',')[0].trim()}</Text>
+                    <Text style={styles.venueLocation} numberOfLines={1}>
+                      {event.venue
+                        ? event.venue_location.split(',')[0].trim()
+                        : (event.venue_location.split(',')[2] || '').trim()}
+                    </Text>
                   ) : null}
                 </View>
                 {!hideViewTicket && (
