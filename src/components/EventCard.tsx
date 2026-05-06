@@ -243,7 +243,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
               style={StyleSheet.absoluteFill}
               imageStyle={styles.stackedBgImage}
             >
-              {isFront && <View style={[StyleSheet.absoluteFill, styles.imageDarken]} />}
+              <View style={[StyleSheet.absoluteFill, styles.imageDarken]} />
               {isFront && (
                 <LinearGradient
                   colors={overlayColors}
