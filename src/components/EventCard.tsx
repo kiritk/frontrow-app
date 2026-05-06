@@ -320,23 +320,27 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
               {/* Footer: venue (left) + View Ticket button (right) */}
               <View style={styles.frontFooter}>
                 <View style={styles.venueBlock}>
-                  <View style={styles.venueRow}>
-                    <Ionicons name="location-outline" size={13} color="rgba(255,255,255,0.75)" />
-                    <Text style={styles.venueName} numberOfLines={1}>
-                      {event.venue
-                        ? event.venue
-                        : event.venue_location
-                          ? event.venue_location.split(',').slice(0, 2).map(s => s.trim()).join(', ')
-                          : ''}
-                    </Text>
-                  </View>
-                  {event.venue_location ? (
-                    <Text style={styles.venueLocation} numberOfLines={1}>
-                      {event.venue
-                        ? event.venue_location.split(',')[0].trim()
-                        : (event.venue_location.split(',')[2] || '').trim()}
-                    </Text>
-                  ) : null}
+                  {(() => {
+                    const hasVenueName = !!event.venue && !event.venue.includes(',');
+                    const locParts = event.venue_location ? event.venue_location.split(',').map(s => s.trim()) : [];
+                    return (
+                      <>
+                        <View style={styles.venueRow}>
+                          <Ionicons name="location-outline" size={13} color="rgba(255,255,255,0.75)" />
+                          <Text style={styles.venueName} numberOfLines={1}>
+                            {hasVenueName
+                              ? event.venue
+                              : locParts.slice(0, 2).join(', ')}
+                          </Text>
+                        </View>
+                        {locParts.length > 0 ? (
+                          <Text style={styles.venueLocation} numberOfLines={1}>
+                            {hasVenueName ? locParts[0] : (locParts[2] || '')}
+                          </Text>
+                        ) : null}
+                      </>
+                    );
+                  })()}
                 </View>
                 {!hideViewTicket && (
                   <TouchableOpacity style={styles.viewTicketButton} activeOpacity={0.85} onPress={onPress}>

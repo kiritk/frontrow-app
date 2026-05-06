@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import { fetchEvents as fetchEventsFromService, removeEvent } from '../lib/eventService';
 import EventCard, { STACKED_CARD_HEIGHT, PEEK_HEIGHT, EventData } from '../components/EventCard';
 import EventDetailView from '../components/EventDetailView';
+import ShareCardModal from '../components/ShareCardModal';
 import * as Haptics from 'expo-haptics';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
@@ -57,6 +58,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [detailVisible, setDetailVisible] = useState(false);
+  const [shareVisible, setShareVisible] = useState(false);
   const listAnim = useRef(new Animated.Value(1)).current;
   const detailAnim = useRef(new Animated.Value(0)).current;
   const flatListRef = useRef<FlatList>(null);
@@ -274,7 +276,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
         <View style={styles.logoPill}>
           <Text style={styles.logoText}>Front Row</Text>
         </View>
-        <TouchableOpacity style={styles.shareButton}>
+        <TouchableOpacity style={styles.shareButton} onPress={() => setShareVisible(true)}>
           <Ionicons name="share-outline" size={18} color={COLORS.navy} />
         </TouchableOpacity>
       </View>
@@ -381,6 +383,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
         animValue={detailAnim}
       />
     )}
+    <ShareCardModal visible={shareVisible} onClose={() => setShareVisible(false)} />
     </View>
   );
 }
