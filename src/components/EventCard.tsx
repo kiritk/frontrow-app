@@ -261,13 +261,9 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
             <View style={[StyleSheet.absoluteFill, { backgroundColor: solidColor }]} />
           )}
 
-          {/* Layer 3 + 4: Glass highlight and grain — front card only */}
+          {/* Grain — front card only */}
           {isFront && (
             <>
-              <LinearGradient
-                colors={['rgba(255,255,255,0.08)', 'rgba(255,255,255,0)']}
-                style={styles.glassHighlight}
-              />
               <LinearGradient
                 colors={['rgba(255,255,255,0.04)', 'rgba(0,0,0,0.04)', 'rgba(255,255,255,0.03)', 'rgba(0,0,0,0.03)']}
                 locations={[0, 0.33, 0.66, 1]}
