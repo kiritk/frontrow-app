@@ -58,6 +58,9 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const [detailVisible, setDetailVisible] = useState(false);
   const listAnim = useRef(new Animated.Value(1)).current;
   const detailAnim = useRef(new Animated.Value(0)).current;
+  const flatListRef = useRef<FlatList>(null);
+  const pendingScrollToEnd = useRef(true);
+  const filteredEventsRef = useRef<Event[]>([]);
 
   const loadProfileImage = useCallback(async () => {
     try {
@@ -121,6 +124,29 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
       : yearFilteredEvents.filter(e => e.type === selectedCategory);
     return [...base].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [yearFilteredEvents, selectedCategory]);
+
+  // Keep ref in sync so the focus listener always sees the latest list
+  filteredEventsRef.current = filteredEvents;
+
+  // Scroll to end when data first arrives after a cold load / focus
+  useEffect(() => {
+    if (filteredEvents.length > 0 && pendingScrollToEnd.current) {
+      pendingScrollToEnd.current = false;
+      flatListRef.current?.scrollToEnd({ animated: false });
+    }
+  }, [filteredEvents]);
+
+  // Mark scroll pending on every screen focus (app open + tab tap)
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (filteredEventsRef.current.length > 0) {
+        flatListRef.current?.scrollToEnd({ animated: false });
+      } else {
+        pendingScrollToEnd.current = true;
+      }
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -315,6 +341,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
 
       {/* Stacked event cards */}
       <FlatList
+        ref={flatListRef}
         data={filteredEvents}
         renderItem={renderEventCard}
         keyExtractor={item => item.id}
