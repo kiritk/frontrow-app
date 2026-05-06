@@ -279,13 +279,15 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
                 end={{ x: 0, y: 1 }}
                 style={StyleSheet.absoluteFill}
               />
-              <LinearGradient
-                colors={['rgba(0,0,0,0.55)', 'rgba(0,0,0,0)']}
-                style={styles.peekBottomEdge}
-                pointerEvents="none"
-              />
             </>
           )}
+
+          {/* Top shadow gradient — all cards */}
+          <LinearGradient
+            colors={['rgba(0,0,0,0.55)', 'rgba(0,0,0,0)']}
+            style={styles.peekBottomEdge}
+            pointerEvents="none"
+          />
 
           {isFront ? (
             // ── Front card: full expanded layout ─────────────────────────
