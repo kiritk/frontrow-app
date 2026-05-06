@@ -61,7 +61,7 @@ const OTHER_COLORS = {
 
 export const getCardStyle = (type: string, sport?: string) => {
   switch (type) {
-    case 'concert':  return { gradientColors: ['#6a1178', '#8C169E', '#aa1ac0'] as [string, string, string], accentColor: '#8C169E' };
+    case 'concert':  return { gradientColors: ['#3a1570', '#4C1D90', '#5e25b0'] as [string, string, string], accentColor: '#4C1D90' };
     case 'theater':  return { gradientColors: ['#182847', '#223766', '#2a4480'] as [string, string, string], accentColor: '#223766' };
     case 'comedy':   return { gradientColors: [COMEDY_COLORS.gradientStart,  COMEDY_COLORS.gradientMid,  COMEDY_COLORS.gradientEnd]  as [string, string, string], accentColor: COMEDY_COLORS.accent };
     case 'landmark': return { gradientColors: [LANDMARK_COLORS.gradientStart, LANDMARK_COLORS.gradientMid, LANDMARK_COLORS.gradientEnd] as [string, string, string], accentColor: LANDMARK_COLORS.accent };
@@ -69,7 +69,7 @@ export const getCardStyle = (type: string, sport?: string) => {
     case 'sports':
       if (sport === 'nfl')    return { gradientColors: ['#2a1a3a', '#4a2a5a', '#6a3a7a'] as [string, string, string], accentColor: '#BA4813' };
       if (sport === 'mlb')    return { gradientColors: ['#6a1818', '#8D2222', '#b02828'] as [string, string, string], accentColor: '#8D2222' };
-      if (sport === 'nba')    return { gradientColors: ['#6a2f18', '#8D4022', '#b05028'] as [string, string, string], accentColor: '#8D4022' };
+      if (sport === 'nba')    return { gradientColors: ['#4f2415', '#69301D', '#833d26'] as [string, string, string], accentColor: '#69301D' };
       if (sport === 'soccer') return { gradientColors: ['#184e68', '#22698D', '#2a80ae'] as [string, string, string], accentColor: '#22698D' };
       if (sport === 'tennis') return { gradientColors: ['#186830', '#228D40', '#2ab050'] as [string, string, string], accentColor: '#228D40' };
       return { gradientColors: ['#5c0008', '#900010', '#c30010'] as [string, string, string], accentColor: '#003FFF' };
@@ -80,13 +80,13 @@ export const getCardStyle = (type: string, sport?: string) => {
 // Solid flat background color for peeking cards (100% opaque, no gradient)
 const getEventSolidColor = (type: string, sport?: string): string => {
   switch (type) {
-    case 'concert':  return '#8C169E';
+    case 'concert':  return '#4C1D90';
     case 'theater':  return '#223766';
     case 'comedy':   return '#6b0101';
     case 'landmark': return '#3b3734';
     case 'other':    return '#e6563b';
     case 'sports':
-      if (sport === 'nba')    return '#8D4022';
+      if (sport === 'nba')    return '#69301D';
       if (sport === 'nfl')    return '#BA4813';
       if (sport === 'mlb')    return '#8D2222';
       if (sport === 'soccer') return '#22698D';
@@ -99,13 +99,13 @@ const getEventSolidColor = (type: string, sport?: string): string => {
 // Semi-transparent gradient overlay for the front card (lets background image show through)
 const getEventOverlayColors = (type: string, sport?: string): [string, string, string] => {
   switch (type) {
-    case 'concert':  return ['rgba(140,22,158,0.72)', 'rgba(140,22,158,0.35)', 'rgba(140,22,158,0.82)'];
+    case 'concert':  return ['rgba(76,29,144,0.72)', 'rgba(76,29,144,0.35)', 'rgba(76,29,144,0.82)'];
     case 'theater':  return ['rgba(34,55,102,0.72)',  'rgba(34,55,102,0.35)',  'rgba(34,55,102,0.82)'];
     case 'comedy':   return ['rgba(61,10,10,0.72)',   'rgba(61,10,10,0.35)',   'rgba(107,1,1,0.82)'];
     case 'landmark': return ['rgba(26,25,23,0.72)',   'rgba(45,43,40,0.35)',   'rgba(59,55,52,0.82)'];
     case 'other':    return ['rgba(42,21,16,0.72)',   'rgba(77,42,31,0.35)',   'rgba(230,86,59,0.82)'];
     case 'sports':
-      if (sport === 'nba')    return ['rgba(141,64,34,0.72)',  'rgba(141,64,34,0.38)',  'rgba(141,64,34,0.82)'];
+      if (sport === 'nba')    return ['rgba(105,48,29,0.72)',  'rgba(105,48,29,0.38)',  'rgba(105,48,29,0.82)'];
       if (sport === 'nfl')    return ['rgba(80,30,8,0.72)',    'rgba(50,20,5,0.35)',    'rgba(100,40,10,0.82)'];
       if (sport === 'mlb')    return ['rgba(141,34,34,0.72)',  'rgba(141,34,34,0.35)',  'rgba(141,34,34,0.82)'];
       if (sport === 'soccer') return ['rgba(34,105,141,0.72)', 'rgba(34,105,141,0.35)', 'rgba(34,105,141,0.82)'];
