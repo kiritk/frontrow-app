@@ -289,11 +289,14 @@ export default React.memo(function EventCard({ event, onPress, isFront = false }
           {isFront ? (
             // ── Front card: full expanded layout ─────────────────────────
             <>
-              {/* Top row: NEXT UP badge (left) + stacked date (right) */}
+              {/* Top row: category tag (left) + stacked date (right) */}
               <View style={styles.frontTopRow}>
-                <View style={styles.nextUpBadge}>
-                  <Text style={styles.nextUpText}>NEXT UP</Text>
-                </View>
+                {eventLabel ? (
+                  <View style={styles.categoryTag}>
+                    <View style={[styles.categoryDot, { backgroundColor: accentColor }]} />
+                    <Text style={styles.categoryTagText}>{eventLabel}</Text>
+                  </View>
+                ) : <View />}
                 <View style={styles.dateChip}>
                   <Text style={styles.dateChipMonth}>{month}</Text>
                   <Text style={styles.dateChipDay}>{String(day).padStart(2, '0')}</Text>
@@ -314,12 +317,6 @@ export default React.memo(function EventCard({ event, onPress, isFront = false }
                     {displayTitle}
                   </Text>
                 )}
-                {eventLabel ? (
-                  <View style={styles.categoryTag}>
-                    <View style={[styles.categoryDot, { backgroundColor: accentColor }]} />
-                    <Text style={styles.categoryTagText}>{eventLabel}</Text>
-                  </View>
-                ) : null}
               </View>
 
               {/* Footer: venue (left) + View Ticket button (right) */}
@@ -330,7 +327,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false }
                     <Text style={styles.venueName} numberOfLines={1}>{event.venue}</Text>
                   </View>
                   {event.venue_location ? (
-                    <Text style={styles.venueLocation} numberOfLines={1}>{event.venue_location}</Text>
+                    <Text style={styles.venueLocation} numberOfLines={1}>{event.venue_location.split(',')[0].trim()}</Text>
                   ) : null}
                 </View>
                 <TouchableOpacity style={styles.viewTicketButton} activeOpacity={0.85} onPress={onPress}>
