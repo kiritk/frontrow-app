@@ -116,8 +116,10 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   }, [visibleCategories, selectedCategory]);
 
   const filteredEvents = useMemo(() => {
-    if (selectedCategory === 'all') return yearFilteredEvents;
-    return yearFilteredEvents.filter(e => e.type === selectedCategory);
+    const base = selectedCategory === 'all'
+      ? yearFilteredEvents
+      : yearFilteredEvents.filter(e => e.type === selectedCategory);
+    return [...base].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [yearFilteredEvents, selectedCategory]);
 
   const onRefresh = async () => {
@@ -184,7 +186,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
       const isFront = indexFromFront === 0;
 
       // Wallet stack: scale down cards further behind the front (no opacity — preserves bold colors)
-      const cardScale = Math.max(0.92, 1 - indexFromFront * 0.02);
+      const cardScale = Math.max(0.95, 1 - indexFromFront * 0.01);
 
       return (
         <View
