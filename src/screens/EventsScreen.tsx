@@ -204,9 +204,45 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
     [openDetail, filteredEvents.length],
   );
 
-  const ListHeader = (
-    <>
-      {/* Year tabs */}
+  return (
+    <View style={{ flex: 1 }}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <Animated.View
+        style={{
+          flex: 1,
+          opacity: listAnim,
+          transform: [{
+            translateY: listAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [20, 0],
+            }),
+          }],
+        }}
+        pointerEvents={detailVisible ? 'none' : 'auto'}
+      >
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.profileButton}
+          onPress={() => (navigation as any).navigate('Profile')}
+        >
+          {profileImage ? (
+            <Image source={{ uri: profileImage }} style={styles.profileButtonImage} />
+          ) : (
+            <View style={styles.profileButtonPlaceholder}>
+              <Ionicons name="person" size={18} color={COLORS.navy} />
+            </View>
+          )}
+        </TouchableOpacity>
+        <View style={styles.logoPill}>
+          <Text style={styles.logoText}>Front Row</Text>
+        </View>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      <Text style={styles.pageTitle}>Events</Text>
+
+      {/* Year tabs — fixed above the scrolling card list */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -232,7 +268,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
       </ScrollView>
       <View style={styles.yearTabDivider} />
 
-      {/* Category pills */}
+      {/* Category pills — fixed above the scrolling card list */}
       {visibleCategories.length > 1 && (
         <ScrollView
           horizontal
@@ -274,54 +310,13 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
           })}
         </ScrollView>
       )}
-    </>
-  );
 
-  return (
-    <View style={{ flex: 1 }}>
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <Animated.View
-        style={{
-          flex: 1,
-          opacity: listAnim,
-          transform: [{
-            translateY: listAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [20, 0],
-            }),
-          }],
-        }}
-        pointerEvents={detailVisible ? 'none' : 'auto'}
-      >
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.profileButton}
-          onPress={() => (navigation as any).navigate('Profile')}
-        >
-          {profileImage ? (
-            <Image source={{ uri: profileImage }} style={styles.profileButtonImage} />
-          ) : (
-            <View style={styles.profileButtonPlaceholder}>
-              <Ionicons name="person" size={18} color={COLORS.navy} />
-            </View>
-          )}
-        </TouchableOpacity>
-        <View style={styles.logoPill}>
-          <Text style={styles.logoText}>Front Row</Text>
-        </View>
-        <View style={styles.headerSpacer} />
-      </View>
-
-      <Text style={styles.pageTitle}>Events</Text>
-
-      {/* Stacked event cards with filters in the list header */}
+      {/* Stacked event cards */}
       <FlatList
         data={filteredEvents}
         renderItem={renderEventCard}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
-        ListHeaderComponent={ListHeader}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.navy} />
         }
