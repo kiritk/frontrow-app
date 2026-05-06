@@ -244,16 +244,12 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
               imageStyle={styles.stackedBgImage}
             >
               {isFront && <View style={[StyleSheet.absoluteFill, styles.imageDarken]} />}
-              {isFront ? (
-                // Front card: semi-transparent gradient so the image shows through
+              {isFront && (
                 <LinearGradient
                   colors={overlayColors}
                   locations={[0, 0.42, 1]}
                   style={StyleSheet.absoluteFill}
                 />
-              ) : (
-                // Peeking card: color overlay at 90% so the card's own image subtly shows through
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: solidColor, opacity: 0.90 }]} />
               )}
             </ImageBackground>
           ) : (
