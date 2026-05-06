@@ -279,7 +279,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false }
                 style={StyleSheet.absoluteFill}
               />
               <LinearGradient
-                colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.55)']}
+                colors={['rgba(0,0,0,0.55)', 'rgba(0,0,0,0)']}
                 style={styles.peekBottomEdge}
                 pointerEvents="none"
               />
@@ -395,10 +395,10 @@ const styles = StyleSheet.create({
   },
   peekBottomEdge: {
     position: 'absolute',
-    top: PEEK_HEIGHT - 18,
+    top: 0,
     left: 0,
     right: 0,
-    height: 18,
+    height: PEEK_HEIGHT - 18,
   },
 
   // ── Peeking card styles ────────────────────────────────────────────────
