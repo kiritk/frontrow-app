@@ -237,7 +237,9 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
         <View style={styles.logoPill}>
           <Text style={styles.logoText}>Front Row</Text>
         </View>
-        <View style={styles.headerSpacer} />
+        <TouchableOpacity style={styles.shareButton}>
+          <Ionicons name="share-outline" size={18} color={COLORS.navy} />
+        </TouchableOpacity>
       </View>
 
       <Text style={styles.pageTitle}>Events</Text>
@@ -385,7 +387,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     paddingHorizontal: SPACING.md,
     paddingVertical: 4,
-    borderRadius: BORDER_RADIUS.xl,
+    borderRadius: BORDER_RADIUS.md,
     borderWidth: 1,
     borderColor: COLORS.creamDark,
   },
@@ -394,8 +396,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: COLORS.navy,
   },
-  headerSpacer: {
+  shareButton: {
     width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: COLORS.creamDark,
   },
   pageTitle: {
     fontFamily: FONTS.bold,
