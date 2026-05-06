@@ -36,6 +36,7 @@ interface EventCardProps {
   event: EventData;
   onPress?: () => void;
   isFront?: boolean;
+  hideViewTicket?: boolean;
 }
 
 const CONCERT_COLORS = {
@@ -189,7 +190,7 @@ const formatDate = (dateString: string) => {
   return { month, day, year, weekday };
 };
 
-export default React.memo(function EventCard({ event, onPress, isFront = false }: EventCardProps) {
+export default React.memo(function EventCard({ event, onPress, isFront = false, hideViewTicket = false }: EventCardProps) {
   const { month, day, year, weekday } = formatDate(event.date);
   const cardStyle = getCardStyle(event.type, event.sport);
   const overlayColors = getEventOverlayColors(event.type, event.sport);
@@ -330,10 +331,12 @@ export default React.memo(function EventCard({ event, onPress, isFront = false }
                     <Text style={styles.venueLocation} numberOfLines={1}>{event.venue_location.split(',')[0].trim()}</Text>
                   ) : null}
                 </View>
-                <TouchableOpacity style={styles.viewTicketButton} activeOpacity={0.85} onPress={onPress}>
-                  <Ionicons name="ticket-outline" size={14} color="#FFFFFF" />
-                  <Text style={styles.viewTicketText}>View Ticket</Text>
-                </TouchableOpacity>
+                {!hideViewTicket && (
+                  <TouchableOpacity style={styles.viewTicketButton} activeOpacity={0.85} onPress={onPress}>
+                    <Ionicons name="ticket-outline" size={14} color="#FFFFFF" />
+                    <Text style={styles.viewTicketText}>View Ticket</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </>
           ) : (

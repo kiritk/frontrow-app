@@ -272,7 +272,7 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
 
           {/* Card */}
           <View style={styles.cardContainer}>
-            <EventCard event={currentEvent} isFront={true} />
+            <EventCard event={currentEvent} isFront={true} hideViewTicket={true} />
           </View>
 
           {/* Photo Shelf */}
