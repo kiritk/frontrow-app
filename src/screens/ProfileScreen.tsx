@@ -199,38 +199,44 @@ export default function ProfileScreen({ navigation }: any) {
       </Modal>
 
       {/* Sign in / sign up sheet */}
-      <Modal
-        visible={authModalVisible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setAuthModalVisible(false)}
-      >
-        <View style={styles.authSheet}>
-          <AuthScreen />
-          <SafeAreaView edges={['top']} style={styles.authCloseContainer} pointerEvents="box-none">
-            <TouchableOpacity
-              style={styles.authCloseButton}
-              onPress={() => setAuthModalVisible(false)}
-            >
-              <Ionicons name="close" size={20} color={COLORS.navy} />
-            </TouchableOpacity>
-          </SafeAreaView>
-        </View>
-      </Modal>
+      {authModalVisible && (
+        <Modal
+          visible
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setAuthModalVisible(false)}
+        >
+          <View style={styles.authSheet}>
+            <AuthScreen />
+            <SafeAreaView edges={['top']} style={styles.authCloseContainer} pointerEvents="box-none">
+              <TouchableOpacity
+                style={styles.authCloseButton}
+                onPress={() => setAuthModalVisible(false)}
+              >
+                <Ionicons name="close" size={20} color={COLORS.navy} />
+              </TouchableOpacity>
+            </SafeAreaView>
+          </View>
+        </Modal>
+      )}
 
-      <AboutScreen
-        visible={aboutModalVisible}
-        onClose={() => setAboutModalVisible(false)}
-      />
+      {aboutModalVisible && (
+        <AboutScreen
+          visible
+          onClose={() => setAboutModalVisible(false)}
+        />
+      )}
 
-      <EditProfileScreen
-        visible={editModalVisible}
-        firstName={firstName}
-        lastName={lastName}
-        profileImage={profileImage}
-        onClose={() => setEditModalVisible(false)}
-        onSave={handleSaveProfile}
-      />
+      {editModalVisible && (
+        <EditProfileScreen
+          visible
+          firstName={firstName}
+          lastName={lastName}
+          profileImage={profileImage}
+          onClose={() => setEditModalVisible(false)}
+          onSave={handleSaveProfile}
+        />
+      )}
     </>
   );
 }
