@@ -15,8 +15,15 @@ interface FanCardProps {
   eventCount: number;
   cityCount: number;
   venueCount: number;
-  sportsCount: number;
+  yearCount: number;
 }
+
+const FAN_LEVEL_COLORS: Record<string, string> = {
+  Rookie: '#3B82F6',
+  Pro: '#DC2626',
+  'All-Star': '#22C55E',
+  Legend: '#F59E0B',
+};
 
 export default function FanCard({
   firstName,
@@ -26,10 +33,11 @@ export default function FanCard({
   eventCount,
   cityCount,
   venueCount,
-  sportsCount,
+  yearCount,
 }: FanCardProps) {
   const initials =
     (firstName?.[0] || '').toUpperCase() + (lastName?.[0] || '').toUpperCase() || '?';
+  const levelColor = FAN_LEVEL_COLORS[fanLevel] || '#7b9ed6';
 
   return (
     <View style={styles.cardOuter}>
@@ -63,7 +71,7 @@ export default function FanCard({
 
         {/* Top row: fan status + event number */}
         <View style={styles.topRow}>
-          <View style={styles.statusBadge}>
+          <View style={[styles.statusBadge, { backgroundColor: levelColor, borderColor: levelColor }]}>
             <Text style={styles.statusText}>{fanLevel.toUpperCase()}</Text>
           </View>
           <Text style={styles.eventNumberHash}>#{eventCount}</Text>
@@ -97,8 +105,8 @@ export default function FanCard({
 
         {/* Name block */}
         <View style={styles.nameContainer}>
-          <Text style={styles.firstName}>{(firstName || 'FIRST').toUpperCase()}</Text>
-          <Text style={styles.lastName}>{(lastName || 'LAST').toUpperCase()}</Text>
+          <Text style={styles.firstName}>{(firstName || 'YOUR').toUpperCase()}</Text>
+          <Text style={styles.lastName}>{(lastName || 'NAME').toUpperCase()}</Text>
         </View>
 
         {/* Bottom stats row */}
@@ -119,8 +127,8 @@ export default function FanCard({
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{sportsCount}</Text>
-            <Text style={styles.statLabel}>SPORTS</Text>
+            <Text style={styles.statNumber}>{yearCount}</Text>
+            <Text style={styles.statLabel}>{yearCount === 1 ? 'YEAR' : 'YEARS'}</Text>
           </View>
         </View>
 
@@ -185,7 +193,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontFamily: FONTS.vt323,
     fontSize: 16,
-    color: '#7b9ed6',
+    color: '#FFFFFF',
     letterSpacing: 2,
   },
   eventNumberContainer: {
@@ -237,16 +245,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   avatarImage: {
-    width: 82,
-    height: 82,
-    borderRadius: 41,
+    width: 103,
+    height: 103,
+    borderRadius: 51,
     borderWidth: 2,
     borderColor: 'rgba(90,120,180,0.5)',
   },
   avatarPlaceholder: {
-    width: 82,
-    height: 82,
-    borderRadius: 41,
+    width: 103,
+    height: 103,
+    borderRadius: 51,
     backgroundColor: 'rgba(30,58,95,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -266,7 +274,7 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
   nameContainer: {
-    marginBottom: 9,
+    marginBottom: 14,
   },
   firstName: {
     fontFamily: FONTS.bold,
@@ -296,17 +304,17 @@ const styles = StyleSheet.create({
   },
   statDivider: {
     width: 1,
-    height: 22,
+    height: 32,
     backgroundColor: 'rgba(90,120,180,0.2)',
   },
   statNumber: {
     fontFamily: FONTS.bold,
-    fontSize: 16,
+    fontSize: 21,
     color: '#FFFFFF',
   },
   statLabel: {
     fontFamily: FONTS.vt323,
-    fontSize: 11,
+    fontSize: 16,
     color: 'rgba(123,158,214,0.6)',
     letterSpacing: 1.5,
     marginTop: 2,

@@ -35,7 +35,7 @@ export default function ShareCardModal({ visible, onClose }: ShareCardModalProps
   const [eventCount, setEventCount] = useState(0);
   const [cityCount, setCityCount] = useState(0);
   const [venueCount, setVenueCount] = useState(0);
-  const [sportsCount, setSportsCount] = useState(0);
+  const [yearCount, setYearCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -53,7 +53,17 @@ export default function ShareCardModal({ visible, onClose }: ShareCardModalProps
       setEventCount(events.length);
       setCityCount(new Set(events.map(e => e.venue_location || e.venue).filter(Boolean)).size);
       setVenueCount(new Set(events.map(e => e.venue).filter(Boolean)).size);
-      setSportsCount(events.filter(e => e.type === 'sports').length);
+      setYearCount(
+        new Set(
+          events
+            .map(e => {
+              if (!e.date) return null;
+              const year = new Date(e.date).getFullYear();
+              return Number.isFinite(year) ? year : null;
+            })
+            .filter((y): y is number => y !== null),
+        ).size,
+      );
     } catch (e) {
       console.error(e);
     }
@@ -139,7 +149,7 @@ export default function ShareCardModal({ visible, onClose }: ShareCardModalProps
                 eventCount={eventCount}
                 cityCount={cityCount}
                 venueCount={venueCount}
-                sportsCount={sportsCount}
+                yearCount={yearCount}
               />
             </ViewShot>
           </View>
