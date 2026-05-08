@@ -55,7 +55,7 @@ export default function AppHeader() {
           <Ionicons name="share-outline" size={18} color={COLORS.navy} />
         </TouchableOpacity>
       </View>
-      <ShareCardModal visible={shareVisible} onClose={() => setShareVisible(false)} />
+      {shareVisible && <ShareCardModal visible onClose={() => setShareVisible(false)} />}
     </>
   );
 }
