@@ -98,6 +98,13 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     return true;
   }, [eventType, sportType, isTeamSport, homeTeam, awayTeam]);
 
+  const canSubmit = useMemo(() => {
+    if (!eventType) return false;
+    if (!dateSelected) return false;
+    if (isTeamSport) return !!(homeTeam && awayTeam);
+    return !!eventName && !!selectedCity;
+  }, [eventType, dateSelected, isTeamSport, homeTeam, awayTeam, eventName, selectedCity]);
+
   const resetForm = () => {
     setEventType(''); setSportType(''); setEventName(''); setVenue('');
     setEventDate(new Date()); setDateSelected(false); setShowDatePicker(false);
@@ -591,11 +598,11 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
             {!keyboardVisible && (
             <View style={[styles.bottomBar, { paddingBottom: insets.bottom + SPACING.md }]}>
               <TouchableOpacity
-                style={[styles.createButton, loading && styles.createButtonDisabled]}
+                style={[styles.createButton, !canSubmit && styles.createButtonDisabled]}
                 onPress={handleSubmit}
-                disabled={loading}
+                disabled={loading || !canSubmit}
               >
-                {loading ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.createButtonText}>Create Event</Text>}
+                {loading ? <ActivityIndicator color={COLORS.white} /> : <Text style={[styles.createButtonText, !canSubmit && styles.createButtonTextDisabled]}>Create Event</Text>}
               </TouchableOpacity>
             </View>
             )}
@@ -794,10 +801,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.navy, borderRadius: BORDER_RADIUS.lg,
     paddingVertical: 16, alignItems: 'center',
   },
-  createButtonDisabled: { opacity: 0.6 },
+  createButtonDisabled: { backgroundColor: '#D1D5DB' },
   createButtonText: {
     fontFamily: FONTS.medium, fontSize: FONT_SIZES.md, color: COLORS.white,
   },
+  createButtonTextDisabled: { color: '#6B7280' },
 
   // Date picker overlay
   datePickerOverlay: {

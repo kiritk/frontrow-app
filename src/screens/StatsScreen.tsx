@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   },
   pageTitle: {
     fontFamily: FONTS.bold,
-    fontSize: 32,
+    fontSize: 28,
     color: COLORS.navy,
   },
   editProfileButton: {
