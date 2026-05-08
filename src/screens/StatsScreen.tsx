@@ -141,7 +141,7 @@ export default function StatsScreen() {
 
           <View style={styles.progressContainer}>
             <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${Math.min((eventCount / 50) * 100, 100)}%` }]} />
+              <View style={[styles.progressFill, { width: `${Math.min((eventCount / 50) * 100, 100)}%`, backgroundColor: fanLevel.color }]} />
             </View>
             <View style={styles.levelMarkers}>
               <View style={styles.levelMarker}>
