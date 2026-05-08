@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useIsFocused } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import AuthScreen from './AuthScreen';
@@ -58,6 +59,7 @@ function MenuItem({
 
 export default function ProfileScreen({ navigation }: any) {
   const { user, signOut } = useAuth();
+  const isFocused = useIsFocused();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -115,7 +117,7 @@ export default function ProfileScreen({ navigation }: any) {
   return (
     <>
       <Modal
-        visible={true}
+        visible={isFocused}
         animationType="slide"
         presentationStyle="pageSheet"
         onRequestClose={handleClose}
