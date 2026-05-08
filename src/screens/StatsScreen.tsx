@@ -65,7 +65,15 @@ export default function StatsScreen() {
   const eventCount = events.length;
   const cityCount = new Set(events.map(e => e.venue_location || e.venue).filter(Boolean)).size;
   const venueCount = new Set(events.map(e => e.venue).filter(Boolean)).size;
-  const sportsCount = events.filter(e => e.type === 'sports').length;
+  const yearCount = new Set(
+    events
+      .map(e => {
+        if (!e.date) return null;
+        const year = new Date(e.date).getFullYear();
+        return Number.isFinite(year) ? year : null;
+      })
+      .filter((y): y is number => y !== null),
+  ).size;
 
   const getFanLevel = () => {
     if (eventCount >= 50) {
@@ -111,7 +119,7 @@ export default function StatsScreen() {
             eventCount={eventCount}
             cityCount={cityCount}
             venueCount={venueCount}
-            sportsCount={sportsCount}
+            yearCount={yearCount}
           />
         </View>
 

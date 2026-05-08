@@ -15,7 +15,7 @@ interface FanCardProps {
   eventCount: number;
   cityCount: number;
   venueCount: number;
-  sportsCount: number;
+  yearCount: number;
 }
 
 export default function FanCard({
@@ -26,7 +26,7 @@ export default function FanCard({
   eventCount,
   cityCount,
   venueCount,
-  sportsCount,
+  yearCount,
 }: FanCardProps) {
   const initials =
     (firstName?.[0] || '').toUpperCase() + (lastName?.[0] || '').toUpperCase() || '?';
@@ -119,8 +119,8 @@ export default function FanCard({
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{sportsCount}</Text>
-            <Text style={styles.statLabel}>SPORTS</Text>
+            <Text style={styles.statNumber}>{yearCount}</Text>
+            <Text style={styles.statLabel}>{yearCount === 1 ? 'YEAR' : 'YEARS'}</Text>
           </View>
         </View>
 
