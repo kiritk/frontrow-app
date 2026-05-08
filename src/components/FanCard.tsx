@@ -97,8 +97,8 @@ export default function FanCard({
 
         {/* Name block */}
         <View style={styles.nameContainer}>
-          <Text style={styles.firstName}>{(firstName || 'FIRST').toUpperCase()}</Text>
-          <Text style={styles.lastName}>{(lastName || 'LAST').toUpperCase()}</Text>
+          <Text style={styles.firstName}>{(firstName || 'YOUR').toUpperCase()}</Text>
+          <Text style={styles.lastName}>{(lastName || 'NAME').toUpperCase()}</Text>
         </View>
 
         {/* Bottom stats row */}
