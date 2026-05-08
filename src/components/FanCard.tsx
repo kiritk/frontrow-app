@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
   },
   nameContainer: {
-    marginBottom: 9,
+    marginBottom: 14,
   },
   firstName: {
     fontFamily: FONTS.bold,
@@ -296,17 +296,17 @@ const styles = StyleSheet.create({
   },
   statDivider: {
     width: 1,
-    height: 22,
+    height: 32,
     backgroundColor: 'rgba(90,120,180,0.2)',
   },
   statNumber: {
     fontFamily: FONTS.bold,
-    fontSize: 16,
+    fontSize: 21,
     color: '#FFFFFF',
   },
   statLabel: {
     fontFamily: FONTS.vt323,
-    fontSize: 11,
+    fontSize: 16,
     color: 'rgba(123,158,214,0.6)',
     letterSpacing: 1.5,
     marginTop: 2,
