@@ -365,13 +365,6 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
-              {/* Cover photo button */}
-              <View style={styles.coverPhotoCenter}>
-                <TouchableOpacity style={styles.coverPhotoButton} onPress={pickCoverPhoto}>
-                  <Ionicons name="camera-outline" size={16} color={COLORS.white} />
-                  <Text style={styles.coverPhotoText}>{coverPhoto ? 'Change cover photo' : 'Pick a cover photo'}</Text>
-                </TouchableOpacity>
-              </View>
               {/* Event Type Section - collapsible */}
               <TouchableOpacity
                 style={styles.sectionCard}
@@ -694,7 +687,7 @@ const styles = StyleSheet.create({
 
   // Form body
   formBody: { flex: 1 },
-  formContent: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.lg },
+  formContent: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.lg, paddingBottom: SPACING.lg },
 
   // Sections
   sectionCard: {
