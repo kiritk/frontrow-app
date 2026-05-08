@@ -18,6 +18,13 @@ interface FanCardProps {
   yearCount: number;
 }
 
+const FAN_LEVEL_COLORS: Record<string, string> = {
+  Rookie: '#3B82F6',
+  Pro: '#DC2626',
+  'All-Star': '#22C55E',
+  Legend: '#F59E0B',
+};
+
 export default function FanCard({
   firstName,
   lastName,
@@ -30,6 +37,7 @@ export default function FanCard({
 }: FanCardProps) {
   const initials =
     (firstName?.[0] || '').toUpperCase() + (lastName?.[0] || '').toUpperCase() || '?';
+  const levelColor = FAN_LEVEL_COLORS[fanLevel] || '#7b9ed6';
 
   return (
     <View style={styles.cardOuter}>
@@ -63,7 +71,7 @@ export default function FanCard({
 
         {/* Top row: fan status + event number */}
         <View style={styles.topRow}>
-          <View style={styles.statusBadge}>
+          <View style={[styles.statusBadge, { backgroundColor: levelColor, borderColor: levelColor }]}>
             <Text style={styles.statusText}>{fanLevel.toUpperCase()}</Text>
           </View>
           <Text style={styles.eventNumberHash}>#{eventCount}</Text>
@@ -185,7 +193,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontFamily: FONTS.vt323,
     fontSize: 16,
-    color: '#7b9ed6',
+    color: '#FFFFFF',
     letterSpacing: 2,
   },
   eventNumberContainer: {
