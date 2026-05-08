@@ -68,6 +68,7 @@ const styles = StyleSheet.create({
     fontSize: 32,
     color: COLORS.navy,
     paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.lg,
     marginBottom: SPACING.lg,
   },
   mapWrapper: {
