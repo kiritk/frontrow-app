@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { getLocalEvents, LocalEvent } from '../lib/localStorage';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 import FanCard from '../components/FanCard';
+import AppHeader from '../components/AppHeader';
 
 const PROFILE_STORAGE_KEY = 'frontrow_user_profile';
 
@@ -91,6 +92,7 @@ export default function StatsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <AppHeader />
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={

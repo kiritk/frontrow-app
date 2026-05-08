@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { fetchEvents as fetchEventsFromService } from '../lib/eventService';
 import EventsGlobe from '../components/EventsGlobe';
+import AppHeader from '../components/AppHeader';
 import { COLORS, SPACING, FONTS } from '../theme/colors';
 
 interface Event {
@@ -48,6 +49,7 @@ export default function MapScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <AppHeader />
       <Text style={styles.pageTitle}>Map</Text>
       <View style={styles.mapWrapper}>
         <EventsGlobe events={events} />

@@ -1,21 +1,18 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Image, FlatList,
+  View, Text, StyleSheet, TouchableOpacity, FlatList,
   RefreshControl, ScrollView, Dimensions, Animated, Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { fetchEvents as fetchEventsFromService, removeEvent } from '../lib/eventService';
 import EventCard, { STACKED_CARD_HEIGHT, PEEK_HEIGHT, EventData } from '../components/EventCard';
 import EventDetailView from '../components/EventDetailView';
-import ShareCardModal from '../components/ShareCardModal';
+import AppHeader from '../components/AppHeader';
 import * as Haptics from 'expo-haptics';
-import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
-
-const PROFILE_STORAGE_KEY = 'frontrow_user_profile';
+import { COLORS, SPACING, FONT_SIZES, FONTS } from '../theme/colors';
 
 interface Event {
   id: string;
@@ -55,10 +52,8 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>('All');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [profileImage, setProfileImage] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [detailVisible, setDetailVisible] = useState(false);
-  const [shareVisible, setShareVisible] = useState(false);
   const listAnim = useRef(new Animated.Value(1)).current;
   const detailAnim = useRef(new Animated.Value(0)).current;
   const flatListRef = useRef<FlatList>(null);
@@ -74,24 +69,6 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
     const offset = Math.max(0, lastCardLayoutBottom - listLayoutHeight.current + TAB_CLEARANCE);
     flatListRef.current?.scrollToOffset({ offset, animated: false });
   }, []);
-
-  const loadProfileImage = useCallback(async () => {
-    try {
-      const stored = await AsyncStorage.getItem(PROFILE_STORAGE_KEY);
-      if (stored) {
-        const profile = JSON.parse(stored);
-        setProfileImage(profile.profileImage || null);
-      }
-    } catch (error) {
-      console.log('Error loading profile image:', error);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadProfileImage();
-    const unsubscribe = navigation.addListener('focus', loadProfileImage);
-    return unsubscribe;
-  }, [navigation, loadProfileImage]);
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -259,27 +236,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
         }}
         pointerEvents={detailVisible ? 'none' : 'auto'}
       >
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.profileButton}
-          onPress={() => (navigation as any).navigate('Profile')}
-        >
-          {profileImage ? (
-            <Image source={{ uri: profileImage }} style={styles.profileButtonImage} />
-          ) : (
-            <View style={styles.profileButtonPlaceholder}>
-              <Ionicons name="person" size={18} color={COLORS.navy} />
-            </View>
-          )}
-        </TouchableOpacity>
-        <View style={styles.logoPill}>
-          <Text style={styles.logoText}>Front Row</Text>
-        </View>
-        <TouchableOpacity style={styles.shareButton} onPress={() => setShareVisible(true)}>
-          <Ionicons name="share-outline" size={18} color={COLORS.navy} />
-        </TouchableOpacity>
-      </View>
+      <AppHeader />
 
       <Text style={styles.pageTitle}>Events</Text>
 
@@ -383,7 +340,6 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
         animValue={detailAnim}
       />
     )}
-    <ShareCardModal visible={shareVisible} onClose={() => setShareVisible(false)} />
     </View>
   );
 }
@@ -392,62 +348,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.cream,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: SIDE_PADDING,
-    paddingVertical: SPACING.sm,
-  },
-  profileButton: {
-    width: 38,
-    height: 38,
-  },
-  profileButtonImage: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 2,
-    borderColor: COLORS.navy,
-  },
-  profileButtonPlaceholder: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: COLORS.white,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: COLORS.creamDark,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  logoPill: {
-    backgroundColor: COLORS.white,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 4,
-    borderRadius: BORDER_RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.creamDark,
-  },
-  logoText: {
-    fontFamily: FONTS.geistMonoBold,
-    fontSize: 18,
-    color: COLORS.navy,
-  },
-  shareButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: COLORS.white,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: COLORS.creamDark,
   },
   pageTitle: {
     fontFamily: FONTS.bold,
