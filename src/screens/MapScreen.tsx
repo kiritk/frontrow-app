@@ -6,28 +6,13 @@ import { useAuth } from '../context/AuthContext';
 import { fetchEvents as fetchEventsFromService } from '../lib/eventService';
 import EventsGlobe from '../components/EventsGlobe';
 import AppHeader from '../components/AppHeader';
+import { LocalEvent } from '../lib/localStorage';
 import { COLORS, SPACING, FONTS } from '../theme/colors';
-
-interface Event {
-  id: string;
-  title: string;
-  type: string;
-  sport?: string;
-  venue: string;
-  venue_location?: string;
-  date: string;
-  photos?: string[];
-  cover_photo?: string;
-  latitude?: number;
-  longitude?: number;
-  home_team?: { name: string; city: string; fullName: string };
-  away_team?: { name: string; city: string; fullName: string };
-}
 
 export default function MapScreen() {
   const { user, localEventsVersion } = useAuth();
   const navigation = useNavigation();
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<LocalEvent[]>([]);
 
   const fetchEvents = useCallback(async () => {
     try {

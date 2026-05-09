@@ -7,6 +7,14 @@ import { clearLocalEvents } from '../lib/localStorage';
 
 const PROFILE_STORAGE_KEY = 'frontrow_user_profile';
 
+export interface UserProfile {
+  firstName: string;
+  lastName: string;
+  profileImage: string | null;
+}
+
+const EMPTY_PROFILE: UserProfile = { firstName: '', lastName: '', profileImage: null };
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -16,6 +24,8 @@ interface AuthContextType {
   // (e.g. guest events migrated to a new account).  Screens can
   // include this in their fetch-effect deps to stay in sync.
   localEventsVersion: number;
+  profile: UserProfile;
+  updateProfile: (next: UserProfile) => Promise<void>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -29,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [localEventsVersion, setLocalEventsVersion] = useState(0);
+  const [profile, setProfile] = useState<UserProfile>(EMPTY_PROFILE);
 
   // Track the last user id we've already handled so we only migrate
   // once per guest-to-signed-in transition (and not on token refreshes
@@ -51,6 +62,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Clear the guard so a future auth event can retry.
       migratedForUserIdRef.current = null;
     }
+  };
+
+  // Load cached profile once on mount.  Subsequent changes flow through updateProfile.
+  useEffect(() => {
+    AsyncStorage.getItem(PROFILE_STORAGE_KEY).then(stored => {
+      if (!stored) return;
+      try {
+        const parsed = JSON.parse(stored) as Partial<UserProfile>;
+        setProfile({
+          firstName: parsed.firstName || '',
+          lastName: parsed.lastName || '',
+          profileImage: parsed.profileImage || null,
+        });
+      } catch (error) {
+        console.warn('[AuthContext] Failed to parse cached profile:', error);
+      }
+    });
+  }, []);
+
+  const updateProfile = async (next: UserProfile) => {
+    await AsyncStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next));
+    setProfile(next);
   };
 
   useEffect(() => {
@@ -98,6 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         AsyncStorage.removeItem(PROFILE_STORAGE_KEY),
         clearLocalEvents(),
       ]);
+      setProfile(EMPTY_PROFILE);
     } catch (error) {
       console.warn('[AuthContext] Failed to clear local data on sign out:', error);
     }
@@ -124,6 +158,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     isGuest: !user,
     localEventsVersion,
+    profile,
+    updateProfile,
     signUp,
     signIn,
     signOut,

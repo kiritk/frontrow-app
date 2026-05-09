@@ -12,25 +12,14 @@ import Animated, {
 import { COLORS, FONTS } from '../theme/colors';
 import { getTeamByName } from '../data/nflTeams';
 import { getMLBTeamByName } from '../data/mlbTeams';
+import { LocalEvent } from '../lib/localStorage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const STACKED_CARD_HEIGHT = 280;
 export const PEEK_HEIGHT = 60;
 
-export interface EventData {
-  id: string;
-  title: string;
-  type: string;
-  sport?: string;
-  venue: string;
-  venue_location?: string;
-  date: string;
-  photos?: string[];
-  cover_photo?: string;
-  home_team?: { name: string; city: string; fullName: string };
-  away_team?: { name: string; city: string; fullName: string };
-}
+export type EventData = LocalEvent;
 
 interface EventCardProps {
   event: EventData;

@@ -8,27 +8,14 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { fetchEvents as fetchEventsFromService, removeEvent } from '../lib/eventService';
-import EventCard, { STACKED_CARD_HEIGHT, PEEK_HEIGHT, EventData } from '../components/EventCard';
+import EventCard, { STACKED_CARD_HEIGHT, PEEK_HEIGHT } from '../components/EventCard';
 import EventDetailView from '../components/EventDetailView';
 import AppHeader from '../components/AppHeader';
 import * as Haptics from 'expo-haptics';
+import { LocalEvent } from '../lib/localStorage';
 import { COLORS, SPACING, FONT_SIZES, FONTS } from '../theme/colors';
 
-interface Event {
-  id: string;
-  title: string;
-  type: string;
-  sport?: string;
-  venue: string;
-  venue_location?: string;
-  date: string;
-  photos?: string[];
-  cover_photo?: string;
-  latitude?: number;
-  longitude?: number;
-  home_team?: { name: string; city: string; fullName: string };
-  away_team?: { name: string; city: string; fullName: string };
-}
+type Event = LocalEvent;
 
 const CATEGORIES = [
   { value: 'all',      label: 'All',       icon: null },

@@ -5,65 +5,30 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import ViewShot from 'react-native-view-shot';
 import * as MediaLibrary from 'expo-media-library';
 
 import { getLocalEvents } from '../lib/localStorage';
+import { computeEventStats, getFanLevel } from '../lib/stats';
+import { useAuth } from '../context/AuthContext';
 import FanCard from './FanCard';
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../theme/colors';
-
-const PROFILE_STORAGE_KEY = 'frontrow_user_profile';
 
 interface ShareCardModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
-function getFanLevel(eventCount: number): string {
-  if (eventCount >= 50) return 'Legend';
-  if (eventCount >= 25) return 'All-Star';
-  if (eventCount >= 10) return 'Pro';
-  return 'Rookie';
-}
-
 export default function ShareCardModal({ visible, onClose }: ShareCardModalProps) {
+  const { profile } = useAuth();
   const cardRef = useRef<ViewShot>(null);
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [eventCount, setEventCount] = useState(0);
-  const [cityCount, setCityCount] = useState(0);
-  const [venueCount, setVenueCount] = useState(0);
-  const [yearCount, setYearCount] = useState(0);
+  const [stats, setStats] = useState({ eventCount: 0, cityCount: 0, venueCount: 0, yearCount: 0 });
   const [loading, setLoading] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
-      const [stored, events] = await Promise.all([
-        AsyncStorage.getItem(PROFILE_STORAGE_KEY),
-        getLocalEvents(),
-      ]);
-      if (stored) {
-        const profile = JSON.parse(stored);
-        setFirstName(profile.firstName || '');
-        setLastName(profile.lastName || '');
-        setProfileImage(profile.profileImage || null);
-      }
-      setEventCount(events.length);
-      setCityCount(new Set(events.map(e => e.venue_location || e.venue).filter(Boolean)).size);
-      setVenueCount(new Set(events.map(e => e.venue).filter(Boolean)).size);
-      setYearCount(
-        new Set(
-          events
-            .map(e => {
-              if (!e.date) return null;
-              const year = new Date(e.date).getFullYear();
-              return Number.isFinite(year) ? year : null;
-            })
-            .filter((y): y is number => y !== null),
-        ).size,
-      );
+      const events = await getLocalEvents();
+      setStats(computeEventStats(events));
     } catch (e) {
       console.error(e);
     }
@@ -72,6 +37,9 @@ export default function ShareCardModal({ visible, onClose }: ShareCardModalProps
   useEffect(() => {
     if (visible) loadData();
   }, [visible, loadData]);
+
+  const { eventCount, cityCount, venueCount, yearCount } = stats;
+  const fanLevelName = getFanLevel(eventCount).level;
 
   const captureCard = async (): Promise<string | null> => {
     try {
@@ -142,10 +110,10 @@ export default function ShareCardModal({ visible, onClose }: ShareCardModalProps
           <View style={styles.cardArea}>
             <ViewShot ref={cardRef} options={{ format: 'png', quality: 1 }}>
               <FanCard
-                firstName={firstName}
-                lastName={lastName}
-                profileImage={profileImage}
-                fanLevel={getFanLevel(eventCount)}
+                firstName={profile.firstName}
+                lastName={profile.lastName}
+                profileImage={profile.profileImage}
+                fanLevel={fanLevelName}
                 eventCount={eventCount}
                 cityCount={cityCount}
                 venueCount={venueCount}
