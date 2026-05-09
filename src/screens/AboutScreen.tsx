@@ -1,42 +1,35 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, FONT_SIZES, FONTS } from '../theme/colors';
 
 interface AboutScreenProps {
-  visible: boolean;
-  onClose: () => void;
+  onBack: () => void;
 }
 
-export default function AboutScreen({ visible, onClose }: AboutScreenProps) {
+export default function AboutScreen({ onBack }: AboutScreenProps) {
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onClose}
-    >
-      <View style={styles.container}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Ionicons name="chevron-down" size={22} color={COLORS.grayDark} />
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView contentContainerStyle={styles.content}>
-          <Text style={styles.title}>About Us</Text>
-
-          <Text style={styles.body}>
-            Front Row was built by fans, for fans. We wanted a better way to stay connected to the live events we love, so we built one ourselves. No corporate agenda, no boardroom decisions — just a genuine passion for bringing fans closer to the action.
-          </Text>
-
-          <Text style={styles.body}>
-            Front Row is completely free to use, with no ads, no premium tiers, and no hidden costs. We believe great tools should be accessible to everyone. We're always looking to make the experience better, so if you have ideas, feedback, or just want to say hi, please don't hesitate to reach out to us via our socials.
-          </Text>
-        </ScrollView>
+    <View style={styles.container}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity style={styles.backButton} onPress={onBack}>
+          <Ionicons name="chevron-back" size={22} color={COLORS.grayDark} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>About</Text>
+        <View style={{ width: 40 }} />
       </View>
-    </Modal>
+
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.title}>About Us</Text>
+
+        <Text style={styles.body}>
+          Front Row was built by fans, for fans. We wanted a better way to stay connected to the live events we love, so we built one ourselves. No corporate agenda, no boardroom decisions — just a genuine passion for bringing fans closer to the action.
+        </Text>
+
+        <Text style={styles.body}>
+          Front Row is completely free to use, with no ads, no premium tiers, and no hidden costs. We believe great tools should be accessible to everyone. We're always looking to make the experience better, so if you have ideas, feedback, or just want to say hi, please don't hesitate to reach out to us via our socials.
+        </Text>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -46,18 +39,26 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cream,
   },
   headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.lg,
-    paddingBottom: SPACING.sm,
-    alignItems: 'flex-start',
+    paddingVertical: SPACING.md,
+    backgroundColor: COLORS.cream,
   },
-  closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#E8E8E8',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  headerTitle: {
+    flex: 1,
+    fontFamily: FONTS.bold,
+    fontSize: FONT_SIZES.xl,
+    color: COLORS.grayDark,
+    textAlign: 'center',
   },
   content: {
     paddingHorizontal: SPACING.lg,

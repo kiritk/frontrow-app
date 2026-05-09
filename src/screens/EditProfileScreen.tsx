@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  TextInput, Image, Modal, Platform, Alert,
+  TextInput, Image, Platform, Alert,
   KeyboardAvoidingView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,33 +17,23 @@ interface EditProfileData {
 }
 
 interface EditProfileScreenProps {
-  visible: boolean;
   firstName: string;
   lastName: string;
   profileImage: string | null;
-  onClose: () => void;
+  onBack: () => void;
   onSave: (data: EditProfileData) => void;
 }
 
 export default function EditProfileScreen({
-  visible,
   firstName: initialFirstName,
   lastName: initialLastName,
   profileImage: initialProfileImage,
-  onClose,
+  onBack,
   onSave,
 }: EditProfileScreenProps) {
   const [firstName, setFirstName] = useState(initialFirstName);
   const [lastName, setLastName] = useState(initialLastName);
   const [profileImage, setProfileImage] = useState<string | null>(initialProfileImage);
-
-  useEffect(() => {
-    if (visible) {
-      setFirstName(initialFirstName);
-      setLastName(initialLastName);
-      setProfileImage(initialProfileImage);
-    }
-  }, [visible]);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -67,69 +57,62 @@ export default function EditProfileScreen({
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onClose}
-    >
-      <View style={styles.container}>
-        <View style={styles.headerSafe}>
-          <View style={styles.headerRow}>
-            <TouchableOpacity style={styles.backButton} onPress={onClose}>
-              <Ionicons name="chevron-back" size={22} color={COLORS.grayDark} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Edit profile</Text>
-            <View style={{ width: 40 }} />
-          </View>
+    <View style={styles.container}>
+      <View style={styles.headerSafe}>
+        <View style={styles.headerRow}>
+          <TouchableOpacity style={styles.backButton} onPress={onBack}>
+            <Ionicons name="chevron-back" size={22} color={COLORS.grayDark} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Edit profile</Text>
+          <View style={{ width: 40 }} />
         </View>
-
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-          >
-            {/* Avatar */}
-            <TouchableOpacity style={styles.avatarWrapper} onPress={pickImage}>
-              {profileImage ? (
-                <Image source={{ uri: profileImage }} style={styles.avatarImage} />
-              ) : (
-                <View style={styles.avatarPlaceholder} />
-              )}
-              <View style={styles.editIconOverlay}>
-                <Ionicons name="pencil" size={13} color={COLORS.grayDark} />
-              </View>
-            </TouchableOpacity>
-
-            {/* Form Fields */}
-            <View style={styles.form}>
-              <TextInput
-                style={styles.input}
-                value={firstName}
-                onChangeText={setFirstName}
-                placeholder="What's your first name?"
-                placeholderTextColor={COLORS.grayLight}
-              />
-
-              <TextInput
-                style={styles.input}
-                value={lastName}
-                onChangeText={setLastName}
-                placeholder="And your last name?"
-                placeholderTextColor={COLORS.grayLight}
-              />
-
-              <TouchableOpacity style={styles.updateButton} onPress={handleSave}>
-                <Text style={styles.updateButtonText}>Update Profile</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
       </View>
-    </Modal>
+
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Avatar */}
+          <TouchableOpacity style={styles.avatarWrapper} onPress={pickImage}>
+            {profileImage ? (
+              <Image source={{ uri: profileImage }} style={styles.avatarImage} />
+            ) : (
+              <View style={styles.avatarPlaceholder} />
+            )}
+            <View style={styles.editIconOverlay}>
+              <Ionicons name="pencil" size={13} color={COLORS.grayDark} />
+            </View>
+          </TouchableOpacity>
+
+          {/* Form Fields */}
+          <View style={styles.form}>
+            <TextInput
+              style={styles.input}
+              value={firstName}
+              onChangeText={setFirstName}
+              placeholder="What's your first name?"
+              placeholderTextColor={COLORS.grayLight}
+            />
+
+            <TextInput
+              style={styles.input}
+              value={lastName}
+              onChangeText={setLastName}
+              placeholder="And your last name?"
+              placeholderTextColor={COLORS.grayLight}
+            />
+
+            <TouchableOpacity style={styles.updateButton} onPress={handleSave}>
+              <Text style={styles.updateButtonText}>Update Profile</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 

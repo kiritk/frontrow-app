@@ -16,6 +16,8 @@ const HEADER_COLOR = '#162A45';
 const ACCENT_COLOR = '#5B4FCF';
 const ICON_BG_COLOR = 'rgba(91, 79, 207, 0.12)';
 
+type ProfileView = 'main' | 'edit' | 'about' | 'auth';
+
 interface MenuItemProps {
   icon: string;
   title: string;
@@ -52,18 +54,22 @@ function MenuItem({
 export default function ProfileScreen({ navigation }: any) {
   const { user, signOut, profile, updateProfile } = useAuth();
   const isFocused = useIsFocused();
-  const [editModalVisible, setEditModalVisible] = useState(false);
-  const [authModalVisible, setAuthModalVisible] = useState(false);
-  const [aboutModalVisible, setAboutModalVisible] = useState(false);
+  const [view, setView] = useState<ProfileView>('main');
 
+  // Reset to main view whenever the modal closes.
   useEffect(() => {
-    if (user && authModalVisible) setAuthModalVisible(false);
-  }, [user, authModalVisible]);
+    if (!isFocused) setView('main');
+  }, [isFocused]);
+
+  // If the user signs in successfully while on the auth view, return to main.
+  useEffect(() => {
+    if (user && view === 'auth') setView('main');
+  }, [user, view]);
 
   const handleSaveProfile = async (data: UserProfile) => {
     try {
       await updateProfile(data);
-      setEditModalVisible(false);
+      setView('main');
     } catch (error) {
       console.log('Error saving profile:', error);
     }
@@ -89,120 +95,105 @@ export default function ProfileScreen({ navigation }: any) {
       presentationStyle="pageSheet"
       onRequestClose={handleClose}
     >
-      <View style={styles.modalRoot}>
-        {/* Dark header with avatar */}
-        <View style={styles.header}>
-          <SafeAreaView edges={['top']} style={styles.headerSafeArea}>
-            <View style={styles.headerTopRow}>
-              <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
-                <Text style={styles.cancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <Text style={styles.headerTitle}>Profile</Text>
-              <View style={styles.cancelButton} />
-            </View>
-          </SafeAreaView>
+      {view === 'main' && (
+        <View style={styles.modalRoot}>
+          <View style={styles.header}>
+            <SafeAreaView edges={['top']} style={styles.headerSafeArea}>
+              <View style={styles.headerTopRow}>
+                <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
+                  <Text style={styles.cancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Profile</Text>
+                <View style={styles.cancelButton} />
+              </View>
+            </SafeAreaView>
 
-          <View style={styles.avatarContainer}>
-            {profile.profileImage ? (
-              <Image source={{ uri: profile.profileImage }} style={styles.avatarImage} />
-            ) : (
-              <View style={styles.avatarPlaceholder} />
-            )}
-          </View>
-          <Text style={styles.userName}>{getDisplayName()}</Text>
-          <View style={{ height: SPACING.xl }} />
-        </View>
-
-        <ScrollView contentContainerStyle={styles.scrollContent} bounces={false}>
-          <View style={styles.contentArea}>
-            {/* Primary actions card */}
-            <View style={styles.menuCard}>
-              <MenuItem
-                icon="pencil-outline"
-                title="Edit profile"
-                onPress={() => setEditModalVisible(true)}
-              />
-              <View style={styles.divider} />
-              {user ? (
-                <MenuItem
-                  icon="log-out-outline"
-                  title="Log Out"
-                  titleColor={COLORS.error}
-                  iconBgColor="rgba(239, 68, 68, 0.12)"
-                  iconColor={COLORS.error}
-                  onPress={() =>
-                    Alert.alert(
-                      'Log out',
-                      'Are you sure you want to log out?',
-                      [
-                        { text: 'Cancel', style: 'cancel' },
-                        { text: 'Log out', style: 'destructive', onPress: () => signOut() },
-                      ],
-                    )
-                  }
-                />
+            <View style={styles.avatarContainer}>
+              {profile.profileImage ? (
+                <Image source={{ uri: profile.profileImage }} style={styles.avatarImage} />
               ) : (
-                <MenuItem
-                  icon="link-outline"
-                  title="Create an Account"
-                  subtitle="Save your experiences across devices"
-                  onPress={() => setAuthModalVisible(true)}
-                />
+                <View style={styles.avatarPlaceholder} />
               )}
             </View>
-
-            {/* More section */}
-            <Text style={styles.sectionLabel}>More</Text>
-            <View style={styles.menuCard}>
-              <MenuItem
-                icon="heart-outline"
-                title="About App"
-                onPress={() => setAboutModalVisible(true)}
-              />
-            </View>
+            <Text style={styles.userName}>{getDisplayName()}</Text>
+            <View style={{ height: SPACING.xl }} />
           </View>
-        </ScrollView>
 
-        {/* Sign in / sign up sheet — nested inside parent modal so iOS can present it on top */}
-        {authModalVisible && (
-          <Modal
-            visible
-            animationType="slide"
-            presentationStyle="pageSheet"
-            onRequestClose={() => setAuthModalVisible(false)}
-          >
-            <View style={styles.authSheet}>
-              <AuthScreen />
-              <SafeAreaView edges={['top']} style={styles.authCloseContainer} pointerEvents="box-none">
-                <TouchableOpacity
-                  style={styles.authCloseButton}
-                  onPress={() => setAuthModalVisible(false)}
-                >
-                  <Ionicons name="close" size={20} color={COLORS.navy} />
-                </TouchableOpacity>
-              </SafeAreaView>
+          <ScrollView contentContainerStyle={styles.scrollContent} bounces={false}>
+            <View style={styles.contentArea}>
+              <View style={styles.menuCard}>
+                <MenuItem
+                  icon="pencil-outline"
+                  title="Edit profile"
+                  onPress={() => setView('edit')}
+                />
+                <View style={styles.divider} />
+                {user ? (
+                  <MenuItem
+                    icon="log-out-outline"
+                    title="Log Out"
+                    titleColor={COLORS.error}
+                    iconBgColor="rgba(239, 68, 68, 0.12)"
+                    iconColor={COLORS.error}
+                    onPress={() =>
+                      Alert.alert(
+                        'Log out',
+                        'Are you sure you want to log out?',
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          { text: 'Log out', style: 'destructive', onPress: () => signOut() },
+                        ],
+                      )
+                    }
+                  />
+                ) : (
+                  <MenuItem
+                    icon="link-outline"
+                    title="Create an Account"
+                    subtitle="Save your experiences across devices"
+                    onPress={() => setView('auth')}
+                  />
+                )}
+              </View>
+
+              <Text style={styles.sectionLabel}>More</Text>
+              <View style={styles.menuCard}>
+                <MenuItem
+                  icon="heart-outline"
+                  title="About App"
+                  onPress={() => setView('about')}
+                />
+              </View>
             </View>
-          </Modal>
-        )}
+          </ScrollView>
+        </View>
+      )}
 
-        {aboutModalVisible && (
-          <AboutScreen
-            visible
-            onClose={() => setAboutModalVisible(false)}
-          />
-        )}
+      {view === 'edit' && (
+        <EditProfileScreen
+          firstName={profile.firstName}
+          lastName={profile.lastName}
+          profileImage={profile.profileImage}
+          onBack={() => setView('main')}
+          onSave={handleSaveProfile}
+        />
+      )}
 
-        {editModalVisible && (
-          <EditProfileScreen
-            visible
-            firstName={profile.firstName}
-            lastName={profile.lastName}
-            profileImage={profile.profileImage}
-            onClose={() => setEditModalVisible(false)}
-            onSave={handleSaveProfile}
-          />
-        )}
-      </View>
+      {view === 'about' && <AboutScreen onBack={() => setView('main')} />}
+
+      {view === 'auth' && (
+        <View style={styles.authSheet}>
+          <AuthScreen />
+          <SafeAreaView edges={['top']} style={styles.authCloseContainer} pointerEvents="box-none">
+            <TouchableOpacity
+              style={styles.authCloseButton}
+              onPress={() => setView('main')}
+            >
+              <Ionicons name="close" size={20} color={COLORS.navy} />
+            </TouchableOpacity>
+          </SafeAreaView>
+        </View>
+      )}
     </Modal>
   );
 }
