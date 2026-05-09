@@ -287,7 +287,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
                 <View style={styles.dateChip}>
                   <Text style={styles.dateChipMonth}>{month}</Text>
                   <Text style={styles.dateChipDay}>{String(day).padStart(2, '0')}</Text>
-                  <Text style={styles.dateChipWeekday}>{weekday}</Text>
+                  <Text style={styles.dateChipWeekday}>{year}</Text>
                 </View>
               </View>
 
