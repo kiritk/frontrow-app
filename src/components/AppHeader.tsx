@@ -1,37 +1,19 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import ShareCardModal from './ShareCardModal';
+import { useAuth } from '../context/AuthContext';
 import { COLORS, SPACING, BORDER_RADIUS, FONTS } from '../theme/colors';
 
-const PROFILE_STORAGE_KEY = 'frontrow_user_profile';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SIDE_PADDING = SCREEN_WIDTH * 0.05;
 
 export default function AppHeader() {
   const navigation = useNavigation<any>();
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const { profile } = useAuth();
   const [shareVisible, setShareVisible] = useState(false);
-
-  const loadProfileImage = useCallback(async () => {
-    try {
-      const stored = await AsyncStorage.getItem(PROFILE_STORAGE_KEY);
-      if (stored) {
-        const profile = JSON.parse(stored);
-        setProfileImage(profile.profileImage || null);
-      }
-    } catch (error) {
-      console.log('Error loading profile image:', error);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadProfileImage();
-    const unsubscribe = navigation.addListener('focus', loadProfileImage);
-    return unsubscribe;
-  }, [navigation, loadProfileImage]);
+  const profileImage = profile.profileImage;
 
   return (
     <>

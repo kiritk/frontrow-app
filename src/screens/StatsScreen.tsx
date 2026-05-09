@@ -1,39 +1,20 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import { getLocalEvents, LocalEvent } from '../lib/localStorage';
+import { computeEventStats, getFanLevel } from '../lib/stats';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 import FanCard from '../components/FanCard';
 import AppHeader from '../components/AppHeader';
 
-const PROFILE_STORAGE_KEY = 'frontrow_user_profile';
-
 export default function StatsScreen() {
   const navigation = useNavigation<any>();
-  const { user, localEventsVersion } = useAuth();
+  const { user, localEventsVersion, profile } = useAuth();
   const [events, setEvents] = useState<LocalEvent[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-
-  const loadProfile = useCallback(async () => {
-    try {
-      const stored = await AsyncStorage.getItem(PROFILE_STORAGE_KEY);
-      if (stored) {
-        const profile = JSON.parse(stored);
-        setFirstName(profile.firstName || '');
-        setLastName(profile.lastName || '');
-        setProfileImage(profile.profileImage || null);
-      }
-    } catch (error) {
-      console.log('Error loading profile:', error);
-    }
-  }, []);
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -45,50 +26,23 @@ export default function StatsScreen() {
   }, []);
 
   useEffect(() => {
-    loadProfile();
     fetchEvents();
-  }, [user, localEventsVersion, loadProfile, fetchEvents]);
+  }, [user, localEventsVersion, fetchEvents]);
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      loadProfile();
-      fetchEvents();
-    });
+    const unsubscribe = navigation.addListener('focus', fetchEvents);
     return unsubscribe;
-  }, [navigation, loadProfile, fetchEvents]);
+  }, [navigation, fetchEvents]);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([loadProfile(), fetchEvents()]);
+    await fetchEvents();
     setRefreshing(false);
   };
 
-  const eventCount = events.length;
-  const cityCount = new Set(events.map(e => e.venue_location || e.venue).filter(Boolean)).size;
-  const venueCount = new Set(events.map(e => e.venue).filter(Boolean)).size;
-  const yearCount = new Set(
-    events
-      .map(e => {
-        if (!e.date) return null;
-        const year = new Date(e.date).getFullYear();
-        return Number.isFinite(year) ? year : null;
-      })
-      .filter((y): y is number => y !== null),
-  ).size;
-
-  const getFanLevel = () => {
-    if (eventCount >= 50) {
-      return { level: 'Legend', color: '#F59E0B', nextLevel: null, eventsToNext: 0, progress: 1 };
-    } else if (eventCount >= 25) {
-      return { level: 'All-Star', color: '#22C55E', nextLevel: 'Legend', eventsToNext: 50 - eventCount, progress: (eventCount - 25) / 25 };
-    } else if (eventCount >= 10) {
-      return { level: 'Pro', color: '#DC2626', nextLevel: 'All-Star', eventsToNext: 25 - eventCount, progress: (eventCount - 10) / 15 };
-    } else {
-      return { level: 'Rookie', color: '#3B82F6', nextLevel: 'Pro', eventsToNext: 10 - eventCount, progress: eventCount / 10 };
-    }
-  };
-
-  const fanLevel = getFanLevel();
+  const stats = useMemo(() => computeEventStats(events), [events]);
+  const fanLevel = useMemo(() => getFanLevel(stats.eventCount), [stats.eventCount]);
+  const { eventCount, cityCount, venueCount, yearCount } = stats;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -114,9 +68,9 @@ export default function StatsScreen() {
         {/* Fan Card */}
         <View style={styles.fanCardContainer}>
           <FanCard
-            firstName={firstName}
-            lastName={lastName}
-            profileImage={profileImage}
+            firstName={profile.firstName}
+            lastName={profile.lastName}
+            profileImage={profile.profileImage}
             fanLevel={fanLevel.level}
             eventCount={eventCount}
             cityCount={cityCount}
@@ -295,22 +249,6 @@ const styles = StyleSheet.create({
   markerRange: {
     fontFamily: FONTS.regular,
     fontSize: 10,
-    color: COLORS.gray,
-  },
-  eventCountContainer: {
-    alignItems: 'center',
-    paddingTop: SPACING.md,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.creamDark,
-  },
-  eventCountNumber: {
-    fontFamily: FONTS.bold,
-    fontSize: 32,
-    color: COLORS.navy,
-  },
-  eventCountLabel: {
-    fontFamily: FONTS.regular,
-    fontSize: FONT_SIZES.sm,
     color: COLORS.gray,
   },
 });

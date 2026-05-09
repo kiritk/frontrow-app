@@ -6,23 +6,15 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useIsFocused } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, UserProfile } from '../context/AuthContext';
 import AuthScreen from './AuthScreen';
 import EditProfileScreen from './EditProfileScreen';
 import AboutScreen from './AboutScreen';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
-const PROFILE_STORAGE_KEY = 'frontrow_user_profile';
 const HEADER_COLOR = '#162A45';
 const ACCENT_COLOR = '#5B4FCF';
 const ICON_BG_COLOR = 'rgba(91, 79, 207, 0.12)';
-
-interface UserProfile {
-  firstName: string;
-  lastName: string;
-  profileImage: string | null;
-}
 
 interface MenuItemProps {
   icon: string;
@@ -58,43 +50,19 @@ function MenuItem({
 }
 
 export default function ProfileScreen({ navigation }: any) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, profile, updateProfile } = useAuth();
   const isFocused = useIsFocused();
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [profileImage, setProfileImage] = useState<string | null>(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [authModalVisible, setAuthModalVisible] = useState(false);
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
 
   useEffect(() => {
-    loadProfile();
-  }, [user]);
-
-  useEffect(() => {
     if (user && authModalVisible) setAuthModalVisible(false);
   }, [user, authModalVisible]);
 
-  const loadProfile = async () => {
-    try {
-      const stored = await AsyncStorage.getItem(PROFILE_STORAGE_KEY);
-      if (stored) {
-        const profile: UserProfile = JSON.parse(stored);
-        setFirstName(profile.firstName || '');
-        setLastName(profile.lastName || '');
-        setProfileImage(profile.profileImage || null);
-      }
-    } catch (error) {
-      console.log('Error loading profile:', error);
-    }
-  };
-
   const handleSaveProfile = async (data: UserProfile) => {
     try {
-      await AsyncStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(data));
-      setFirstName(data.firstName);
-      setLastName(data.lastName);
-      setProfileImage(data.profileImage);
+      await updateProfile(data);
       setEditModalVisible(false);
     } catch (error) {
       console.log('Error saving profile:', error);
@@ -110,7 +78,7 @@ export default function ProfileScreen({ navigation }: any) {
   };
 
   const getDisplayName = () => {
-    if (firstName || lastName) return `${firstName} ${lastName}`.trim();
+    if (profile.firstName || profile.lastName) return `${profile.firstName} ${profile.lastName}`.trim();
     return 'Welcome!';
   };
 
@@ -136,8 +104,8 @@ export default function ProfileScreen({ navigation }: any) {
             </SafeAreaView>
 
             <View style={styles.avatarContainer}>
-              {profileImage ? (
-                <Image source={{ uri: profileImage }} style={styles.avatarImage} />
+              {profile.profileImage ? (
+                <Image source={{ uri: profile.profileImage }} style={styles.avatarImage} />
               ) : (
                 <View style={styles.avatarPlaceholder} />
               )}
@@ -199,38 +167,44 @@ export default function ProfileScreen({ navigation }: any) {
       </Modal>
 
       {/* Sign in / sign up sheet */}
-      <Modal
-        visible={authModalVisible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setAuthModalVisible(false)}
-      >
-        <View style={styles.authSheet}>
-          <AuthScreen />
-          <SafeAreaView edges={['top']} style={styles.authCloseContainer} pointerEvents="box-none">
-            <TouchableOpacity
-              style={styles.authCloseButton}
-              onPress={() => setAuthModalVisible(false)}
-            >
-              <Ionicons name="close" size={20} color={COLORS.navy} />
-            </TouchableOpacity>
-          </SafeAreaView>
-        </View>
-      </Modal>
+      {authModalVisible && (
+        <Modal
+          visible
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setAuthModalVisible(false)}
+        >
+          <View style={styles.authSheet}>
+            <AuthScreen />
+            <SafeAreaView edges={['top']} style={styles.authCloseContainer} pointerEvents="box-none">
+              <TouchableOpacity
+                style={styles.authCloseButton}
+                onPress={() => setAuthModalVisible(false)}
+              >
+                <Ionicons name="close" size={20} color={COLORS.navy} />
+              </TouchableOpacity>
+            </SafeAreaView>
+          </View>
+        </Modal>
+      )}
 
-      <AboutScreen
-        visible={aboutModalVisible}
-        onClose={() => setAboutModalVisible(false)}
-      />
+      {aboutModalVisible && (
+        <AboutScreen
+          visible
+          onClose={() => setAboutModalVisible(false)}
+        />
+      )}
 
-      <EditProfileScreen
-        visible={editModalVisible}
-        firstName={firstName}
-        lastName={lastName}
-        profileImage={profileImage}
-        onClose={() => setEditModalVisible(false)}
-        onSave={handleSaveProfile}
-      />
+      {editModalVisible && (
+        <EditProfileScreen
+          visible
+          firstName={profile.firstName}
+          lastName={profile.lastName}
+          profileImage={profile.profileImage}
+          onClose={() => setEditModalVisible(false)}
+          onSave={handleSaveProfile}
+        />
+      )}
     </>
   );
 }
