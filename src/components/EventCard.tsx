@@ -492,16 +492,16 @@ const styles = StyleSheet.create({
   teamLogoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: 18,
   },
   teamLogo: {
-    width: 52,
-    height: 52,
+    width: 65,
+    height: 65,
     resizeMode: 'contain',
   },
   vsText: {
-    fontFamily: FONTS.bold,
-    fontSize: 18,
+    fontFamily: FONTS.geistMono,
+    fontSize: 23,
     color: 'rgba(255,255,255,0.90)',
   },
   categoryTag: {
