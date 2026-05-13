@@ -122,6 +122,8 @@ export default function EventsGlobeImpl({ events }: EventsGlobeImplProps) {
         scaleBarEnabled={false}
         attributionEnabled={true}
         logoEnabled={true}
+        rotateEnabled={false}
+        pitchEnabled={false}
       >
         <Mapbox.Camera
           ref={cameraRef}
