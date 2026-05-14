@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   outerFrame: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
-    borderRadius: 14,
+    borderRadius: 0,
     backgroundColor: '#1C0A00',
     padding: 5,
     shadowOffset: { width: 0, height: 14 },
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
   },
   innerFrame: {
     flex: 1,
-    borderRadius: 10,
+    borderRadius: 0,
     borderWidth: 2,
     borderColor: '#C8972A',
     overflow: 'hidden',
