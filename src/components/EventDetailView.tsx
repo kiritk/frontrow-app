@@ -307,7 +307,7 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
 
           {/* Card */}
           <View style={styles.cardContainer}>
-            <EventCard event={currentEvent} isFront={true} hideViewTicket={true} />
+            <EventCard event={currentEvent} isFront={true} hideViewTicket={true} blurGradient={true} detailCard={true} />
           </View>
 
           {/* Photo Shelf */}
@@ -645,7 +645,7 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.xs,
     color: COLORS.gray,
     marginTop: 6,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   thumbWrapper: {
     position: 'relative',

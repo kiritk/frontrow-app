@@ -4,6 +4,7 @@ import {
   ImageBackground, Image, Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring,
@@ -26,6 +27,8 @@ interface EventCardProps {
   onPress?: () => void;
   isFront?: boolean;
   hideViewTicket?: boolean;
+  blurGradient?: boolean;
+  detailCard?: boolean;
 }
 
 const CONCERT_COLORS = {
@@ -109,7 +112,6 @@ const getEventOverlayColors = (type: string, sport?: string): [string, string, s
 export const getBackgroundSource = (event: EventData, homeTeam: any) => {
   const photos = event.photos || [];
   if (event.cover_photo) return { uri: event.cover_photo };
-  if (photos.length > 0 && photos[0]) return { uri: photos[0] };
   const isTeamSport = (event.sport === 'nfl' || event.sport === 'mlb') && event.home_team && event.away_team;
   switch (event.type) {
     case 'concert': return require('../../assets/images/concert_bg.png');
@@ -179,7 +181,7 @@ const formatDate = (dateString: string) => {
   return { month, day, year, weekday };
 };
 
-export default React.memo(function EventCard({ event, onPress, isFront = false, hideViewTicket = false }: EventCardProps) {
+export default React.memo(function EventCard({ event, onPress, isFront = false, hideViewTicket = false, blurGradient = false, detailCard = false }: EventCardProps) {
   const { month, day, year, weekday } = formatDate(event.date);
   const cardStyle = getCardStyle(event.type, event.sport);
   const overlayColors = getEventOverlayColors(event.type, event.sport);
@@ -215,7 +217,13 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
     : displayTitle;
 
   return (
-    <Animated.View style={[styles.stackedCardWrapper, { backgroundColor: solidColor }, animatedStyle]}>
+    <Animated.View style={[
+      styles.stackedCardWrapper,
+      { backgroundColor: solidColor },
+      homeTeam && { borderWidth: 2, borderColor: homeTeam.primaryColor },
+      detailCard && styles.detailCardWrapper,
+      animatedStyle,
+    ]}>
       <TouchableOpacity
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
@@ -223,7 +231,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
         activeOpacity={1}
         style={{ flex: 1 }}
       >
-        <View style={styles.stackedCard}>
+        <View style={[styles.stackedCard, detailCard && { borderRadius: 0 }]}>
 
           {/* Layer 1 + 2: Background + color overlay */}
           {bgSource ? (
@@ -265,6 +273,16 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
             style={styles.peekBottomEdge}
             pointerEvents="none"
           />
+
+          {/* Blur gradient — detail page only, clear at top → blurred at bottom */}
+          {blurGradient && (
+            <>
+              <BlurView intensity={6}  tint="dark" style={[styles.blurLayer, { top: STACKED_CARD_HEIGHT * 0.30 }]} pointerEvents="none" />
+              <BlurView intensity={16} tint="dark" style={[styles.blurLayer, { top: STACKED_CARD_HEIGHT * 0.50 }]} pointerEvents="none" />
+              <BlurView intensity={30} tint="dark" style={[styles.blurLayer, { top: STACKED_CARD_HEIGHT * 0.65 }]} pointerEvents="none" />
+              <BlurView intensity={50} tint="dark" style={[styles.blurLayer, { top: STACKED_CARD_HEIGHT * 0.78 }]} pointerEvents="none" />
+            </>
+          )}
 
           {isFront ? (
             // ── Front card: full expanded layout ─────────────────────────
@@ -353,6 +371,12 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
         </View>
       </TouchableOpacity>
 
+      {detailCard && (
+        <>
+          <View style={[styles.perforation, styles.perforationLeft]} pointerEvents="none" />
+          <View style={[styles.perforation, styles.perforationRight]} pointerEvents="none" />
+        </>
+      )}
     </Animated.View>
   );
 });
@@ -371,6 +395,27 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 10,
   },
+  detailCardWrapper: {
+    borderRadius: 0,
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 0,
+  },
+  perforation: {
+    position: 'absolute',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FCFCFC',
+    top: STACKED_CARD_HEIGHT * 0.75 - 14,
+  },
+  perforationLeft: {
+    left: -14,
+  },
+  perforationRight: {
+    right: -14,
+  },
   stackedCard: {
     flex: 1,
     borderRadius: 19,
@@ -381,6 +426,12 @@ const styles = StyleSheet.create({
   },
   imageDarken: {
     backgroundColor: 'rgba(0,0,0,0.25)',
+  },
+  blurLayer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   glassHighlight: {
     position: 'absolute',
