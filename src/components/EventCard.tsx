@@ -28,6 +28,7 @@ interface EventCardProps {
   isFront?: boolean;
   hideViewTicket?: boolean;
   blurGradient?: boolean;
+  detailCard?: boolean;
 }
 
 const CONCERT_COLORS = {
@@ -180,7 +181,7 @@ const formatDate = (dateString: string) => {
   return { month, day, year, weekday };
 };
 
-export default React.memo(function EventCard({ event, onPress, isFront = false, hideViewTicket = false, blurGradient = false }: EventCardProps) {
+export default React.memo(function EventCard({ event, onPress, isFront = false, hideViewTicket = false, blurGradient = false, detailCard = false }: EventCardProps) {
   const { month, day, year, weekday } = formatDate(event.date);
   const cardStyle = getCardStyle(event.type, event.sport);
   const overlayColors = getEventOverlayColors(event.type, event.sport);
@@ -220,6 +221,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
       styles.stackedCardWrapper,
       { backgroundColor: solidColor },
       homeTeam && { borderWidth: 2, borderColor: homeTeam.primaryColor },
+      detailCard && styles.detailCardWrapper,
       animatedStyle,
     ]}>
       <TouchableOpacity
@@ -229,7 +231,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
         activeOpacity={1}
         style={{ flex: 1 }}
       >
-        <View style={styles.stackedCard}>
+        <View style={[styles.stackedCard, detailCard && { borderRadius: 0 }]}>
 
           {/* Layer 1 + 2: Background + color overlay */}
           {bgSource ? (
@@ -369,6 +371,12 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
         </View>
       </TouchableOpacity>
 
+      {detailCard && (
+        <>
+          <View style={[styles.perforation, styles.perforationLeft]} pointerEvents="none" />
+          <View style={[styles.perforation, styles.perforationRight]} pointerEvents="none" />
+        </>
+      )}
     </Animated.View>
   );
 });
@@ -386,6 +394,27 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 20,
     elevation: 10,
+  },
+  detailCardWrapper: {
+    borderRadius: 0,
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 0,
+  },
+  perforation: {
+    position: 'absolute',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FCFCFC',
+    top: STACKED_CARD_HEIGHT * 0.75 - 14,
+  },
+  perforationLeft: {
+    left: -14,
+  },
+  perforationRight: {
+    right: -14,
   },
   stackedCard: {
     flex: 1,
