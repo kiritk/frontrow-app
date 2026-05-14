@@ -216,7 +216,12 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
     : displayTitle;
 
   return (
-    <Animated.View style={[styles.stackedCardWrapper, { backgroundColor: solidColor }, animatedStyle]}>
+    <Animated.View style={[
+      styles.stackedCardWrapper,
+      { backgroundColor: solidColor },
+      homeTeam && { borderWidth: 2, borderColor: homeTeam.primaryColor },
+      animatedStyle,
+    ]}>
       <TouchableOpacity
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
