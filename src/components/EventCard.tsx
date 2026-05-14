@@ -109,7 +109,6 @@ const getEventOverlayColors = (type: string, sport?: string): [string, string, s
 export const getBackgroundSource = (event: EventData, homeTeam: any) => {
   const photos = event.photos || [];
   if (event.cover_photo) return { uri: event.cover_photo };
-  if (photos.length > 0 && photos[0]) return { uri: photos[0] };
   const isTeamSport = (event.sport === 'nfl' || event.sport === 'mlb') && event.home_team && event.away_team;
   switch (event.type) {
     case 'concert': return require('../../assets/images/concert_bg.png');
