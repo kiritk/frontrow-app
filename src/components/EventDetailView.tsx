@@ -20,9 +20,11 @@ import EventCard, { EventData } from './EventCard';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SHELF_PADDING = SCREEN_WIDTH * 0.05;
 const SLOT_GAP = 12;
-const THUMB_SIZE = (SCREEN_WIDTH * 0.9 - SLOT_GAP * 4) / 5;
+const MAX_MORE_PHOTOS = 4;
+const DIVIDER_WIDTH = 1;
+const LIGHT_BLUE = '#4FC3F7';
+const THUMB_SIZE = (SCREEN_WIDTH * 0.9 - SLOT_GAP * 5 - DIVIDER_WIDTH) / 5;
 const SLOT_STRIDE = THUMB_SIZE + SLOT_GAP;
-const MAX_PHOTOS = 5;
 
 interface EventDetailViewProps {
   event: EventData;
@@ -35,6 +37,7 @@ interface EventDetailViewProps {
 export default function EventDetailView({ event, onClose, onDelete, onUpdate, animValue }: EventDetailViewProps) {
   const { user } = useAuth();
   const [photos, setPhotos] = useState<string[]>(event.photos || []);
+  const [coverPhoto, setCoverPhoto] = useState<string | undefined>(event.cover_photo);
   const [title, setTitle] = useState(event.title);
   const [date, setDate] = useState(event.date);
   const [venue, setVenue] = useState(event.venue);
@@ -65,13 +68,13 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
         dragAnim.setValue({ x: gesture.dx, y: gesture.dy });
         const origin = dragIndexRef.current!;
         const target = Math.round(origin + gesture.dx / SLOT_STRIDE);
-        const clamped = Math.max(0, Math.min(MAX_PHOTOS - 1, target));
+        const clamped = Math.max(0, Math.min(MAX_MORE_PHOTOS - 1, target));
         setDropTarget(clamped !== origin ? clamped : null);
       },
       onPanResponderRelease: (_, gesture) => {
         const origin = dragIndexRef.current!;
         const target = Math.round(origin + gesture.dx / SLOT_STRIDE);
-        const clamped = Math.max(0, Math.min(MAX_PHOTOS - 1, target));
+        const clamped = Math.max(0, Math.min(MAX_MORE_PHOTOS - 1, target));
 
         if (clamped !== origin) {
           const currentPhotos = [...photosRef.current];
@@ -103,7 +106,7 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
     })
   ).current;
 
-  const currentEvent: EventData = { ...event, photos, title, date, venue };
+  const currentEvent: EventData = { ...event, photos, title, date, venue, cover_photo: coverPhoto };
 
   const updateEvent = async (updates: Record<string, any>) => {
     try {
@@ -185,15 +188,47 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
     Keyboard.dismiss();
   };
 
+  const pickCoverPhoto = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Please allow access to your photos');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: false,
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      setCoverPhoto(uri);
+      await updateEvent({ cover_photo: uri });
+    }
+  };
+
+  const removeCoverPhoto = async () => {
+    Alert.alert('Remove Cover Photo', 'Remove the cover photo?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: async () => {
+          setCoverPhoto(undefined);
+          await updateEvent({ cover_photo: undefined });
+        },
+      },
+    ]);
+  };
+
   const pickImages = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission needed', 'Please allow access to your photos');
       return;
     }
-    const remaining = MAX_PHOTOS - photos.length;
+    const remaining = MAX_MORE_PHOTOS - photos.length;
     if (remaining <= 0) {
-      Alert.alert('Limit reached', `Maximum ${MAX_PHOTOS} photos per event`);
+      Alert.alert('Limit reached', `Maximum ${MAX_MORE_PHOTOS} photos per event`);
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -203,7 +238,7 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
       quality: 0.8,
     });
     if (!result.canceled) {
-      const newPhotos = [...photos, ...result.assets.map(a => a.uri)].slice(0, MAX_PHOTOS);
+      const newPhotos = [...photos, ...result.assets.map(a => a.uri)].slice(0, MAX_MORE_PHOTOS);
       setPhotos(newPhotos);
       await updateEvent({ photos: newPhotos });
     }
@@ -276,88 +311,115 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
           </View>
 
           {/* Photo Shelf */}
-          <View style={styles.photoSection} {...panResponder.panHandlers}>
+          <View style={styles.photoSection}>
             <Text style={styles.photoTitle}>Your Pictures</Text>
             <View style={styles.photoShelf}>
-              {Array.from({ length: MAX_PHOTOS }).map((_, index) => {
-                const photo = photos[index];
-                const isDragging = dragIndex === index;
-                const isDropTarget = dropTarget === index && dragIndex !== index;
 
-                if (photo) {
-                  return (
-                    <View key={index} style={styles.thumbWrapper}>
-                      {isDragging ? (
-                        <Animated.View
-                          style={[
-                            styles.photoThumb,
-                            styles.photoThumbDragging,
-                            { transform: [...dragAnim.getTranslateTransform(), { scale: 1.08 }], zIndex: 50 },
-                          ]}
-                        >
-                          <Image source={{ uri: photo }} style={styles.photoThumbImage} />
-                          {index === 0 && (
-                            <View style={styles.coverBadge}>
-                              <Text style={styles.coverBadgeText}>Cover</Text>
-                            </View>
+              {/* Cover Photo Group */}
+              <View style={styles.coverPhotoGroup}>
+                {coverPhoto ? (
+                  <View style={styles.thumbWrapper}>
+                    <TouchableOpacity style={styles.photoThumb} activeOpacity={0.9} onPress={pickCoverPhoto}>
+                      <Image source={{ uri: coverPhoto }} style={styles.photoThumbImage} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.deleteIcon}
+                      onPress={removeCoverPhoto}
+                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                    >
+                      <Ionicons name="close-circle" size={18} color="#E53935" />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.photoThumb, styles.addPhotoThumb]}
+                    onPress={pickCoverPhoto}
+                  >
+                    <Ionicons name="add" size={28} color={LIGHT_BLUE} />
+                  </TouchableOpacity>
+                )}
+                <Text style={styles.coverPhotoLabel}>Cover photo</Text>
+              </View>
+
+              {/* Divider */}
+              <View style={styles.photoSectionDivider} />
+
+              {/* More Pictures Group */}
+              <View style={styles.morePicturesGroup} {...panResponder.panHandlers}>
+                <View style={styles.morePicturesRow}>
+                  {Array.from({ length: MAX_MORE_PHOTOS }).map((_, index) => {
+                    const photo = photos[index];
+                    const isDragging = dragIndex === index;
+                    const isDropTarget = dropTarget === index && dragIndex !== index;
+
+                    if (photo) {
+                      return (
+                        <View key={index} style={styles.thumbWrapper}>
+                          {isDragging ? (
+                            <Animated.View
+                              style={[
+                                styles.photoThumb,
+                                styles.photoThumbDragging,
+                                { transform: [...dragAnim.getTranslateTransform(), { scale: 1.08 }], zIndex: 50 },
+                              ]}
+                            >
+                              <Image source={{ uri: photo }} style={styles.photoThumbImage} />
+                            </Animated.View>
+                          ) : (
+                            <TouchableOpacity
+                              style={[
+                                styles.photoThumb,
+                                isDropTarget && styles.photoThumbDropTarget,
+                              ]}
+                              onLongPress={() => startDrag(index)}
+                              delayLongPress={200}
+                              activeOpacity={0.9}
+                            >
+                              <Image source={{ uri: photo }} style={styles.photoThumbImage} />
+                            </TouchableOpacity>
                           )}
-                        </Animated.View>
-                      ) : (
+                          <TouchableOpacity
+                            style={styles.deleteIcon}
+                            onPress={() => removePhoto(index)}
+                            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                          >
+                            <Ionicons name="close-circle" size={18} color="#E53935" />
+                          </TouchableOpacity>
+                        </View>
+                      );
+                    }
+
+                    if (index === photos.length) {
+                      return (
                         <TouchableOpacity
+                          key={index}
                           style={[
                             styles.photoThumb,
+                            styles.addPhotoThumb,
                             isDropTarget && styles.photoThumbDropTarget,
                           ]}
-                          onLongPress={() => startDrag(index)}
-                          delayLongPress={200}
-                          activeOpacity={0.9}
+                          onPress={pickImages}
                         >
-                          <Image source={{ uri: photo }} style={styles.photoThumbImage} />
-                          {index === 0 && (
-                            <View style={styles.coverBadge}>
-                              <Text style={styles.coverBadgeText}>Cover</Text>
-                            </View>
-                          )}
+                          <Ionicons name="add" size={24} color={COLORS.gray} />
                         </TouchableOpacity>
-                      )}
-                      <TouchableOpacity
-                        style={styles.deleteIcon}
-                        onPress={() => removePhoto(index)}
-                        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                      >
-                        <Ionicons name="close-circle" size={18} color="#E53935" />
-                      </TouchableOpacity>
-                    </View>
-                  );
-                }
+                      );
+                    }
 
-                if (index === photos.length) {
-                  return (
-                    <TouchableOpacity
-                      key={index}
-                      style={[
-                        styles.photoThumb,
-                        styles.addPhotoThumb,
-                        isDropTarget && styles.photoThumbDropTarget,
-                      ]}
-                      onPress={pickImages}
-                    >
-                      <Ionicons name="add" size={28} color={COLORS.gray} />
-                    </TouchableOpacity>
-                  );
-                }
+                    return (
+                      <View
+                        key={index}
+                        style={[
+                          styles.photoThumb,
+                          styles.emptyPhotoThumb,
+                          isDropTarget && styles.photoThumbDropTarget,
+                        ]}
+                      />
+                    );
+                  })}
+                </View>
+                <Text style={styles.morePicturesLabel}>More pictures</Text>
+              </View>
 
-                return (
-                  <View
-                    key={index}
-                    style={[
-                      styles.photoThumb,
-                      styles.emptyPhotoThumb,
-                      isDropTarget && styles.photoThumbDropTarget,
-                    ]}
-                  />
-                );
-              })}
             </View>
           </View>
         </ScrollView>
@@ -553,7 +615,37 @@ const styles = StyleSheet.create({
   },
   photoShelf: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
     gap: SLOT_GAP,
+  },
+  coverPhotoGroup: {
+    alignItems: 'center',
+  },
+  coverPhotoLabel: {
+    fontFamily: FONTS.medium,
+    fontSize: FONT_SIZES.xs,
+    color: LIGHT_BLUE,
+    marginTop: 6,
+  },
+  photoSectionDivider: {
+    width: DIVIDER_WIDTH,
+    alignSelf: 'stretch',
+    backgroundColor: '#D1D1D6',
+    marginVertical: 2,
+  },
+  morePicturesGroup: {
+    flex: 1,
+  },
+  morePicturesRow: {
+    flexDirection: 'row',
+    gap: SLOT_GAP,
+  },
+  morePicturesLabel: {
+    fontFamily: FONTS.medium,
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.gray,
+    marginTop: 6,
+    textAlign: 'center',
   },
   thumbWrapper: {
     position: 'relative',
@@ -579,20 +671,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: COLORS.navy,
     borderStyle: 'dashed',
-  },
-  coverBadge: {
-    position: 'absolute',
-    bottom: 4,
-    left: 4,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  coverBadgeText: {
-    fontFamily: FONTS.medium,
-    fontSize: 9,
-    color: COLORS.white,
   },
   deleteIcon: {
     position: 'absolute',

@@ -108,8 +108,8 @@ const getEventOverlayColors = (type: string, sport?: string): [string, string, s
 
 export const getBackgroundSource = (event: EventData, homeTeam: any) => {
   const photos = event.photos || [];
-  if (photos.length > 0 && photos[0]) return { uri: photos[0] };
   if (event.cover_photo) return { uri: event.cover_photo };
+  if (photos.length > 0 && photos[0]) return { uri: photos[0] };
   const isTeamSport = (event.sport === 'nfl' || event.sport === 'mlb') && event.home_team && event.away_team;
   switch (event.type) {
     case 'concert': return require('../../assets/images/concert_bg.png');
@@ -233,13 +233,6 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
               imageStyle={styles.stackedBgImage}
             >
               <View style={[StyleSheet.absoluteFill, styles.imageDarken]} />
-              {isFront && (
-                <LinearGradient
-                  colors={overlayColors}
-                  locations={[0, 0.42, 1]}
-                  style={StyleSheet.absoluteFill}
-                />
-              )}
             </ImageBackground>
           ) : (
             // No image: solid event color
@@ -351,7 +344,10 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
               >
                 {peekTitle}
               </Text>
-              <Text style={styles.peekDate}>{month} {day}, {year}</Text>
+              <View style={styles.peekDateBlock}>
+                <Text style={styles.peekDate}>{month}</Text>
+                <Text style={styles.peekDate}>{String(day).padStart(2, '0')}</Text>
+              </View>
             </View>
           )}
         </View>
@@ -426,10 +422,14 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 12,
   },
+  peekDateBlock: {
+    alignItems: 'flex-end',
+  },
   peekDate: {
     fontFamily: FONTS.medium,
     fontSize: 13,
     color: 'rgba(255,255,255,0.85)',
+    lineHeight: 16,
   },
 
   // ── Front card styles ─────────────────────────────────────────────────
@@ -492,16 +492,16 @@ const styles = StyleSheet.create({
   teamLogoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: 18,
   },
   teamLogo: {
-    width: 52,
-    height: 52,
+    width: 65,
+    height: 65,
     resizeMode: 'contain',
   },
   vsText: {
-    fontFamily: FONTS.bold,
-    fontSize: 18,
+    fontFamily: FONTS.geistMono,
+    fontSize: 23,
     color: 'rgba(255,255,255,0.90)',
   },
   categoryTag: {
