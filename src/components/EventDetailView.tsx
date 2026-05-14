@@ -645,7 +645,7 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.xs,
     color: COLORS.gray,
     marginTop: 6,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   thumbWrapper: {
     position: 'relative',
