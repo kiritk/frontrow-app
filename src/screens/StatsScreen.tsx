@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { getLocalEvents, LocalEvent } from '../lib/localStorage';
 import { computeEventStats, getFanLevel } from '../lib/stats';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
-import FanCard from '../components/FanCard';
+import TradingCardProfile from '../components/TradingCardProfile';
 import AppHeader from '../components/AppHeader';
 
 export default function StatsScreen() {
@@ -67,7 +67,7 @@ export default function StatsScreen() {
 
         {/* Fan Card */}
         <View style={styles.fanCardContainer}>
-          <FanCard
+          <TradingCardProfile
             firstName={profile.firstName}
             lastName={profile.lastName}
             profileImage={profile.profileImage}
