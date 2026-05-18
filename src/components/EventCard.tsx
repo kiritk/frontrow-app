@@ -4,7 +4,6 @@ import {
   ImageBackground, Image, Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring,
@@ -27,7 +26,6 @@ interface EventCardProps {
   onPress?: () => void;
   isFront?: boolean;
   hideViewTicket?: boolean;
-  blurGradient?: boolean;
   detailCard?: boolean;
 }
 
@@ -181,7 +179,7 @@ const formatDate = (dateString: string) => {
   return { month, day, year, weekday };
 };
 
-export default React.memo(function EventCard({ event, onPress, isFront = false, hideViewTicket = false, blurGradient = false, detailCard = false }: EventCardProps) {
+export default React.memo(function EventCard({ event, onPress, isFront = false, hideViewTicket = false, detailCard = false }: EventCardProps) {
   const { month, day, year, weekday } = formatDate(event.date);
   const cardStyle = getCardStyle(event.type, event.sport);
   const overlayColors = getEventOverlayColors(event.type, event.sport);
@@ -274,16 +272,6 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
             pointerEvents="none"
           />
 
-          {/* Blur gradient — detail page only, clear at top → blurred at bottom */}
-          {blurGradient && (
-            <>
-              <BlurView intensity={6}  tint="dark" style={[styles.blurLayer, { top: STACKED_CARD_HEIGHT * 0.30 }]} pointerEvents="none" />
-              <BlurView intensity={16} tint="dark" style={[styles.blurLayer, { top: STACKED_CARD_HEIGHT * 0.50 }]} pointerEvents="none" />
-              <BlurView intensity={30} tint="dark" style={[styles.blurLayer, { top: STACKED_CARD_HEIGHT * 0.65 }]} pointerEvents="none" />
-              <BlurView intensity={50} tint="dark" style={[styles.blurLayer, { top: STACKED_CARD_HEIGHT * 0.78 }]} pointerEvents="none" />
-            </>
-          )}
-
           {isFront ? (
             // ── Front card: full expanded layout ─────────────────────────
             <>
@@ -296,8 +284,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
                   </View>
                 ) : <View />}
                 <View style={styles.dateChip}>
-                  <Text style={styles.dateChipMonth}>{month}</Text>
-                  <Text style={styles.dateChipDay}>{String(day).padStart(2, '0')}</Text>
+                  <Text style={styles.dateChipMonthDay}>{month} {String(day).padStart(2, '0')}</Text>
                   <Text style={styles.dateChipWeekday}>{year}</Text>
                 </View>
               </View>
@@ -306,9 +293,15 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
               <View style={styles.frontTitleArea}>
                 {isTeamSport && homeTeam && awayTeam ? (
                   <View style={styles.teamLogoRow}>
-                    <Image source={homeTeam.logo} style={styles.teamLogo} />
+                    <View style={styles.teamBlock}>
+                      <Image source={homeTeam.logo} style={styles.teamLogo} />
+                      <Text style={styles.teamNameText} numberOfLines={2}>{homeTeam.fullName}</Text>
+                    </View>
                     <Text style={styles.vsText}>VS</Text>
-                    <Image source={awayTeam.logo} style={styles.teamLogo} />
+                    <View style={styles.teamBlock}>
+                      <Image source={awayTeam.logo} style={styles.teamLogo} />
+                      <Text style={styles.teamNameText} numberOfLines={2}>{awayTeam.fullName}</Text>
+                    </View>
                   </View>
                 ) : (
                   <Text style={[styles.frontTitle, { fontFamily: titleFont }]} numberOfLines={2}>
@@ -408,7 +401,7 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 14,
     backgroundColor: '#FCFCFC',
-    top: STACKED_CARD_HEIGHT * 0.75 - 14,
+    top: STACKED_CARD_HEIGHT * 0.25 - 14,
   },
   perforationLeft: {
     left: -14,
@@ -426,12 +419,6 @@ const styles = StyleSheet.create({
   },
   imageDarken: {
     backgroundColor: 'rgba(0,0,0,0.25)',
-  },
-  blurLayer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
   },
   glassHighlight: {
     position: 'absolute',
@@ -507,24 +494,18 @@ const styles = StyleSheet.create({
   dateChip: {
     alignItems: 'flex-end',
   },
-  dateChipMonth: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.80)',
-    letterSpacing: 1.5,
-  },
-  dateChipDay: {
+  dateChipMonthDay: {
     fontFamily: FONTS.bold,
-    fontSize: 34,
+    fontSize: 26,
     color: '#FFFFFF',
-    lineHeight: 38,
-    marginTop: -2,
+    lineHeight: 30,
+    letterSpacing: 0.5,
   },
   dateChipWeekday: {
     fontFamily: FONTS.medium,
-    fontSize: 11,
+    fontSize: 13,
     color: 'rgba(255,255,255,0.65)',
-    marginTop: -4,
+    marginTop: 0,
   },
   frontTitleArea: {
     flex: 1,
@@ -542,8 +523,23 @@ const styles = StyleSheet.create({
   },
   teamLogoRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
     gap: 18,
+  },
+  teamBlock: {
+    alignItems: 'center',
+    gap: 8,
+    maxWidth: 110,
+  },
+  teamNameText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.7)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   teamLogo: {
     width: 65,
@@ -554,6 +550,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.geistMono,
     fontSize: 23,
     color: 'rgba(255,255,255,0.90)',
+    marginTop: 20,
   },
   categoryTag: {
     flexDirection: 'row',
