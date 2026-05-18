@@ -61,6 +61,8 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
     try {
       const allEvents = await fetchEventsFromService(user?.id);
       setEvents(allEvents);
+      // Keep the open detail view in sync with the freshly-loaded data.
+      setSelectedEvent(prev => (prev ? allEvents.find(e => e.id === prev.id) ?? prev : null));
     } catch (error) {
       console.error('Error fetching events:', error);
     }

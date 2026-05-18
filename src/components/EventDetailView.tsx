@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Alert, Image,
   Dimensions, ScrollView, TextInput, Modal, Platform,
@@ -41,6 +41,15 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
   const [title, setTitle] = useState(event.title);
   const [date, setDate] = useState(event.date);
   const [venue, setVenue] = useState(event.venue);
+
+  // Re-sync local state when the parent passes in a fresh event object
+  // (e.g. after fetchEvents reloads from storage post-edit).
+  useEffect(() => {
+    setPhotos(event.photos || []);
+    setTitle(event.title);
+    setDate(event.date);
+    setVenue(event.venue);
+  }, [event.id, event.title, event.date, event.venue, event.photos]);
   const [showEditSheet, setShowEditSheet] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editCityQuery, setEditCityQuery] = useState('');
