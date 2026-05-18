@@ -296,8 +296,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
                   </View>
                 ) : <View />}
                 <View style={styles.dateChip}>
-                  <Text style={styles.dateChipMonth}>{month}</Text>
-                  <Text style={styles.dateChipDay}>{String(day).padStart(2, '0')}</Text>
+                  <Text style={styles.dateChipMonthDay}>{month} {String(day).padStart(2, '0')}</Text>
                   <Text style={styles.dateChipWeekday}>{year}</Text>
                 </View>
               </View>
@@ -507,24 +506,18 @@ const styles = StyleSheet.create({
   dateChip: {
     alignItems: 'flex-end',
   },
-  dateChipMonth: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.80)',
-    letterSpacing: 1.5,
-  },
-  dateChipDay: {
+  dateChipMonthDay: {
     fontFamily: FONTS.bold,
-    fontSize: 34,
+    fontSize: 26,
     color: '#FFFFFF',
-    lineHeight: 38,
-    marginTop: -2,
+    lineHeight: 30,
+    letterSpacing: 0.5,
   },
   dateChipWeekday: {
     fontFamily: FONTS.medium,
-    fontSize: 11,
+    fontSize: 13,
     color: 'rgba(255,255,255,0.65)',
-    marginTop: -4,
+    marginTop: 0,
   },
   frontTitleArea: {
     flex: 1,
