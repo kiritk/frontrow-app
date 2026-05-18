@@ -184,6 +184,22 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
     });
   }, [detailAnim, listAnim, fetchEvents]);
 
+  // Tapping the Events tab (even while already on it) resets to the
+  // starting state: close the detail view and scroll back to the front card.
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('tabPress' as any, () => {
+      if (detailVisible) {
+        closeDetail();
+      }
+      if (filteredEventsRef.current.length > 0) {
+        scrollToLastCard();
+      } else {
+        pendingScrollToEnd.current = true;
+      }
+    });
+    return unsubscribe;
+  }, [navigation, scrollToLastCard, detailVisible, closeDetail]);
+
   const renderEventCard = useCallback(
     ({ item, index }: { item: Event; index: number }) => {
       const total = filteredEvents.length;
