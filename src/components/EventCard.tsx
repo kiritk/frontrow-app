@@ -293,9 +293,15 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
               <View style={styles.frontTitleArea}>
                 {isTeamSport && homeTeam && awayTeam ? (
                   <View style={styles.teamLogoRow}>
-                    <Image source={homeTeam.logo} style={styles.teamLogo} />
+                    <View style={styles.teamBlock}>
+                      <Image source={homeTeam.logo} style={styles.teamLogo} />
+                      <Text style={styles.teamNameText} numberOfLines={2}>{homeTeam.fullName}</Text>
+                    </View>
                     <Text style={styles.vsText}>VS</Text>
-                    <Image source={awayTeam.logo} style={styles.teamLogo} />
+                    <View style={styles.teamBlock}>
+                      <Image source={awayTeam.logo} style={styles.teamLogo} />
+                      <Text style={styles.teamNameText} numberOfLines={2}>{awayTeam.fullName}</Text>
+                    </View>
                   </View>
                 ) : (
                   <Text style={[styles.frontTitle, { fontFamily: titleFont }]} numberOfLines={2}>
@@ -517,8 +523,23 @@ const styles = StyleSheet.create({
   },
   teamLogoRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
     gap: 18,
+  },
+  teamBlock: {
+    alignItems: 'center',
+    gap: 8,
+    maxWidth: 110,
+  },
+  teamNameText: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.7)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   teamLogo: {
     width: 65,
@@ -529,6 +550,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.geistMono,
     fontSize: 23,
     color: 'rgba(255,255,255,0.90)',
+    marginTop: 20,
   },
   categoryTag: {
     flexDirection: 'row',

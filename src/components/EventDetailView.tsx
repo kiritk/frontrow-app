@@ -1,11 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Alert, Image,
-  ImageBackground, Dimensions, ScrollView, TextInput, Modal, Platform,
+  Dimensions, ScrollView, TextInput, Modal, Platform,
   KeyboardAvoidingView, Keyboard, Pressable,
   Animated, PanResponder,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -16,9 +15,7 @@ import { useAuth } from '../context/AuthContext';
 import { editEvent } from '../lib/eventService';
 import { SORTED_CITIES, USCity } from '../data/usCities';
 import { COLORS, FONTS, SPACING, FONT_SIZES, BORDER_RADIUS } from '../theme/colors';
-import EventCard, { EventData, getBackgroundSource } from './EventCard';
-import { getTeamByName } from '../data/nflTeams';
-import { getMLBTeamByName } from '../data/mlbTeams';
+import EventCard, { EventData } from './EventCard';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SHELF_PADDING = SCREEN_WIDTH * 0.05;
@@ -130,22 +127,6 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
   };
 
   const isTeamSport = (event.sport === 'nfl' || event.sport === 'mlb') && event.home_team && event.away_team;
-
-  const homeTeamData = (event.sport === 'nfl' && event.home_team)
-    ? getTeamByName(event.home_team.name)
-    : (event.sport === 'mlb' && event.home_team)
-    ? getMLBTeamByName(event.home_team.name)
-    : null;
-  const awayTeamData = (event.sport === 'nfl' && event.away_team)
-    ? getTeamByName(event.away_team.name)
-    : (event.sport === 'mlb' && event.away_team)
-    ? getMLBTeamByName(event.away_team.name)
-    : null;
-  const bgSource = getBackgroundSource(currentEvent, homeTeamData);
-  const matchDate = (() => {
-    const d = new Date(date.slice(0, 10) + 'T12:00:00');
-    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-  })();
 
   const renderPhotoShelf = () => (
     <View style={styles.photoShelf}>
@@ -431,60 +412,16 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
             </TouchableOpacity>
           </View>
 
-          {isTeamSport && homeTeamData && awayTeamData ? (
-            /* ── NFL/MLB Match Ticket Card ── */
-            <View style={styles.matchCardContainer}>
-              <View style={[styles.matchCard, homeTeamData && { borderColor: homeTeamData.primaryColor, borderWidth: 2 }]}>
+          {/* Card */}
+          <View style={styles.cardContainer}>
+            <EventCard event={currentEvent} isFront={true} hideViewTicket={true} detailCard={true} />
+          </View>
 
-                {/* Top: blurred stadium image with logos */}
-                <View style={styles.matchTop}>
-                  <ImageBackground source={bgSource} style={styles.matchBgImage} resizeMode="cover">
-                    <BlurView intensity={10} tint="dark" style={StyleSheet.absoluteFill} />
-                    <View style={styles.matchLogosRow}>
-                      <View style={styles.matchTeamBlock}>
-                        <Image source={awayTeamData.logo} style={styles.matchLogo} resizeMode="contain" />
-                        <Text style={styles.matchTeamCity}>{awayTeamData.city}</Text>
-                      </View>
-                      <Text style={styles.matchVS}>VS</Text>
-                      <View style={styles.matchTeamBlock}>
-                        <Image source={homeTeamData.logo} style={styles.matchLogo} resizeMode="contain" />
-                        <Text style={styles.matchTeamCity}>{homeTeamData.city}</Text>
-                      </View>
-                    </View>
-                  </ImageBackground>
-                </View>
-
-                {/* Perforations */}
-                <View style={[styles.matchPerforation, styles.matchPerfLeft]} />
-                <View style={[styles.matchPerforation, styles.matchPerfRight]} />
-
-                {/* Dashed divider line */}
-                <View style={styles.matchDivider} />
-
-                {/* Bottom: venue, date, photos */}
-                <View style={styles.matchBottom}>
-                  <Text style={styles.matchVenueName}>{venue}</Text>
-                  <Text style={styles.matchDateText}>{matchDate}</Text>
-                  <Text style={[styles.photoTitle, styles.matchPhotoTitle]}>Your Pictures</Text>
-                  {renderPhotoShelf()}
-                  <View style={styles.matchBottomSpacer} />
-                </View>
-              </View>
-            </View>
-          ) : (
-            <>
-              {/* Card */}
-              <View style={styles.cardContainer}>
-                <EventCard event={currentEvent} isFront={true} hideViewTicket={true} detailCard={true} />
-              </View>
-
-              {/* Photo Shelf */}
-              <View style={styles.photoSection}>
-                <Text style={styles.photoTitle}>Your Pictures</Text>
-                {renderPhotoShelf()}
-              </View>
-            </>
-          )}
+          {/* Photo Shelf */}
+          <View style={styles.photoSection}>
+            <Text style={styles.photoTitle}>Your Pictures</Text>
+            {renderPhotoShelf()}
+          </View>
         </ScrollView>
       </SafeAreaView>
 
@@ -899,107 +836,5 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     fontSize: FONT_SIZES.md,
     color: COLORS.white,
-  },
-
-  // ── NFL/MLB Match Ticket Card ──────────────────────────────────────────
-  matchCardContainer: {
-    alignItems: 'center',
-    marginTop: SPACING.sm,
-    marginBottom: SPACING.xl,
-  },
-  matchCard: {
-    width: SCREEN_WIDTH * 0.9,
-    borderRadius: 0,
-    overflow: 'visible',
-    backgroundColor: COLORS.white,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  matchTop: {
-    height: 220,
-    overflow: 'hidden',
-  },
-  matchBgImage: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  matchLogosRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-evenly',
-    paddingHorizontal: 16,
-  },
-  matchTeamBlock: {
-    alignItems: 'center',
-    gap: 10,
-  },
-  matchLogo: {
-    width: 90,
-    height: 90,
-  },
-  matchTeamCity: {
-    fontFamily: FONTS.bold,
-    fontSize: 14,
-    color: '#FFFFFF',
-    textShadowColor: 'rgba(0,0,0,0.7)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 4,
-    letterSpacing: 0.5,
-  },
-  matchVS: {
-    fontFamily: FONTS.geistMonoBold,
-    fontSize: 20,
-    color: 'rgba(255,255,255,0.75)',
-    letterSpacing: 3,
-  },
-  matchPerforation: {
-    position: 'absolute',
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: COLORS.cream,
-    top: 220 * 0.25 - 14,
-    zIndex: 10,
-  },
-  matchPerfLeft: {
-    left: -14,
-  },
-  matchPerfRight: {
-    right: -14,
-  },
-  matchDivider: {
-    height: 0,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E5E5',
-    borderStyle: 'dashed',
-    marginHorizontal: 16,
-  },
-  matchBottom: {
-    backgroundColor: COLORS.white,
-    paddingTop: SPACING.lg,
-    paddingBottom: 0,
-  },
-  matchVenueName: {
-    fontFamily: FONTS.bold,
-    fontSize: 20,
-    color: COLORS.navy,
-    marginBottom: 4,
-    paddingHorizontal: SPACING.lg,
-  },
-  matchDateText: {
-    fontFamily: FONTS.regular,
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.gray,
-    marginBottom: SPACING.lg,
-    paddingHorizontal: SPACING.lg,
-  },
-  matchPhotoTitle: {
-    paddingHorizontal: SPACING.lg,
-  },
-  matchBottomSpacer: {
-    height: SPACING.lg,
   },
 });
