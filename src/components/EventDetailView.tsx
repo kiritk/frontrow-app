@@ -961,7 +961,7 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 14,
     backgroundColor: COLORS.cream,
-    top: 220 - 14,
+    top: 220 * 0.25 - 14,
     zIndex: 10,
   },
   matchPerfLeft: {

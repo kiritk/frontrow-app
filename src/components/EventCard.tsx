@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 14,
     backgroundColor: '#FCFCFC',
-    top: STACKED_CARD_HEIGHT * 0.75 - 14,
+    top: STACKED_CARD_HEIGHT * 0.25 - 14,
   },
   perforationLeft: {
     left: -14,
