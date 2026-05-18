@@ -4,7 +4,6 @@ import {
   ImageBackground, Image, Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring,
@@ -27,7 +26,6 @@ interface EventCardProps {
   onPress?: () => void;
   isFront?: boolean;
   hideViewTicket?: boolean;
-  blurGradient?: boolean;
   detailCard?: boolean;
 }
 
@@ -181,7 +179,7 @@ const formatDate = (dateString: string) => {
   return { month, day, year, weekday };
 };
 
-export default React.memo(function EventCard({ event, onPress, isFront = false, hideViewTicket = false, blurGradient = false, detailCard = false }: EventCardProps) {
+export default React.memo(function EventCard({ event, onPress, isFront = false, hideViewTicket = false, detailCard = false }: EventCardProps) {
   const { month, day, year, weekday } = formatDate(event.date);
   const cardStyle = getCardStyle(event.type, event.sport);
   const overlayColors = getEventOverlayColors(event.type, event.sport);
@@ -273,16 +271,6 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
             style={styles.peekBottomEdge}
             pointerEvents="none"
           />
-
-          {/* Blur gradient — detail page only, clear at top → blurred at bottom */}
-          {blurGradient && (
-            <>
-              <BlurView intensity={6}  tint="dark" style={[styles.blurLayer, { top: STACKED_CARD_HEIGHT * 0.30 }]} pointerEvents="none" />
-              <BlurView intensity={16} tint="dark" style={[styles.blurLayer, { top: STACKED_CARD_HEIGHT * 0.50 }]} pointerEvents="none" />
-              <BlurView intensity={30} tint="dark" style={[styles.blurLayer, { top: STACKED_CARD_HEIGHT * 0.65 }]} pointerEvents="none" />
-              <BlurView intensity={50} tint="dark" style={[styles.blurLayer, { top: STACKED_CARD_HEIGHT * 0.78 }]} pointerEvents="none" />
-            </>
-          )}
 
           {isFront ? (
             // ── Front card: full expanded layout ─────────────────────────
@@ -425,12 +413,6 @@ const styles = StyleSheet.create({
   },
   imageDarken: {
     backgroundColor: 'rgba(0,0,0,0.25)',
-  },
-  blurLayer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
   },
   glassHighlight: {
     position: 'absolute',
