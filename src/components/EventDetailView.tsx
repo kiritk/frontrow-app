@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Alert, Image,
-  Dimensions, ScrollView, TextInput, Modal, Platform,
+  ImageBackground, Dimensions, ScrollView, TextInput, Modal, Platform,
   KeyboardAvoidingView, Keyboard, Pressable,
   Animated, PanResponder,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -15,7 +16,9 @@ import { useAuth } from '../context/AuthContext';
 import { editEvent } from '../lib/eventService';
 import { SORTED_CITIES, USCity } from '../data/usCities';
 import { COLORS, FONTS, SPACING, FONT_SIZES, BORDER_RADIUS } from '../theme/colors';
-import EventCard, { EventData } from './EventCard';
+import EventCard, { EventData, getBackgroundSource } from './EventCard';
+import { getTeamByName } from '../data/nflTeams';
+import { getMLBTeamByName } from '../data/mlbTeams';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SHELF_PADDING = SCREEN_WIDTH * 0.05;
@@ -127,6 +130,120 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
   };
 
   const isTeamSport = (event.sport === 'nfl' || event.sport === 'mlb') && event.home_team && event.away_team;
+
+  const homeTeamData = (event.sport === 'nfl' && event.home_team)
+    ? getTeamByName(event.home_team.name)
+    : (event.sport === 'mlb' && event.home_team)
+    ? getMLBTeamByName(event.home_team.name)
+    : null;
+  const awayTeamData = (event.sport === 'nfl' && event.away_team)
+    ? getTeamByName(event.away_team.name)
+    : (event.sport === 'mlb' && event.away_team)
+    ? getMLBTeamByName(event.away_team.name)
+    : null;
+  const bgSource = getBackgroundSource(currentEvent, homeTeamData);
+  const matchDate = (() => {
+    const d = new Date(date.slice(0, 10) + 'T12:00:00');
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  })();
+
+  const renderPhotoShelf = () => (
+    <View style={styles.photoShelf}>
+      {/* Cover Photo Group */}
+      <View style={styles.coverPhotoGroup}>
+        {coverPhoto ? (
+          <View style={styles.thumbWrapper}>
+            <TouchableOpacity style={styles.photoThumb} activeOpacity={0.9} onPress={pickCoverPhoto}>
+              <Image source={{ uri: coverPhoto }} style={styles.photoThumbImage} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.deleteIcon}
+              onPress={removeCoverPhoto}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            >
+              <Ionicons name="close-circle" size={18} color="#E53935" />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={[styles.photoThumb, styles.addPhotoThumb]}
+            onPress={pickCoverPhoto}
+          >
+            <Ionicons name="add" size={28} color={LIGHT_BLUE} />
+          </TouchableOpacity>
+        )}
+        <Text style={styles.coverPhotoLabel}>Cover photo</Text>
+      </View>
+
+      {/* Divider */}
+      <View style={styles.photoSectionDivider} />
+
+      {/* More Pictures Group */}
+      <View style={styles.morePicturesGroup} {...panResponder.panHandlers}>
+        <View style={styles.morePicturesRow}>
+          {Array.from({ length: MAX_MORE_PHOTOS }).map((_, index) => {
+            const photo = photos[index];
+            const isDragging = dragIndex === index;
+            const isDropTarget = dropTarget === index && dragIndex !== index;
+
+            if (photo) {
+              return (
+                <View key={index} style={styles.thumbWrapper}>
+                  {isDragging ? (
+                    <Animated.View
+                      style={[
+                        styles.photoThumb,
+                        styles.photoThumbDragging,
+                        { transform: [...dragAnim.getTranslateTransform(), { scale: 1.08 }], zIndex: 50 },
+                      ]}
+                    >
+                      <Image source={{ uri: photo }} style={styles.photoThumbImage} />
+                    </Animated.View>
+                  ) : (
+                    <TouchableOpacity
+                      style={[styles.photoThumb, isDropTarget && styles.photoThumbDropTarget]}
+                      onLongPress={() => startDrag(index)}
+                      delayLongPress={200}
+                      activeOpacity={0.9}
+                    >
+                      <Image source={{ uri: photo }} style={styles.photoThumbImage} />
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    style={styles.deleteIcon}
+                    onPress={() => removePhoto(index)}
+                    hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                  >
+                    <Ionicons name="close-circle" size={18} color="#E53935" />
+                  </TouchableOpacity>
+                </View>
+              );
+            }
+
+            if (index === photos.length) {
+              return (
+                <TouchableOpacity
+                  key={index}
+                  style={[styles.photoThumb, styles.addPhotoThumb, isDropTarget && styles.photoThumbDropTarget]}
+                  onPress={pickImages}
+                >
+                  <Ionicons name="add" size={24} color={COLORS.gray} />
+                </TouchableOpacity>
+              );
+            }
+
+            return (
+              <View
+                key={index}
+                style={[styles.photoThumb, styles.emptyPhotoThumb, isDropTarget && styles.photoThumbDropTarget]}
+              />
+            );
+          })}
+        </View>
+        <Text style={styles.morePicturesLabel}>More pictures</Text>
+      </View>
+    </View>
+  );
 
   const openEditSheet = () => {
     setEditTitle(title);
@@ -314,123 +431,60 @@ export default function EventDetailView({ event, onClose, onDelete, onUpdate, an
             </TouchableOpacity>
           </View>
 
-          {/* Card */}
-          <View style={styles.cardContainer}>
-            <EventCard event={currentEvent} isFront={true} hideViewTicket={true} blurGradient={true} detailCard={true} />
-          </View>
+          {isTeamSport && homeTeamData && awayTeamData ? (
+            /* ── NFL/MLB Match Ticket Card ── */
+            <View style={styles.matchCardContainer}>
+              <View style={[styles.matchCard, homeTeamData && { borderColor: homeTeamData.primaryColor, borderWidth: 2 }]}>
 
-          {/* Photo Shelf */}
-          <View style={styles.photoSection}>
-            <Text style={styles.photoTitle}>Your Pictures</Text>
-            <View style={styles.photoShelf}>
-
-              {/* Cover Photo Group */}
-              <View style={styles.coverPhotoGroup}>
-                {coverPhoto ? (
-                  <View style={styles.thumbWrapper}>
-                    <TouchableOpacity style={styles.photoThumb} activeOpacity={0.9} onPress={pickCoverPhoto}>
-                      <Image source={{ uri: coverPhoto }} style={styles.photoThumbImage} />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.deleteIcon}
-                      onPress={removeCoverPhoto}
-                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                    >
-                      <Ionicons name="close-circle" size={18} color="#E53935" />
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <TouchableOpacity
-                    style={[styles.photoThumb, styles.addPhotoThumb]}
-                    onPress={pickCoverPhoto}
-                  >
-                    <Ionicons name="add" size={28} color={LIGHT_BLUE} />
-                  </TouchableOpacity>
-                )}
-                <Text style={styles.coverPhotoLabel}>Cover photo</Text>
-              </View>
-
-              {/* Divider */}
-              <View style={styles.photoSectionDivider} />
-
-              {/* More Pictures Group */}
-              <View style={styles.morePicturesGroup} {...panResponder.panHandlers}>
-                <View style={styles.morePicturesRow}>
-                  {Array.from({ length: MAX_MORE_PHOTOS }).map((_, index) => {
-                    const photo = photos[index];
-                    const isDragging = dragIndex === index;
-                    const isDropTarget = dropTarget === index && dragIndex !== index;
-
-                    if (photo) {
-                      return (
-                        <View key={index} style={styles.thumbWrapper}>
-                          {isDragging ? (
-                            <Animated.View
-                              style={[
-                                styles.photoThumb,
-                                styles.photoThumbDragging,
-                                { transform: [...dragAnim.getTranslateTransform(), { scale: 1.08 }], zIndex: 50 },
-                              ]}
-                            >
-                              <Image source={{ uri: photo }} style={styles.photoThumbImage} />
-                            </Animated.View>
-                          ) : (
-                            <TouchableOpacity
-                              style={[
-                                styles.photoThumb,
-                                isDropTarget && styles.photoThumbDropTarget,
-                              ]}
-                              onLongPress={() => startDrag(index)}
-                              delayLongPress={200}
-                              activeOpacity={0.9}
-                            >
-                              <Image source={{ uri: photo }} style={styles.photoThumbImage} />
-                            </TouchableOpacity>
-                          )}
-                          <TouchableOpacity
-                            style={styles.deleteIcon}
-                            onPress={() => removePhoto(index)}
-                            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                          >
-                            <Ionicons name="close-circle" size={18} color="#E53935" />
-                          </TouchableOpacity>
-                        </View>
-                      );
-                    }
-
-                    if (index === photos.length) {
-                      return (
-                        <TouchableOpacity
-                          key={index}
-                          style={[
-                            styles.photoThumb,
-                            styles.addPhotoThumb,
-                            isDropTarget && styles.photoThumbDropTarget,
-                          ]}
-                          onPress={pickImages}
-                        >
-                          <Ionicons name="add" size={24} color={COLORS.gray} />
-                        </TouchableOpacity>
-                      );
-                    }
-
-                    return (
-                      <View
-                        key={index}
-                        style={[
-                          styles.photoThumb,
-                          styles.emptyPhotoThumb,
-                          isDropTarget && styles.photoThumbDropTarget,
-                        ]}
-                      />
-                    );
-                  })}
+                {/* Top: blurred stadium image with logos */}
+                <View style={styles.matchTop}>
+                  <ImageBackground source={bgSource} style={styles.matchBgImage} resizeMode="cover">
+                    <BlurView intensity={10} tint="dark" style={StyleSheet.absoluteFill} />
+                    <View style={styles.matchLogosRow}>
+                      <View style={styles.matchTeamBlock}>
+                        <Image source={awayTeamData.logo} style={styles.matchLogo} resizeMode="contain" />
+                        <Text style={styles.matchTeamCity}>{awayTeamData.city}</Text>
+                      </View>
+                      <Text style={styles.matchVS}>VS</Text>
+                      <View style={styles.matchTeamBlock}>
+                        <Image source={homeTeamData.logo} style={styles.matchLogo} resizeMode="contain" />
+                        <Text style={styles.matchTeamCity}>{homeTeamData.city}</Text>
+                      </View>
+                    </View>
+                  </ImageBackground>
                 </View>
-                <Text style={styles.morePicturesLabel}>More pictures</Text>
+
+                {/* Perforations */}
+                <View style={[styles.matchPerforation, styles.matchPerfLeft]} />
+                <View style={[styles.matchPerforation, styles.matchPerfRight]} />
+
+                {/* Dashed divider line */}
+                <View style={styles.matchDivider} />
+
+                {/* Bottom: venue, date, photos */}
+                <View style={styles.matchBottom}>
+                  <Text style={styles.matchVenueName}>{venue}</Text>
+                  <Text style={styles.matchDateText}>{matchDate}</Text>
+                  <Text style={[styles.photoTitle, styles.matchPhotoTitle]}>Your Pictures</Text>
+                  {renderPhotoShelf()}
+                  <View style={styles.matchBottomSpacer} />
+                </View>
+              </View>
+            </View>
+          ) : (
+            <>
+              {/* Card */}
+              <View style={styles.cardContainer}>
+                <EventCard event={currentEvent} isFront={true} hideViewTicket={true} blurGradient={true} detailCard={true} />
               </View>
 
-            </View>
-          </View>
+              {/* Photo Shelf */}
+              <View style={styles.photoSection}>
+                <Text style={styles.photoTitle}>Your Pictures</Text>
+                {renderPhotoShelf()}
+              </View>
+            </>
+          )}
         </ScrollView>
       </SafeAreaView>
 
@@ -845,5 +899,107 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.medium,
     fontSize: FONT_SIZES.md,
     color: COLORS.white,
+  },
+
+  // ── NFL/MLB Match Ticket Card ──────────────────────────────────────────
+  matchCardContainer: {
+    alignItems: 'center',
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.xl,
+  },
+  matchCard: {
+    width: SCREEN_WIDTH * 0.9,
+    borderRadius: 0,
+    overflow: 'visible',
+    backgroundColor: COLORS.white,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  matchTop: {
+    height: 220,
+    overflow: 'hidden',
+  },
+  matchBgImage: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  matchLogosRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-evenly',
+    paddingHorizontal: 16,
+  },
+  matchTeamBlock: {
+    alignItems: 'center',
+    gap: 10,
+  },
+  matchLogo: {
+    width: 90,
+    height: 90,
+  },
+  matchTeamCity: {
+    fontFamily: FONTS.bold,
+    fontSize: 14,
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.7)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 4,
+    letterSpacing: 0.5,
+  },
+  matchVS: {
+    fontFamily: FONTS.geistMonoBold,
+    fontSize: 20,
+    color: 'rgba(255,255,255,0.75)',
+    letterSpacing: 3,
+  },
+  matchPerforation: {
+    position: 'absolute',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: COLORS.cream,
+    top: 220 - 14,
+    zIndex: 10,
+  },
+  matchPerfLeft: {
+    left: -14,
+  },
+  matchPerfRight: {
+    right: -14,
+  },
+  matchDivider: {
+    height: 0,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5E5',
+    borderStyle: 'dashed',
+    marginHorizontal: 16,
+  },
+  matchBottom: {
+    backgroundColor: COLORS.white,
+    paddingTop: SPACING.lg,
+    paddingBottom: 0,
+  },
+  matchVenueName: {
+    fontFamily: FONTS.bold,
+    fontSize: 20,
+    color: COLORS.navy,
+    marginBottom: 4,
+    paddingHorizontal: SPACING.lg,
+  },
+  matchDateText: {
+    fontFamily: FONTS.regular,
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.gray,
+    marginBottom: SPACING.lg,
+    paddingHorizontal: SPACING.lg,
+  },
+  matchPhotoTitle: {
+    paddingHorizontal: SPACING.lg,
+  },
+  matchBottomSpacer: {
+    height: SPACING.lg,
   },
 });
