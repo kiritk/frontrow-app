@@ -366,8 +366,8 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
                 {peekTitle}
               </Text>
               <View style={styles.peekDateBlock}>
-                <Text style={styles.peekDate}>{month}</Text>
-                <Text style={styles.peekDate}>{String(day).padStart(2, '0')}</Text>
+                <Text style={styles.peekDate}>{month} {String(day).padStart(2, '0')}</Text>
+                <Text style={styles.peekYear}>{year}</Text>
               </View>
             </View>
           )}
@@ -478,6 +478,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: 'rgba(255,255,255,0.85)',
     lineHeight: 16,
+  },
+  peekYear: {
+    fontFamily: FONTS.medium,
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.60)',
+    lineHeight: 14,
   },
 
   // ── Front card styles ─────────────────────────────────────────────────
