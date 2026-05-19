@@ -246,10 +246,8 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
             <View style={[StyleSheet.absoluteFill, { backgroundColor: solidColor }]} />
           )}
 
-          {/* Consistent blur over the whole card — NFL/MLB detail card only */}
-          {detailCard && isTeamSport && (
-            <BlurView intensity={6} tint="dark" style={StyleSheet.absoluteFill} pointerEvents="none" />
-          )}
+          {/* Consistent blur over the whole card — all cards, all event types */}
+          <BlurView intensity={4} tint="dark" style={StyleSheet.absoluteFill} pointerEvents="none" />
 
           {/* Grain — front card only */}
           {isFront && (
