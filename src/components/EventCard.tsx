@@ -408,11 +408,11 @@ const styles = StyleSheet.create({
   },
   perforation: {
     position: 'absolute',
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 19.6,
+    height: 19.6,
+    borderRadius: 9.8,
     backgroundColor: '#FCFCFC',
-    top: STACKED_CARD_HEIGHT * 0.25 - 14,
+    top: STACKED_CARD_HEIGHT * 0.25 - 9.8,
   },
   perforationLine: {
     position: 'absolute',
@@ -424,10 +424,10 @@ const styles = StyleSheet.create({
     borderStyle: 'dotted',
   },
   perforationLeft: {
-    left: -14,
+    left: -9.8,
   },
   perforationRight: {
-    right: -14,
+    right: -9.8,
   },
   stackedCard: {
     flex: 1,
