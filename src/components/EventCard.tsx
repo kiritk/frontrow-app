@@ -4,6 +4,7 @@ import {
   ImageBackground, Image, Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring,
@@ -229,7 +230,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
         activeOpacity={1}
         style={{ flex: 1 }}
       >
-        <View style={[styles.stackedCard, detailCard && { borderRadius: 0 }]}>
+        <View style={[styles.stackedCard, detailCard && { borderRadius: 9 }]}>
 
           {/* Layer 1 + 2: Background + color overlay */}
           {bgSource ? (
@@ -243,6 +244,11 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
           ) : (
             // No image: solid event color
             <View style={[StyleSheet.absoluteFill, { backgroundColor: solidColor }]} />
+          )}
+
+          {/* Consistent blur over the whole card — NFL/MLB detail card only */}
+          {detailCard && isTeamSport && (
+            <BlurView intensity={6} tint="dark" style={StyleSheet.absoluteFill} pointerEvents="none" />
           )}
 
           {/* Grain — front card only */}
@@ -290,7 +296,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
               </View>
 
               {/* Title + category tag */}
-              <View style={styles.frontTitleArea}>
+              <View style={[styles.frontTitleArea, isTeamSport && styles.frontTitleAreaCentered]}>
                 {isTeamSport && homeTeam && awayTeam ? (
                   <View style={styles.teamLogoRow}>
                     <View style={styles.teamBlock}>
@@ -389,7 +395,7 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   detailCardWrapper: {
-    borderRadius: 0,
+    borderRadius: 10,
     shadowOpacity: 0,
     shadowRadius: 0,
     shadowOffset: { width: 0, height: 0 },
@@ -514,6 +520,10 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     gap: 8,
   },
+  frontTitleAreaCentered: {
+    justifyContent: 'center',
+    paddingBottom: 0,
+  },
   frontTitle: {
     fontSize: 28,
     fontFamily: FONTS.bold,
@@ -534,7 +544,7 @@ const styles = StyleSheet.create({
   },
   teamNameText: {
     fontFamily: FONTS.semiBold,
-    fontSize: 14,
+    fontSize: 15.4,
     color: '#FFFFFF',
     textAlign: 'center',
     textShadowColor: 'rgba(0,0,0,0.7)',
@@ -547,7 +557,7 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   vsText: {
-    fontFamily: FONTS.geistMono,
+    fontFamily: FONTS.semiBold,
     fontSize: 23,
     color: 'rgba(255,255,255,0.90)',
     marginTop: 20,
@@ -578,7 +588,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: 'rgba(0,0,0,0.42)',
   },
   venueBlock: {
     flex: 1,
@@ -588,12 +597,19 @@ const styles = StyleSheet.create({
   venueRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
     gap: 5,
   },
   venueName: {
     fontFamily: FONTS.semiBold,
     fontSize: 13,
     color: '#FFFFFF',
+    flexShrink: 1,
   },
   venueLocation: {
     fontFamily: FONTS.regular,
