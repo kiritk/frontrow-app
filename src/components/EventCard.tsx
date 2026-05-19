@@ -301,12 +301,18 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
                   <View style={styles.teamLogoRow}>
                     <View style={styles.teamBlock}>
                       <Image source={homeTeam.logo} style={styles.teamLogo} />
-                      <Text style={styles.teamNameText} numberOfLines={2}>{homeTeam.fullName}</Text>
+                      <View style={styles.teamNameGroup}>
+                        <Text style={styles.teamCityText} numberOfLines={1}>{homeTeam.city}</Text>
+                        <Text style={styles.teamNameText} numberOfLines={1}>{homeTeam.name}</Text>
+                      </View>
                     </View>
                     <Text style={styles.vsText}>VS</Text>
                     <View style={styles.teamBlock}>
                       <Image source={awayTeam.logo} style={styles.teamLogo} />
-                      <Text style={styles.teamNameText} numberOfLines={2}>{awayTeam.fullName}</Text>
+                      <View style={styles.teamNameGroup}>
+                        <Text style={styles.teamCityText} numberOfLines={1}>{awayTeam.city}</Text>
+                        <Text style={styles.teamNameText} numberOfLines={1}>{awayTeam.name}</Text>
+                      </View>
                     </View>
                   </View>
                 ) : (
@@ -541,6 +547,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     maxWidth: 110,
+  },
+  teamNameGroup: {
+    alignItems: 'center',
+  },
+  teamCityText: {
+    fontFamily: FONTS.regular,
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.75)',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.7)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   teamNameText: {
     fontFamily: FONTS.semiBold,
