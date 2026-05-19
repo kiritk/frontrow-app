@@ -10,6 +10,7 @@ import { useAuth, UserProfile } from '../context/AuthContext';
 import AuthScreen from './AuthScreen';
 import EditProfileScreen from './EditProfileScreen';
 import AboutScreen from './AboutScreen';
+import ShareCardModal from '../components/ShareCardModal';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
 const HEADER_COLOR = '#162A45';
@@ -55,6 +56,7 @@ export default function ProfileScreen({ navigation }: any) {
   const { user, signOut, profile, updateProfile } = useAuth();
   const isFocused = useIsFocused();
   const [view, setView] = useState<ProfileView>('main');
+  const [shareVisible, setShareVisible] = useState(false);
 
   // Reset to main view whenever the modal closes.
   useEffect(() => {
@@ -128,6 +130,21 @@ export default function ProfileScreen({ navigation }: any) {
                   onPress={() => setView('edit')}
                 />
                 <View style={styles.divider} />
+                <MenuItem
+                  icon="heart-outline"
+                  title="About App"
+                  onPress={() => setView('about')}
+                />
+                <View style={styles.divider} />
+                <MenuItem
+                  icon="share-outline"
+                  title="Share Stats"
+                  onPress={() => setShareVisible(true)}
+                />
+              </View>
+
+              <Text style={styles.sectionLabel}>More</Text>
+              <View style={styles.menuCard}>
                 {user ? (
                   <MenuItem
                     icon="log-out-outline"
@@ -154,15 +171,6 @@ export default function ProfileScreen({ navigation }: any) {
                     onPress={() => setView('auth')}
                   />
                 )}
-              </View>
-
-              <Text style={styles.sectionLabel}>More</Text>
-              <View style={styles.menuCard}>
-                <MenuItem
-                  icon="heart-outline"
-                  title="About App"
-                  onPress={() => setView('about')}
-                />
               </View>
             </View>
           </ScrollView>
@@ -193,6 +201,10 @@ export default function ProfileScreen({ navigation }: any) {
             </TouchableOpacity>
           </SafeAreaView>
         </View>
+      )}
+
+      {shareVisible && (
+        <ShareCardModal visible onClose={() => setShareVisible(false)} />
       )}
     </Modal>
   );
@@ -249,6 +261,8 @@ const styles = StyleSheet.create({
     height: 110,
     borderRadius: 55,
     overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
     marginTop: SPACING.xl,
     marginBottom: SPACING.md,
   },

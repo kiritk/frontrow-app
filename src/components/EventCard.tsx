@@ -19,6 +19,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const STACKED_CARD_HEIGHT = 280;
 export const PEEK_HEIGHT = 60;
+const PERFORATION_DASHES = 14;
 
 export type EventData = LocalEvent;
 
@@ -247,7 +248,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
           )}
 
           {/* Consistent blur over the whole card — all cards, all event types */}
-          <BlurView intensity={4} tint="dark" style={StyleSheet.absoluteFill} pointerEvents="none" />
+          <BlurView intensity={6} tint="dark" style={StyleSheet.absoluteFill} pointerEvents="none" />
 
           {/* Grain — front card only */}
           {isFront && (
@@ -376,7 +377,11 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
 
       {detailCard && (
         <>
-          <View style={styles.perforationLine} pointerEvents="none" />
+          <View style={styles.perforationLine} pointerEvents="none">
+            {Array.from({ length: PERFORATION_DASHES }).map((_, i) => (
+              <View key={i} style={styles.perforationDash} />
+            ))}
+          </View>
           <View style={[styles.perforation, styles.perforationLeft]} pointerEvents="none" />
           <View style={[styles.perforation, styles.perforationRight]} pointerEvents="none" />
         </>
@@ -419,9 +424,17 @@ const styles = StyleSheet.create({
     left: 16,
     right: 16,
     top: STACKED_CARD_HEIGHT * 0.25 - 1,
-    borderTopWidth: 2,
-    borderColor: 'rgba(255,255,255,0.55)',
-    borderStyle: 'dotted',
+    height: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+  },
+  perforationDash: {
+    width: 7,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: 'rgba(255,255,255,0.55)',
   },
   perforationLeft: {
     left: -9.8,
