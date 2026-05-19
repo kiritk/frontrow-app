@@ -249,6 +249,8 @@ const styles = StyleSheet.create({
     height: 110,
     borderRadius: 55,
     overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
     marginTop: SPACING.xl,
     marginBottom: SPACING.md,
   },
