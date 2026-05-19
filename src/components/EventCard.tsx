@@ -597,12 +597,19 @@ const styles = StyleSheet.create({
   venueRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
     gap: 5,
   },
   venueName: {
     fontFamily: FONTS.semiBold,
     fontSize: 13,
     color: '#FFFFFF',
+    flexShrink: 1,
   },
   venueLocation: {
     fontFamily: FONTS.regular,
