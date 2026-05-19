@@ -4,6 +4,7 @@ import {
   ImageBackground, Image, Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring,
@@ -243,6 +244,11 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
           ) : (
             // No image: solid event color
             <View style={[StyleSheet.absoluteFill, { backgroundColor: solidColor }]} />
+          )}
+
+          {/* Consistent blur over the whole card — NFL/MLB detail card only */}
+          {detailCard && isTeamSport && (
+            <BlurView intensity={6} tint="dark" style={StyleSheet.absoluteFill} pointerEvents="none" />
           )}
 
           {/* Grain — front card only */}
