@@ -9,7 +9,7 @@ const CARD_WIDTH  = Math.round(SCREEN_WIDTH * 0.88);
 const CARD_HEIGHT = Math.round(CARD_WIDTH / 0.72);
 
 const FOOTER_H  = Math.round(CARD_HEIGHT * 0.175);
-const AVATAR_SZ = Math.round(CARD_WIDTH  * 0.52);
+const AVATAR_SZ = Math.round(CARD_WIDTH  * 0.26);
 
 // ── Vintage palette ─────────────────────────────────────────────────────────
 const NAVY   = '#0D2A52';
