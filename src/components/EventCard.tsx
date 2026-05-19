@@ -19,6 +19,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const STACKED_CARD_HEIGHT = 280;
 export const PEEK_HEIGHT = 60;
+const PERFORATION_DASHES = 14;
 
 export type EventData = LocalEvent;
 
@@ -376,7 +377,11 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
 
       {detailCard && (
         <>
-          <View style={styles.perforationLine} pointerEvents="none" />
+          <View style={styles.perforationLine} pointerEvents="none">
+            {Array.from({ length: PERFORATION_DASHES }).map((_, i) => (
+              <View key={i} style={styles.perforationDash} />
+            ))}
+          </View>
           <View style={[styles.perforation, styles.perforationLeft]} pointerEvents="none" />
           <View style={[styles.perforation, styles.perforationRight]} pointerEvents="none" />
         </>
@@ -418,10 +423,18 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
-    top: STACKED_CARD_HEIGHT * 0.25 - 2,
-    borderTopWidth: 4,
-    borderColor: 'rgba(255,255,255,0.55)',
-    borderStyle: 'dotted',
+    top: STACKED_CARD_HEIGHT * 0.25 - 1,
+    height: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+  },
+  perforationDash: {
+    width: 7,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: 'rgba(255,255,255,0.55)',
   },
   perforationLeft: {
     left: -9.8,
