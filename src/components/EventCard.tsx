@@ -229,7 +229,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
         activeOpacity={1}
         style={{ flex: 1 }}
       >
-        <View style={[styles.stackedCard, detailCard && { borderRadius: 0 }]}>
+        <View style={[styles.stackedCard, detailCard && { borderRadius: 9 }]}>
 
           {/* Layer 1 + 2: Background + color overlay */}
           {bgSource ? (
@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   detailCardWrapper: {
-    borderRadius: 0,
+    borderRadius: 10,
     shadowOpacity: 0,
     shadowRadius: 0,
     shadowOffset: { width: 0, height: 0 },
