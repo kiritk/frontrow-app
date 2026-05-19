@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   vsText: {
-    fontFamily: FONTS.geistMono,
+    fontFamily: FONTS.semiBold,
     fontSize: 23,
     color: 'rgba(255,255,255,0.90)',
     marginTop: 20,
