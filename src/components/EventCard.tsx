@@ -246,10 +246,8 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
             <View style={[StyleSheet.absoluteFill, { backgroundColor: solidColor }]} />
           )}
 
-          {/* Consistent blur over the whole card — NFL/MLB detail card only */}
-          {detailCard && isTeamSport && (
-            <BlurView intensity={6} tint="dark" style={StyleSheet.absoluteFill} pointerEvents="none" />
-          )}
+          {/* Consistent blur over the whole card — all cards, all event types */}
+          <BlurView intensity={4} tint="dark" style={StyleSheet.absoluteFill} pointerEvents="none" />
 
           {/* Grain — front card only */}
           {isFront && (
@@ -301,12 +299,18 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
                   <View style={styles.teamLogoRow}>
                     <View style={styles.teamBlock}>
                       <Image source={homeTeam.logo} style={styles.teamLogo} />
-                      <Text style={styles.teamNameText} numberOfLines={2}>{homeTeam.fullName}</Text>
+                      <View style={styles.teamNameGroup}>
+                        <Text style={styles.teamCityText} numberOfLines={1}>{homeTeam.city}</Text>
+                        <Text style={styles.teamNameText} numberOfLines={1}>{homeTeam.name}</Text>
+                      </View>
                     </View>
                     <Text style={styles.vsText}>VS</Text>
                     <View style={styles.teamBlock}>
                       <Image source={awayTeam.logo} style={styles.teamLogo} />
-                      <Text style={styles.teamNameText} numberOfLines={2}>{awayTeam.fullName}</Text>
+                      <View style={styles.teamNameGroup}>
+                        <Text style={styles.teamCityText} numberOfLines={1}>{awayTeam.city}</Text>
+                        <Text style={styles.teamNameText} numberOfLines={1}>{awayTeam.name}</Text>
+                      </View>
                     </View>
                   </View>
                 ) : (
@@ -362,8 +366,8 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
                 {peekTitle}
               </Text>
               <View style={styles.peekDateBlock}>
-                <Text style={styles.peekDate}>{month}</Text>
-                <Text style={styles.peekDate}>{String(day).padStart(2, '0')}</Text>
+                <Text style={styles.peekDate}>{month} {String(day).padStart(2, '0')}</Text>
+                <Text style={styles.peekYear}>{year}</Text>
               </View>
             </View>
           )}
@@ -372,6 +376,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
 
       {detailCard && (
         <>
+          <View style={styles.perforationLine} pointerEvents="none" />
           <View style={[styles.perforation, styles.perforationLeft]} pointerEvents="none" />
           <View style={[styles.perforation, styles.perforationRight]} pointerEvents="none" />
         </>
@@ -403,17 +408,26 @@ const styles = StyleSheet.create({
   },
   perforation: {
     position: 'absolute',
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 19.6,
+    height: 19.6,
+    borderRadius: 9.8,
     backgroundColor: '#FCFCFC',
-    top: STACKED_CARD_HEIGHT * 0.25 - 14,
+    top: STACKED_CARD_HEIGHT * 0.25 - 9.8,
+  },
+  perforationLine: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    top: STACKED_CARD_HEIGHT * 0.25 - 1,
+    borderTopWidth: 2,
+    borderColor: 'rgba(255,255,255,0.55)',
+    borderStyle: 'dotted',
   },
   perforationLeft: {
-    left: -14,
+    left: -9.8,
   },
   perforationRight: {
-    right: -14,
+    right: -9.8,
   },
   stackedCard: {
     flex: 1,
@@ -474,6 +488,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: 'rgba(255,255,255,0.85)',
     lineHeight: 16,
+  },
+  peekYear: {
+    fontFamily: FONTS.medium,
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.60)',
+    lineHeight: 14,
   },
 
   // ── Front card styles ─────────────────────────────────────────────────
@@ -541,6 +561,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     maxWidth: 110,
+  },
+  teamNameGroup: {
+    alignItems: 'center',
+  },
+  teamCityText: {
+    fontFamily: FONTS.regular,
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.75)',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.7)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   teamNameText: {
     fontFamily: FONTS.semiBold,
