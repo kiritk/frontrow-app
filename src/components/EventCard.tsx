@@ -376,6 +376,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
 
       {detailCard && (
         <>
+          <View style={styles.perforationLine} pointerEvents="none" />
           <View style={[styles.perforation, styles.perforationLeft]} pointerEvents="none" />
           <View style={[styles.perforation, styles.perforationRight]} pointerEvents="none" />
         </>
@@ -412,6 +413,15 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: '#FCFCFC',
     top: STACKED_CARD_HEIGHT * 0.25 - 14,
+  },
+  perforationLine: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    top: STACKED_CARD_HEIGHT * 0.25 - 1,
+    borderTopWidth: 2,
+    borderColor: 'rgba(255,255,255,0.55)',
+    borderStyle: 'dotted',
   },
   perforationLeft: {
     left: -14,
