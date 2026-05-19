@@ -544,7 +544,7 @@ const styles = StyleSheet.create({
   },
   teamNameText: {
     fontFamily: FONTS.semiBold,
-    fontSize: 14,
+    fontSize: 15.4,
     color: '#FFFFFF',
     textAlign: 'center',
     textShadowColor: 'rgba(0,0,0,0.7)',
