@@ -296,7 +296,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
               </View>
 
               {/* Title + category tag */}
-              <View style={styles.frontTitleArea}>
+              <View style={[styles.frontTitleArea, isTeamSport && styles.frontTitleAreaCentered]}>
                 {isTeamSport && homeTeam && awayTeam ? (
                   <View style={styles.teamLogoRow}>
                     <View style={styles.teamBlock}>
@@ -519,6 +519,10 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     paddingBottom: 10,
     gap: 8,
+  },
+  frontTitleAreaCentered: {
+    justifyContent: 'center',
+    paddingBottom: 0,
   },
   frontTitle: {
     fontSize: 28,
