@@ -1,7 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Polygon, Defs, Pattern, Rect, Circle } from 'react-native-svg';
 import { FONTS } from '../theme/colors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -11,43 +9,15 @@ const CARD_HEIGHT = Math.round(CARD_WIDTH / 0.72);
 const FOOTER_H  = Math.round(CARD_HEIGHT * 0.175);
 const AVATAR_SZ = Math.round(CARD_WIDTH  * 0.26);
 
-// ── Vintage palette ─────────────────────────────────────────────────────────
-const NAVY   = '#0D2A52';
-const CREAM  = '#F3EFE6';
-const V_RED  = '#B53A3A';
-const L_BLUE = '#C5D8F0';
-const M_BLUE = '#8AAAE0';
+const NAVY  = '#0D2A52';
+const V_RED = '#B53A3A';
 
-const LEVEL_RIBBON: Record<string, [string, string]> = {
-  Rookie:     ['#1C4E94', '#0E3170'],
-  Pro:        ['#B53A3A', '#7A1A1A'],
-  'All-Star': ['#1A8740', '#116030'],
-  Legend:     ['#C87D0E', '#966009'],
-};
-
-const STADIUM = require('../../assets/images/mlb/stadiums/angels.jpg');
-
-// ── Diagonal panel coordinates ───────────────────────────────────────────────
 const W = CARD_WIDTH;
 const H = CARD_HEIGHT;
 
-// Main light-blue band (vertical thickness halved, anchored at top edge)
-const BAND_POINTS = [
-  `0,${Math.round(H * 0.07)}`,
-  `${W},0`,
-  `${W},${Math.round(H * 0.3025)}`,
-  `0,${Math.round(H * 0.3575)}`,
-].join(' ');
+// Placeholder until assets/images/card-background.png is added
+// const CARD_BG = require('../../assets/images/card-background.png');
 
-// Thin white stripe at bottom of blue band
-const STRIPE_POINTS = [
-  `0,${Math.round(H * 0.3405)}`,
-  `${W},${Math.round(H * 0.2855)}`,
-  `${W},${Math.round(H * 0.3125)}`,
-  `0,${Math.round(H * 0.3675)}`,
-].join(' ');
-
-// ── Component ────────────────────────────────────────────────────────────────
 interface Props {
   firstName:    string;
   lastName:     string;
@@ -66,7 +36,6 @@ export default function TradingCardProfile({
   const first = (firstName || 'YOUR').toUpperCase();
   const last  = (lastName  || 'NAME').toUpperCase();
   const level = fanLevel || 'Rookie';
-  const [rib1, rib2] = LEVEL_RIBBON[level] ?? LEVEL_RIBBON.Rookie;
 
   const avatarTop  = Math.round(H * 0.09);
   const avatarLeft = Math.round((W - AVATAR_SZ - 14) / 2);
@@ -86,98 +55,31 @@ export default function TradingCardProfile({
   return (
     <View style={styles.card}>
 
-      {/* ── 1. CREAM PAPER BASE ─────────────────────────────────────── */}
-      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: CREAM }]} />
+      {/* ── 1. BACKGROUND IMAGE ─────────────────────────────────────── */}
+      {/* Swap comment below once card-background.png is in assets/images/ */}
+      {/* <Image source={CARD_BG} style={StyleSheet.absoluteFillObject} resizeMode="stretch" /> */}
+      <View style={[StyleSheet.absoluteFillObject, styles.bgPlaceholder]} />
 
-      {/* ── 2. GRAIN TEXTURE ────────────────────────────────────────── */}
-      <Svg
-        style={StyleSheet.absoluteFillObject}
-        width={W} height={H}
-        pointerEvents="none"
-      >
-        <Defs>
-          <Pattern id="grain" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
-            <Rect width="6" height="6" fill="none" />
-            <Circle cx="1"   cy="1"   r="0.7" fill="rgba(55,35,10,0.07)" />
-            <Circle cx="4"   cy="2.5" r="0.5" fill="rgba(55,35,10,0.05)" />
-            <Circle cx="1.5" cy="4.5" r="0.55" fill="rgba(55,35,10,0.06)" />
-            <Circle cx="4.5" cy="5"   r="0.4" fill="rgba(55,35,10,0.04)" />
-          </Pattern>
-        </Defs>
-        <Rect width={W} height={H} fill="url(#grain)" />
-      </Svg>
-
-      {/* ── 3. STADIUM IMAGE (faded, blue-tinted) ───────────────────── */}
-      <Image source={STADIUM} style={styles.stadiumBg} resizeMode="cover" />
-      <LinearGradient
-        colors={['rgba(14,49,112,0.32)', 'rgba(14,49,112,0.14)', 'rgba(14,49,112,0)']}
-        locations={[0, 0.55, 1]}
-        style={[StyleSheet.absoluteFillObject, { height: H * 0.70 }]}
-        pointerEvents="none"
-      />
-
-      {/* ── 4. DIAGONAL PANELS ──────────────────────────────────────── */}
-      <Svg
-        style={StyleSheet.absoluteFillObject}
-        width={W} height={H}
-        pointerEvents="none"
-      >
-        <Polygon points={BAND_POINTS}   fill={L_BLUE}              opacity="0.80" />
-        <Polygon points={BAND_POINTS}   fill={M_BLUE}              opacity="0.18" />
-        <Polygon points={STRIPE_POINTS} fill="rgba(255,255,255,0.65)" opacity="1" />
-      </Svg>
-
-      {/* ── 5. VERTICAL "FRONT ROW FAN" ─────────────────────────────── */}
-      <Text
-        style={[styles.vertText, {
-          left: -Math.round(H * 0.38 / 2) + 13,
-          top:  Math.round(H * 0.36),
-          width: Math.round(H * 0.38),
+      {/* ── 2. LEVEL TEXT — over top-left blue ribbon ───────────────── */}
+      <View
+        style={[styles.ribbonTextWrapper, {
+          top:    Math.round(H * 0.065),
+          height: RIBBON_H,
         }]}
         pointerEvents="none"
       >
-        FRONT ROW FAN
-      </Text>
-
-      {/* ── 6. LEFT STARS ───────────────────────────────────────────── */}
-      <View style={[styles.leftStars, { top: Math.round(H * 0.24) }]} pointerEvents="none">
-        {[0, 1, 2].map(i => <Text key={i} style={styles.leftStar}>★</Text>)}
+        <Text style={styles.ribbonText}>{level.toUpperCase()}</Text>
       </View>
 
-      {/* ── 7. ROOKIE RIBBON (top-left) ─────────────────────────────── */}
-      <View style={[styles.ribbonRow, { top: Math.round(H * 0.065) }]}>
-        <LinearGradient
-          colors={[rib1, rib2]}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-          style={[styles.ribbonBody, { height: RIBBON_H }]}
-        >
-          <Text style={styles.ribbonText}>{level.toUpperCase()}</Text>
-        </LinearGradient>
-        {/* Right-pointing arrow */}
-        <View style={[styles.ribbonArrow, {
-          borderTopWidth:    RIBBON_H / 2,
-          borderBottomWidth: RIBBON_H / 2,
-          borderLeftWidth:   13,
-          borderLeftColor:   rib2,
-        }]} />
+      {/* ── 3. EVENT COUNT — over top-right red badge ───────────────── */}
+      <View
+        style={[styles.badgeTextWrapper, { width: BADGE_W }]}
+        pointerEvents="none"
+      >
+        <Text style={styles.badgeText}>#{eventCount}</Text>
       </View>
 
-      {/* ── 8. NUMBER BADGE (top-right) ─────────────────────────────── */}
-      <View style={[styles.badgeWrapper, { width: BADGE_W }]}>
-        <LinearGradient colors={[V_RED, '#7A1A1A']} style={styles.badgeBody}>
-          <Text style={styles.badgeText}>#{eventCount}</Text>
-        </LinearGradient>
-        {/* Bottom-pointing arrow */}
-        <View style={[styles.badgeArrow, {
-          borderLeftWidth:  BADGE_W / 2,
-          borderRightWidth: BADGE_W / 2,
-          borderTopWidth:   14,
-          borderTopColor:   '#7A1A1A',
-        }]} />
-      </View>
-
-      {/* ── 9. AVATAR CIRCLE ────────────────────────────────────────── */}
-      {/* Outer cream ring */}
+      {/* ── 4. AVATAR CIRCLE ────────────────────────────────────────── */}
       <View style={[styles.avatarOuter, {
         width:        AVATAR_SZ + 18,
         height:       AVATAR_SZ + 18,
@@ -185,13 +87,11 @@ export default function TradingCardProfile({
         top:          avatarTop,
         left:         avatarLeft,
       }]}>
-        {/* Dark navy inner ring */}
         <View style={[styles.avatarRing, {
           width:        AVATAR_SZ + 6,
           height:       AVATAR_SZ + 6,
           borderRadius: (AVATAR_SZ + 6) / 2,
         }]}>
-          {/* Avatar fill */}
           <View style={[styles.avatarFill, {
             width:        AVATAR_SZ,
             height:       AVATAR_SZ,
@@ -212,11 +112,9 @@ export default function TradingCardProfile({
         </View>
       </View>
 
-      {/* ── 10. DROP PHOTO LABEL ────────────────────────────────────── */}
+      {/* ── 5. DROP PHOTO LABEL ─────────────────────────────────────── */}
       {!profileImage && (
-        <View style={[styles.dropRow, {
-          top: avatarTop + AVATAR_SZ + 22,
-        }]}>
+        <View style={[styles.dropRow, { top: avatarTop + AVATAR_SZ + 22 }]}>
           <Text style={styles.dropStars}>★ ★ ★</Text>
           <View style={styles.dropBadge}>
             <Text style={styles.dropText}>DROP PHOTO HERE</Text>
@@ -225,7 +123,7 @@ export default function TradingCardProfile({
         </View>
       )}
 
-      {/* ── 11. NAME BLOCK ──────────────────────────────────────────── */}
+      {/* ── 6. NAME BLOCK ───────────────────────────────────────────── */}
       <View style={[styles.nameBlock, { top: nameTop, height: nameH }]}>
         <Text
           style={styles.nameFirst}
@@ -245,10 +143,7 @@ export default function TradingCardProfile({
         </Text>
       </View>
 
-      {/* ── 12. RULE ────────────────────────────────────────────────── */}
-      <View style={[styles.rule, { bottom: FOOTER_H }]} />
-
-      {/* ── 13. STATS FOOTER ────────────────────────────────────────── */}
+      {/* ── 7. STATS FOOTER ─────────────────────────────────────────── */}
       <View style={[styles.footer, { height: FOOTER_H }]}>
         {stats.map((s, i) => (
           <React.Fragment key={s.label}>
@@ -261,28 +156,14 @@ export default function TradingCardProfile({
         ))}
       </View>
 
-      {/* ── 14. CORNER VIGNETTE ─────────────────────────────────────── */}
-      <Svg
-        style={StyleSheet.absoluteFillObject}
-        width={W} height={H}
-        pointerEvents="none"
-      >
-        <Polygon points={`0,0 ${W*0.44},0 0,${H*0.34}`}                     fill="rgba(0,0,0,0.08)" />
-        <Polygon points={`${W},0 ${W*0.56},0 ${W},${H*0.34}`}               fill="rgba(0,0,0,0.06)" />
-        <Polygon points={`0,${H} ${W*0.44},${H} 0,${H*0.76}`}               fill="rgba(0,0,0,0.08)" />
-        <Polygon points={`${W},${H} ${W*0.56},${H} ${W},${H*0.76}`}         fill="rgba(0,0,0,0.06)" />
-      </Svg>
-
     </View>
   );
 }
 
-// ── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   card: {
     width:           CARD_WIDTH,
     height:          CARD_HEIGHT,
-    borderRadius:    0,
     overflow:        'hidden',
     backgroundColor: NAVY,
     borderWidth:     3,
@@ -294,51 +175,18 @@ const styles = StyleSheet.create({
     elevation:       20,
   },
 
-  // Stadium background
-  stadiumBg: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.22,
-    height:  CARD_HEIGHT * 0.72,
+  // Remove once real background image is wired up
+  bgPlaceholder: {
+    backgroundColor: '#1A3A6B',
   },
 
-  // Vertical "FRONT ROW FAN"
-  vertText: {
-    position:    'absolute',
-    fontFamily:  FONTS.audiowide,
-    fontSize:    8,
-    letterSpacing: 5,
-    color:       '#183E73',
-    opacity:     0.62,
-    textAlign:   'center',
-    transform:   [{ rotate: '-90deg' }],
-  },
-
-  // Left stars
-  leftStars: {
-    position:   'absolute',
-    left:       18,
-    alignItems: 'center',
-    gap:        8,
-  },
-  leftStar: {
-    fontSize: 9,
-    color:    V_RED,
-    opacity:  0.80,
-  },
-
-  // Rookie ribbon
-  ribbonRow: {
-    position:      'absolute',
-    left:          0,
-    flexDirection: 'row',
-    alignItems:    'center',
-    zIndex:        10,
-  },
-  ribbonBody: {
-    paddingHorizontal: 14,
-    paddingLeft:       18,
-    justifyContent:    'center',
-    alignItems:        'center',
+  // Level label — transparent bg, sits over the blue ribbon in the image
+  ribbonTextWrapper: {
+    position:       'absolute',
+    left:           0,
+    paddingLeft:    18,
+    justifyContent: 'center',
+    zIndex:         10,
   },
   ribbonText: {
     fontFamily:    FONTS.audiowide,
@@ -346,36 +194,21 @@ const styles = StyleSheet.create({
     color:         '#FFFFFF',
     letterSpacing: 5,
   },
-  ribbonArrow: {
-    borderTopColor:    'transparent',
-    borderBottomColor: 'transparent',
-    borderStyle:       'solid',
-  },
 
-  // Number badge
-  badgeWrapper: {
-    position:   'absolute',
-    top:        0,
-    right:      18,
-    alignItems: 'center',
-    zIndex:     10,
-  },
-  badgeBody: {
-    width:         '100%',
-    paddingTop:    10,
-    paddingBottom: 8,
+  // Event count — transparent bg, sits over the red badge in the image
+  badgeTextWrapper: {
+    position:      'absolute',
+    top:           10,
+    right:         18,
     alignItems:    'center',
+    justifyContent: 'center',
+    zIndex:        10,
   },
   badgeText: {
-    fontFamily:  FONTS.tourney,
-    fontSize:    38,
-    color:       '#FFFFFF',
-    lineHeight:  40,
-  },
-  badgeArrow: {
-    borderLeftColor:  'transparent',
-    borderRightColor: 'transparent',
-    borderStyle:      'solid',
+    fontFamily: FONTS.tourney,
+    fontSize:   38,
+    color:      '#FFFFFF',
+    lineHeight: 40,
   },
 
   // Avatar rings
@@ -434,7 +267,7 @@ const styles = StyleSheet.create({
     opacity:  0.80,
   },
   dropBadge: {
-    backgroundColor:  NAVY,
+    backgroundColor:   NAVY,
     paddingHorizontal: 12,
     paddingVertical:   4,
   },
@@ -447,10 +280,10 @@ const styles = StyleSheet.create({
 
   // Name block
   nameBlock: {
-    position:          'absolute',
-    left:              14,
-    right:             14,
-    justifyContent:    'center',
+    position:       'absolute',
+    left:           14,
+    right:          14,
+    justifyContent: 'center',
   },
   nameFirst: {
     fontFamily:       FONTS.tourney,
@@ -471,15 +304,6 @@ const styles = StyleSheet.create({
     textShadowColor:  'rgba(0,0,0,0.12)',
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 3,
-  },
-
-  // Rule
-  rule: {
-    position:         'absolute',
-    left:             14,
-    right:            14,
-    height:           StyleSheet.hairlineWidth,
-    backgroundColor:  '#C4BAB0',
   },
 
   // Stats footer
@@ -504,10 +328,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   footerNum: {
-    fontFamily:  FONTS.tourney,
-    fontSize:    34,
-    color:       '#FFFFFF',
-    lineHeight:  36,
+    fontFamily: FONTS.tourney,
+    fontSize:   34,
+    color:      '#FFFFFF',
+    lineHeight: 36,
   },
   footerLabel: {
     fontFamily:    FONTS.bold,
