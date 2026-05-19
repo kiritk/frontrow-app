@@ -31,20 +31,20 @@ const STADIUM = require('../../assets/images/mlb/stadiums/angels.jpg');
 const W = CARD_WIDTH;
 const H = CARD_HEIGHT;
 
-// Main light-blue band
+// Main light-blue band (vertical thickness halved, anchored at top edge)
 const BAND_POINTS = [
   `0,${Math.round(H * 0.07)}`,
   `${W},0`,
-  `${W},${Math.round(H * 0.605)}`,
-  `0,${Math.round(H * 0.645)}`,
+  `${W},${Math.round(H * 0.3025)}`,
+  `0,${Math.round(H * 0.3575)}`,
 ].join(' ');
 
 // Thin white stripe at bottom of blue band
 const STRIPE_POINTS = [
-  `0,${Math.round(H * 0.628)}`,
-  `${W},${Math.round(H * 0.588)}`,
-  `${W},${Math.round(H * 0.615)}`,
-  `0,${Math.round(H * 0.655)}`,
+  `0,${Math.round(H * 0.3405)}`,
+  `${W},${Math.round(H * 0.2855)}`,
+  `${W},${Math.round(H * 0.3125)}`,
+  `0,${Math.round(H * 0.3675)}`,
 ].join(' ');
 
 // ── Component ────────────────────────────────────────────────────────────────
