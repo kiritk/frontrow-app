@@ -128,6 +128,15 @@ export default function ProfileScreen({ navigation }: any) {
                   onPress={() => setView('edit')}
                 />
                 <View style={styles.divider} />
+                <MenuItem
+                  icon="heart-outline"
+                  title="About App"
+                  onPress={() => setView('about')}
+                />
+              </View>
+
+              <Text style={styles.sectionLabel}>More</Text>
+              <View style={styles.menuCard}>
                 {user ? (
                   <MenuItem
                     icon="log-out-outline"
@@ -154,15 +163,6 @@ export default function ProfileScreen({ navigation }: any) {
                     onPress={() => setView('auth')}
                   />
                 )}
-              </View>
-
-              <Text style={styles.sectionLabel}>More</Text>
-              <View style={styles.menuCard}>
-                <MenuItem
-                  icon="heart-outline"
-                  title="About App"
-                  onPress={() => setView('about')}
-                />
               </View>
             </View>
           </ScrollView>
