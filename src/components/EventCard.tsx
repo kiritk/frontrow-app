@@ -248,7 +248,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
           )}
 
           {/* Consistent blur over the whole card — all cards, all event types */}
-          <BlurView intensity={4} tint="dark" style={StyleSheet.absoluteFill} pointerEvents="none" />
+          <BlurView intensity={6} tint="dark" style={StyleSheet.absoluteFill} pointerEvents="none" />
 
           {/* Grain — front card only */}
           {isFront && (
