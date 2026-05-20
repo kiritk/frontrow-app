@@ -15,8 +15,7 @@ const V_RED = '#B53A3A';
 const W = CARD_WIDTH;
 const H = CARD_HEIGHT;
 
-// Placeholder until assets/images/card-background.png is added
-// const CARD_BG = require('../../assets/images/card-background.png');
+const CARD_BG = require('../../assets/images/card-background.png');
 
 interface Props {
   firstName:    string;
@@ -56,9 +55,7 @@ export default function TradingCardProfile({
     <View style={styles.card}>
 
       {/* ── 1. BACKGROUND IMAGE ─────────────────────────────────────── */}
-      {/* Swap comment below once card-background.png is in assets/images/ */}
-      {/* <Image source={CARD_BG} style={StyleSheet.absoluteFillObject} resizeMode="stretch" /> */}
-      <View style={[StyleSheet.absoluteFillObject, styles.bgPlaceholder]} />
+      <Image source={CARD_BG} style={StyleSheet.absoluteFillObject} resizeMode="stretch" />
 
       {/* ── 2. LEVEL TEXT — over top-left blue ribbon ───────────────── */}
       <View
@@ -173,11 +170,6 @@ const styles = StyleSheet.create({
     shadowOpacity:   0.55,
     shadowRadius:    22,
     elevation:       20,
-  },
-
-  // Remove once real background image is wired up
-  bgPlaceholder: {
-    backgroundColor: '#1A3A6B',
   },
 
   // Level label — transparent bg, sits over the blue ribbon in the image
