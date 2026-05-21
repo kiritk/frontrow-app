@@ -109,12 +109,13 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   // Keep ref in sync so the focus listener always sees the latest list
   filteredEventsRef.current = filteredEvents;
 
-  // Scroll to last card when data first arrives after a cold load / focus
+  // Scroll to last card when data first arrives after a cold load / focus.
+  // NOTE: intentionally not called here — scrollToLastCard must run after the
+  // FlatList has native content laid out, which onContentSizeChange guarantees.
+  // The focus / tabPress listeners call it directly (items already rendered then).
   useEffect(() => {
-    if (filteredEvents.length > 0 && pendingScrollToEnd.current) {
-      scrollToLastCard();
-    }
-  }, [filteredEvents, scrollToLastCard]);
+    if (filteredEvents.length === 0) pendingScrollToEnd.current = true;
+  }, [filteredEvents]);
 
   // Mark scroll pending on every screen focus (app open + tab tap)
   useEffect(() => {
@@ -323,8 +324,8 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
         renderItem={renderEventCard}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
-        onLayout={e => {
-          listLayoutHeight.current = e.nativeEvent.layout.height;
+        onLayout={e => { listLayoutHeight.current = e.nativeEvent.layout.height; }}
+        onContentSizeChange={() => {
           if (pendingScrollToEnd.current && filteredEventsRef.current.length > 0) {
             scrollToLastCard();
           }
