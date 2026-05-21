@@ -7,6 +7,13 @@ export interface EventStats {
   yearCount: number;
 }
 
+export interface ExtendedEventStats extends EventStats {
+  firstEvent: LocalEvent | null;
+  favoriteVenue: { name: string; count: number } | null;
+  favoriteCity:  { name: string; count: number } | null;
+  eventsByType:  { type: string; count: number }[];
+}
+
 export function computeEventStats(events: LocalEvent[]): EventStats {
   return {
     eventCount: events.length,
@@ -21,6 +28,47 @@ export function computeEventStats(events: LocalEvent[]): EventStats {
         })
         .filter((y): y is number => y !== null),
     ).size,
+  };
+}
+
+function topEntry(map: Map<string, number>): { name: string; count: number } | null {
+  let top: { name: string; count: number } | null = null;
+  map.forEach((count, name) => {
+    if (!top || count > top.count) top = { name, count };
+  });
+  return top;
+}
+
+export function computeExtendedStats(events: LocalEvent[]): ExtendedEventStats {
+  const base = computeEventStats(events);
+  if (events.length === 0) {
+    return { ...base, firstEvent: null, favoriteVenue: null, favoriteCity: null, eventsByType: [] };
+  }
+
+  const firstEvent = [...events].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  )[0];
+
+  const venueCounts = new Map<string, number>();
+  const cityCounts  = new Map<string, number>();
+  const typeCounts  = new Map<string, number>();
+
+  events.forEach(e => {
+    if (e.venue)          venueCounts.set(e.venue, (venueCounts.get(e.venue) ?? 0) + 1);
+    if (e.venue_location) cityCounts.set(e.venue_location, (cityCounts.get(e.venue_location) ?? 0) + 1);
+    typeCounts.set(e.type, (typeCounts.get(e.type) ?? 0) + 1);
+  });
+
+  const eventsByType = [...typeCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([type, count]) => ({ type, count }));
+
+  return {
+    ...base,
+    firstEvent,
+    favoriteVenue: topEntry(venueCounts),
+    favoriteCity:  topEntry(cityCounts),
+    eventsByType,
   };
 }
 

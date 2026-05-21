@@ -1,37 +1,89 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
+import {
+  View, Text, StyleSheet, ScrollView, RefreshControl,
+  TouchableOpacity, Image, Dimensions,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
-import { getLocalEvents, LocalEvent } from '../lib/localStorage';
-import { computeEventStats, getFanLevel } from '../lib/stats';
+import { getLocalEvents } from '../lib/localStorage';
+import { computeExtendedStats, getFanLevel } from '../lib/stats';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
-import TradingCardProfile from '../components/TradingCardProfile';
 import AppHeader from '../components/AppHeader';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const H_PAD = SPACING.lg;
+
+// ── Background images ────────────────────────────────────────────────────────
+const PROFILE_BG  = require('../../assets/images/profile_bg.jpg');
+const CONCERT_BG  = require('../../assets/images/concert_bg.png');
+const THEATER_BG  = require('../../assets/images/theater_bg.jpg');
+const COMEDY_BG   = require('../../assets/images/comedy_bg.jpg');
+const LANDMARK_BG = require('../../assets/images/landmark_bg.jpg');
+const BASKET_BG   = require('../../assets/images/basketball_bg.jpg');
+const SOCCER_BG   = require('../../assets/images/soccer_bg.jpg');
+const TENNIS_BG   = require('../../assets/images/tennis_bg.jpg');
+const OTHER_BG    = require('../../assets/images/other_bg.jpg');
+
+function getTypeBg(type: string, sport?: string) {
+  if (type === 'concert')  return CONCERT_BG;
+  if (type === 'theater')  return THEATER_BG;
+  if (type === 'comedy')   return COMEDY_BG;
+  if (type === 'landmark') return LANDMARK_BG;
+  if (type === 'sports') {
+    if (sport === 'nba')    return BASKET_BG;
+    if (sport === 'soccer') return SOCCER_BG;
+    if (sport === 'tennis') return TENNIS_BG;
+    return PROFILE_BG;
+  }
+  return OTHER_BG;
+}
+
+// ── Type config ──────────────────────────────────────────────────────────────
+type IconName = React.ComponentProps<typeof Ionicons>['name'];
+const TYPE_CONFIG: Record<string, { label: string; grad: [string, string]; icon: IconName }> = {
+  sports:   { label: 'Sports',    grad: ['#BA4813', '#5a2208'], icon: 'trophy' },
+  concert:  { label: 'Concerts',  grad: ['#4C1D90', '#220d42'], icon: 'musical-notes' },
+  theater:  { label: 'Theater',   grad: ['#223766', '#0f1c35'], icon: 'film' },
+  comedy:   { label: 'Comedy',    grad: ['#7c1010', '#3a0000'], icon: 'mic' },
+  landmark: { label: 'Landmarks', grad: ['#3b3734', '#1a1816'], icon: 'location' },
+  other:    { label: 'Other',     grad: ['#c0490b', '#6a2005'], icon: 'ellipsis-horizontal' },
+};
+
+// ── Date formatter ───────────────────────────────────────────────────────────
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(iso: string) {
+  const d = new Date(iso);
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+// ── Card shell helpers ───────────────────────────────────────────────────────
+const DARK_GRAD: [string, string] = ['#0e1c2f', '#162440'];
+const CARD_SHADOW = {
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.18,
+  shadowRadius: 12,
+  elevation: 5,
+};
 
 export default function StatsScreen() {
   const navigation = useNavigation<any>();
-  const { user, localEventsVersion, profile } = useAuth();
-  const [events, setEvents] = useState<LocalEvent[]>([]);
+  const { user, localEventsVersion } = useAuth();
+  const [events, setEvents] = useState<Awaited<ReturnType<typeof getLocalEvents>>>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchEvents = useCallback(async () => {
-    try {
-      const all = await getLocalEvents();
-      setEvents(all);
-    } catch (error) {
-      console.error(error);
-    }
+    try { setEvents(await getLocalEvents()); }
+    catch (e) { console.error(e); }
   }, []);
 
+  useEffect(() => { fetchEvents(); }, [user, localEventsVersion, fetchEvents]);
   useEffect(() => {
-    fetchEvents();
-  }, [user, localEventsVersion, fetchEvents]);
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', fetchEvents);
-    return unsubscribe;
+    const unsub = navigation.addListener('focus', fetchEvents);
+    return unsub;
   }, [navigation, fetchEvents]);
 
   const onRefresh = async () => {
@@ -40,51 +92,71 @@ export default function StatsScreen() {
     setRefreshing(false);
   };
 
-  const stats = useMemo(() => computeEventStats(events), [events]);
+  const stats    = useMemo(() => computeExtendedStats(events), [events]);
   const fanLevel = useMemo(() => getFanLevel(stats.eventCount), [stats.eventCount]);
-  const { eventCount, cityCount, venueCount, yearCount } = stats;
+
+  const {
+    eventCount, cityCount, venueCount, yearCount,
+    firstEvent, favoriteVenue, favoriteCity, eventsByType,
+  } = stats;
+
+  const hasEvents = eventCount > 0;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <AppHeader />
       <ScrollView
         contentContainerStyle={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.navy} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.navy} />}
+        showsVerticalScrollIndicator={false}
       >
-        {/* Header row */}
+
+        {/* ── Page header ─────────────────────────────────────── */}
         <View style={styles.pageHeader}>
           <Text style={styles.pageTitle}>Stats</Text>
-          <TouchableOpacity
-            style={styles.editProfileButton}
-            onPress={() => navigation.navigate('Profile')}
-          >
+          <TouchableOpacity style={styles.editBtn} onPress={() => navigation.navigate('Profile')}>
             <Ionicons name="pencil" size={13} color={COLORS.navy} />
-            <Text style={styles.editProfileButtonText}>Edit</Text>
+            <Text style={styles.editBtnText}>Edit</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Fan Card */}
-        <View style={styles.fanCardContainer}>
-          <TradingCardProfile
-            firstName={profile.firstName}
-            lastName={profile.lastName}
-            profileImage={profile.profileImage}
-            fanLevel={fanLevel.level}
-            eventCount={eventCount}
-            cityCount={cityCount}
-            venueCount={venueCount}
-            yearCount={yearCount}
+        {/* ── 1. Total Events hero ─────────────────────────────── */}
+        <View style={[styles.heroCard, CARD_SHADOW]}>
+          <Image source={PROFILE_BG} style={StyleSheet.absoluteFillObject as any} resizeMode="cover" />
+          <LinearGradient
+            colors={['rgba(12,28,60,0.92)', 'rgba(18,44,94,0.80)']}
+            style={StyleSheet.absoluteFillObject as any}
           />
+          {/* Top: big number */}
+          <View style={styles.heroTop}>
+            <Text style={styles.heroNum}>{hasEvents ? eventCount : '—'}</Text>
+            <Text style={styles.heroLabel}>EVENTS ATTENDED</Text>
+          </View>
+          {/* Bottom: sub-stats */}
+          <View style={styles.heroDivider} />
+          <View style={styles.heroRow}>
+            {[
+              { v: hasEvents ? cityCount  : '—', l: 'CITIES'  },
+              { v: hasEvents ? venueCount : '—', l: 'VENUES'  },
+              { v: hasEvents ? yearCount  : '—', l: 'YEARS'   },
+            ].map((s, i, arr) => (
+              <React.Fragment key={s.l}>
+                <View style={styles.heroStat}>
+                  <Text style={styles.heroStatNum}>{s.v}</Text>
+                  <Text style={styles.heroStatLabel}>{s.l}</Text>
+                </View>
+                {i < arr.length - 1 && <View style={styles.heroStatDiv} />}
+              </React.Fragment>
+            ))}
+          </View>
         </View>
 
-        {/* Fan Level Card */}
-        <View style={styles.fanLevelCard}>
+        {/* ── 2. Fan Level ─────────────────────────────────────── */}
+        <View style={[styles.fanLevelCard, CARD_SHADOW]}>
           <View style={styles.fanLevelHeader}>
             <View>
               <Text style={styles.fanLevelTitle}>Fan Level</Text>
-              <Text style={styles.fanLevelSubtitle}>
+              <Text style={styles.fanLevelSub}>
                 {fanLevel.nextLevel
                   ? `${fanLevel.eventsToNext} more events to ${fanLevel.nextLevel}`
                   : 'You reached the highest level!'}
@@ -94,36 +166,107 @@ export default function StatsScreen() {
               <Text style={styles.fanLevelBadgeText}>{fanLevel.level}</Text>
             </View>
           </View>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, {
+              width: `${Math.min((eventCount / 50) * 100, 100)}%` as any,
+              backgroundColor: fanLevel.color,
+            }]} />
+          </View>
+          <View style={styles.levelMarkers}>
+            {[
+              { label: 'Rookie',   color: '#3B82F6', min: 0  },
+              { label: 'Pro',      color: '#DC2626', min: 10 },
+              { label: 'All-Star', color: '#22C55E', min: 25 },
+              { label: 'Legend',   color: '#F59E0B', min: 50 },
+            ].map(m => (
+              <View key={m.label} style={styles.levelMarker}>
+                <View style={[styles.markerDot, { backgroundColor: m.color, opacity: eventCount >= m.min ? 1 : 0.28 }]} />
+                <Text style={styles.markerLabel}>{m.label}</Text>
+                <Text style={styles.markerRange}>{m.min === 50 ? '50+' : `${m.min}-${m.min === 25 ? 49 : m.min === 10 ? 24 : 9}`}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
 
-          <View style={styles.progressContainer}>
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${Math.min((eventCount / 50) * 100, 100)}%`, backgroundColor: fanLevel.color }]} />
+        {/* ── 3. Events by Type ────────────────────────────────── */}
+        <View style={[styles.whiteCard, CARD_SHADOW]}>
+          <Text style={styles.whiteCardTitle}>Events by Type</Text>
+          {eventsByType.length > 0 ? (
+            <View style={styles.typeGrid}>
+              {eventsByType.map(({ type, count }) => {
+                const cfg = TYPE_CONFIG[type] ?? TYPE_CONFIG.other;
+                return (
+                  <LinearGradient key={type} colors={cfg.grad} style={styles.typeChip}>
+                    <Ionicons name={cfg.icon} size={14} color="rgba(255,255,255,0.85)" />
+                    <Text style={styles.typeChipLabel}>{cfg.label}</Text>
+                    <Text style={styles.typeChipCount}>{count}</Text>
+                  </LinearGradient>
+                );
+              })}
             </View>
-            <View style={styles.levelMarkers}>
-              <View style={styles.levelMarker}>
-                <View style={[styles.markerDot, { backgroundColor: '#3B82F6' }, eventCount >= 0 && styles.markerDotActive]} />
-                <Text style={styles.markerLabel}>Rookie</Text>
-                <Text style={styles.markerRange}>0-9</Text>
-              </View>
-              <View style={styles.levelMarker}>
-                <View style={[styles.markerDot, { backgroundColor: '#DC2626' }, eventCount >= 10 && styles.markerDotActive]} />
-                <Text style={styles.markerLabel}>Pro</Text>
-                <Text style={styles.markerRange}>10-24</Text>
-              </View>
-              <View style={styles.levelMarker}>
-                <View style={[styles.markerDot, { backgroundColor: '#22C55E' }, eventCount >= 25 && styles.markerDotActive]} />
-                <Text style={styles.markerLabel}>All-Star</Text>
-                <Text style={styles.markerRange}>25-49</Text>
-              </View>
-              <View style={styles.levelMarker}>
-                <View style={[styles.markerDot, { backgroundColor: '#F59E0B' }, eventCount >= 50 && styles.markerDotActive]} />
-                <Text style={styles.markerLabel}>Legend</Text>
-                <Text style={styles.markerRange}>50+</Text>
-              </View>
-            </View>
+          ) : (
+            <Text style={styles.emptyHint}>Add events to see your breakdown</Text>
+          )}
+        </View>
+
+        {/* ── 4. First Event ───────────────────────────────────── */}
+        <View style={[styles.darkCard, CARD_SHADOW]}>
+          {firstEvent && (
+            <Image
+              source={getTypeBg(firstEvent.type, firstEvent.sport)}
+              style={StyleSheet.absoluteFillObject as any}
+              resizeMode="cover"
+            />
+          )}
+          <LinearGradient
+            colors={['rgba(8,16,30,0.94)', 'rgba(14,28,54,0.86)']}
+            style={StyleSheet.absoluteFillObject as any}
+          />
+          <View style={styles.darkCardContent}>
+            <Text style={styles.goldLabel}>YOUR FIRST EVENT</Text>
+            {firstEvent ? (
+              <>
+                <Text style={styles.firstEventTitle} numberOfLines={2}>{firstEvent.title}</Text>
+                <Text style={styles.firstEventMeta}>
+                  {fmtDate(firstEvent.date)}
+                  {firstEvent.venue ? ` · ${firstEvent.venue}` : ''}
+                </Text>
+              </>
+            ) : (
+              <Text style={styles.emptyWhite}>No events yet</Text>
+            )}
+          </View>
+        </View>
+
+        {/* ── 5. Favorite Venue + City ─────────────────────────── */}
+        <View style={styles.insightRow}>
+          {/* Venue */}
+          <View style={[styles.insightCard, CARD_SHADOW]}>
+            <LinearGradient colors={DARK_GRAD} style={StyleSheet.absoluteFillObject as any} />
+            <Ionicons name="location" size={18} color={COLORS.gold} style={{ marginBottom: 6 }} />
+            <Text style={styles.insightLabel}>FAVORITE VENUE</Text>
+            <Text style={styles.insightValue} numberOfLines={2}>
+              {favoriteVenue?.name ?? '—'}
+            </Text>
+            {favoriteVenue && (
+              <Text style={styles.insightCount}>{favoriteVenue.count} visit{favoriteVenue.count !== 1 ? 's' : ''}</Text>
+            )}
           </View>
 
+          {/* City */}
+          <View style={[styles.insightCard, CARD_SHADOW]}>
+            <LinearGradient colors={['#111e30', '#1a2e48']} style={StyleSheet.absoluteFillObject as any} />
+            <Ionicons name="map" size={18} color={COLORS.gold} style={{ marginBottom: 6 }} />
+            <Text style={styles.insightLabel}>FAVORITE CITY</Text>
+            <Text style={styles.insightValue} numberOfLines={2}>
+              {favoriteCity?.name ?? '—'}
+            </Text>
+            {favoriteCity && (
+              <Text style={styles.insightCount}>{favoriteCity.count} visit{favoriteCity.count !== 1 ? 's' : ''}</Text>
+            )}
+          </View>
         </View>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -135,21 +278,25 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cream,
   },
   content: {
-    padding: SPACING.lg,
-    paddingBottom: 100,
+    paddingHorizontal: H_PAD,
+    paddingBottom: 110,
+    gap: SPACING.md,
   },
+
+  // Page header
   pageHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: SPACING.lg,
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.xs,
   },
   pageTitle: {
     fontFamily: FONTS.bold,
     fontSize: 28,
     color: COLORS.navy,
   },
-  editProfileButton: {
+  editBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
@@ -159,26 +306,79 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: COLORS.navy,
   },
-  editProfileButtonText: {
+  editBtnText: {
     fontFamily: FONTS.semiBold,
     fontSize: FONT_SIZES.sm,
     color: COLORS.navy,
   },
-  fanCardContainer: {
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
+
+  // ── Hero card ──────────────────────────────────────────────────────────────
+  heroCard: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
+  heroTop: {
+    paddingTop: SPACING.xl,
+    paddingHorizontal: SPACING.xl,
+    paddingBottom: SPACING.lg,
+    alignItems: 'flex-start',
+  },
+  heroNum: {
+    fontFamily: FONTS.bold,
+    fontSize: 80,
+    lineHeight: 80,
+    color: '#FFFFFF',
+    letterSpacing: -2,
+  },
+  heroLabel: {
+    fontFamily: FONTS.audiowide,
+    fontSize: 10,
+    letterSpacing: 4,
+    color: 'rgba(255,255,255,0.55)',
+    marginTop: 4,
+  },
+  heroDivider: {
+    height: 1,
+    marginHorizontal: SPACING.xl,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  heroRow: {
+    flexDirection: 'row',
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.lg,
+  },
+  heroStat: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  heroStatNum: {
+    fontFamily: FONTS.bold,
+    fontSize: FONT_SIZES.xxl,
+    color: '#FFFFFF',
+  },
+  heroStatLabel: {
+    fontFamily: FONTS.audiowide,
+    fontSize: 8,
+    letterSpacing: 3,
+    color: 'rgba(255,255,255,0.50)',
+    marginTop: 3,
+  },
+  heroStatDiv: {
+    width: 1,
+    height: 36,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignSelf: 'center',
+  },
+
+  // ── Fan Level card ─────────────────────────────────────────────────────────
   fanLevelCard: {
     backgroundColor: COLORS.white,
-    borderRadius: BORDER_RADIUS.xl,
+    borderRadius: 20,
     padding: SPACING.lg,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    borderColor: '#E8E8E8',
   },
   fanLevelHeader: {
     flexDirection: 'row',
@@ -187,12 +387,12 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   fanLevelTitle: {
-    fontFamily: 'GeistMono_700Bold',
+    fontFamily: FONTS.geistMonoBold,
     fontSize: FONT_SIZES.xl,
     color: COLORS.navy,
     marginBottom: 4,
   },
-  fanLevelSubtitle: {
+  fanLevelSub: {
     fontFamily: FONTS.regular,
     fontSize: FONT_SIZES.sm,
     color: COLORS.gray,
@@ -203,12 +403,9 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.md,
   },
   fanLevelBadgeText: {
-    fontFamily: 'GeistMono_700Bold',
+    fontFamily: FONTS.geistMonoBold,
     fontSize: FONT_SIZES.md,
     color: COLORS.white,
-  },
-  progressContainer: {
-    marginBottom: SPACING.lg,
   },
   progressTrack: {
     height: 8,
@@ -219,7 +416,6 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: COLORS.navy,
     borderRadius: 4,
   },
   levelMarkers: {
@@ -231,24 +427,140 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   markerDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    marginBottom: 6,
-    opacity: 0.3,
-  },
-  markerDotActive: {
-    opacity: 1,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    marginBottom: 5,
   },
   markerLabel: {
     fontFamily: FONTS.semiBold,
-    fontSize: 11,
+    fontSize: 10,
     color: COLORS.navy,
     marginBottom: 2,
   },
   markerRange: {
     fontFamily: FONTS.regular,
-    fontSize: 10,
+    fontSize: 9,
     color: COLORS.gray,
+  },
+
+  // ── White card (Events by Type) ────────────────────────────────────────────
+  whiteCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    padding: SPACING.lg,
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+  },
+  whiteCardTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: FONT_SIZES.lg,
+    color: COLORS.navy,
+    marginBottom: SPACING.md,
+  },
+  typeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+  },
+  typeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 30,
+  },
+  typeChipLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: FONT_SIZES.sm,
+    color: '#FFFFFF',
+  },
+  typeChipCount: {
+    fontFamily: FONTS.bold,
+    fontSize: FONT_SIZES.md,
+    color: '#FFFFFF',
+    opacity: 0.9,
+  },
+
+  // ── Dark card (First Event) ────────────────────────────────────────────────
+  darkCard: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    minHeight: 120,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.07)',
+  },
+  darkCardContent: {
+    padding: SPACING.xl,
+  },
+  goldLabel: {
+    fontFamily: FONTS.audiowide,
+    fontSize: 9,
+    letterSpacing: 3,
+    color: COLORS.gold,
+    marginBottom: SPACING.sm,
+  },
+  firstEventTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: FONT_SIZES.xl,
+    color: '#FFFFFF',
+    marginBottom: 6,
+    lineHeight: 26,
+  },
+  firstEventMeta: {
+    fontFamily: FONTS.regular,
+    fontSize: FONT_SIZES.sm,
+    color: 'rgba(255,255,255,0.55)',
+  },
+
+  // ── Insight row (Venue + City) ─────────────────────────────────────────────
+  insightRow: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+  },
+  insightCard: {
+    flex: 1,
+    borderRadius: 20,
+    overflow: 'hidden',
+    padding: SPACING.lg,
+    minHeight: 130,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.07)',
+  },
+  insightLabel: {
+    fontFamily: FONTS.audiowide,
+    fontSize: 8,
+    letterSpacing: 2,
+    color: 'rgba(255,255,255,0.45)',
+    marginBottom: 6,
+  },
+  insightValue: {
+    fontFamily: FONTS.bold,
+    fontSize: FONT_SIZES.md,
+    color: '#FFFFFF',
+    lineHeight: 22,
+    flex: 1,
+  },
+  insightCount: {
+    fontFamily: FONTS.semiBold,
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.gold,
+    marginTop: 6,
+  },
+
+  // ── Empty states ───────────────────────────────────────────────────────────
+  emptyHint: {
+    fontFamily: FONTS.regular,
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.gray,
+    textAlign: 'center',
+    paddingVertical: SPACING.sm,
+  },
+  emptyWhite: {
+    fontFamily: FONTS.regular,
+    fontSize: FONT_SIZES.md,
+    color: 'rgba(255,255,255,0.40)',
+    marginTop: SPACING.xs,
   },
 });
