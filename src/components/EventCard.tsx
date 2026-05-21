@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
     width: 7,
     height: 2,
     borderRadius: 1,
-    backgroundColor: 'rgba(255,255,255,0.55)',
+    backgroundColor: '#FFFFFF',
   },
   perforationLeft: {
     left: -9.8,

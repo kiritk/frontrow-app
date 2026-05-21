@@ -55,7 +55,11 @@ export default function TradingCardProfile({
     <View style={styles.card}>
 
       {/* ── 1. BACKGROUND IMAGE ─────────────────────────────────────── */}
-      <Image source={CARD_BG} style={StyleSheet.absoluteFillObject} resizeMode="stretch" />
+      <Image
+        source={CARD_BG}
+        style={{ position: 'absolute', top: 0, left: 0, width: CARD_WIDTH, height: CARD_HEIGHT }}
+        resizeMode="stretch"
+      />
 
       {/* ── 2. LEVEL TEXT — over top-left blue ribbon ───────────────── */}
       <View
