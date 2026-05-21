@@ -48,10 +48,12 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const filteredEventsRef = useRef<Event[]>([]);
   const listLayoutHeight = useRef(0);
 
-  // Scroll so the last card's bottom sits 160px above the viewport bottom (clears tab bar)
+  // Scroll so the last card's bottom sits 160px above the viewport bottom (clears tab bar).
+  // Clears pendingScrollToEnd only when it actually executes (layout height is known).
   const scrollToLastCard = useCallback(() => {
     const n = filteredEventsRef.current.length;
     if (n === 0 || listLayoutHeight.current === 0) return;
+    pendingScrollToEnd.current = false;
     const lastCardLayoutBottom = STACKED_CARD_HEIGHT + Math.max(0, n - 1) * PEEK_HEIGHT;
     const offset = Math.max(0, lastCardLayoutBottom - listLayoutHeight.current + TAB_CLEARANCE);
     flatListRef.current?.scrollToOffset({ offset, animated: false });
@@ -110,7 +112,6 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   // Scroll to last card when data first arrives after a cold load / focus
   useEffect(() => {
     if (filteredEvents.length > 0 && pendingScrollToEnd.current) {
-      pendingScrollToEnd.current = false;
       scrollToLastCard();
     }
   }, [filteredEvents, scrollToLastCard]);
@@ -322,7 +323,12 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
         renderItem={renderEventCard}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
-        onLayout={e => { listLayoutHeight.current = e.nativeEvent.layout.height; }}
+        onLayout={e => {
+          listLayoutHeight.current = e.nativeEvent.layout.height;
+          if (pendingScrollToEnd.current && filteredEventsRef.current.length > 0) {
+            scrollToLastCard();
+          }
+        }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.navy} />
         }
