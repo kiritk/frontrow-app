@@ -120,38 +120,7 @@ export default function StatsScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* ── 1. Total Events hero ─────────────────────────────── */}
-        <View style={[styles.heroCard, CARD_SHADOW]}>
-          <Image source={PROFILE_BG} style={StyleSheet.absoluteFillObject as any} resizeMode="cover" />
-          <LinearGradient
-            colors={['rgba(12,28,60,0.92)', 'rgba(18,44,94,0.80)']}
-            style={StyleSheet.absoluteFillObject as any}
-          />
-          {/* Top: big number */}
-          <View style={styles.heroTop}>
-            <Text style={styles.heroNum}>{hasEvents ? eventCount : '—'}</Text>
-            <Text style={styles.heroLabel}>EVENTS ATTENDED</Text>
-          </View>
-          {/* Bottom: sub-stats */}
-          <View style={styles.heroDivider} />
-          <View style={styles.heroRow}>
-            {[
-              { v: hasEvents ? cityCount  : '—', l: 'CITIES'  },
-              { v: hasEvents ? venueCount : '—', l: 'VENUES'  },
-              { v: hasEvents ? yearCount  : '—', l: 'YEARS'   },
-            ].map((s, i, arr) => (
-              <React.Fragment key={s.l}>
-                <View style={styles.heroStat}>
-                  <Text style={styles.heroStatNum}>{s.v}</Text>
-                  <Text style={styles.heroStatLabel}>{s.l}</Text>
-                </View>
-                {i < arr.length - 1 && <View style={styles.heroStatDiv} />}
-              </React.Fragment>
-            ))}
-          </View>
-        </View>
-
-        {/* ── 2. Fan Level ─────────────────────────────────────── */}
+        {/* ── 1. Fan Level ─────────────────────────────────────── */}
         <View style={[styles.fanLevelCard, CARD_SHADOW]}>
           <View style={styles.fanLevelHeader}>
             <View>
@@ -184,6 +153,37 @@ export default function StatsScreen() {
                 <Text style={styles.markerLabel}>{m.label}</Text>
                 <Text style={styles.markerRange}>{m.min === 50 ? '50+' : `${m.min}-${m.min === 25 ? 49 : m.min === 10 ? 24 : 9}`}</Text>
               </View>
+            ))}
+          </View>
+        </View>
+
+        {/* ── 2. Total Events hero ─────────────────────────────── */}
+        <View style={[styles.heroCard, CARD_SHADOW]}>
+          <Image source={PROFILE_BG} style={StyleSheet.absoluteFillObject as any} resizeMode="cover" />
+          <LinearGradient
+            colors={['rgba(12,28,60,0.92)', 'rgba(18,44,94,0.80)']}
+            style={StyleSheet.absoluteFillObject as any}
+          />
+          {/* Top: big number */}
+          <View style={styles.heroTop}>
+            <Text style={styles.heroNum}>{hasEvents ? eventCount : '—'}</Text>
+            <Text style={styles.heroLabel}>EVENTS ATTENDED</Text>
+          </View>
+          {/* Bottom: sub-stats */}
+          <View style={styles.heroDivider} />
+          <View style={styles.heroRow}>
+            {[
+              { v: hasEvents ? cityCount  : '—', l: 'CITIES'  },
+              { v: hasEvents ? venueCount : '—', l: 'VENUES'  },
+              { v: hasEvents ? yearCount  : '—', l: 'YEARS'   },
+            ].map((s, i, arr) => (
+              <React.Fragment key={s.l}>
+                <View style={styles.heroStat}>
+                  <Text style={styles.heroStatNum}>{s.v}</Text>
+                  <Text style={styles.heroStatLabel}>{s.l}</Text>
+                </View>
+                {i < arr.length - 1 && <View style={styles.heroStatDiv} />}
+              </React.Fragment>
             ))}
           </View>
         </View>
