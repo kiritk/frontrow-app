@@ -17,7 +17,8 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const H_PAD = SPACING.lg;
 
 // ── Background images ────────────────────────────────────────────────────────
-const PROFILE_BG  = require('../../assets/images/profile_bg.jpg');
+const PROFILE_BG      = require('../../assets/images/profile_bg.jpg');
+const OTHER_SPORTS_BG = require('../../assets/images/other_sports_bg.jpg');
 const CONCERT_BG  = require('../../assets/images/concert_bg.png');
 const THEATER_BG  = require('../../assets/images/theater_bg.jpg');
 const COMEDY_BG   = require('../../assets/images/comedy_bg.jpg');
@@ -51,6 +52,12 @@ const TYPE_CONFIG: Record<string, { label: string; grad: [string, string]; icon:
   landmark: { label: 'Landmarks', grad: ['#3b3734', '#1a1816'], icon: 'location' },
   other:    { label: 'Other',     grad: ['#c0490b', '#6a2005'], icon: 'ellipsis-horizontal' },
 };
+
+// ── City/state extractor (drops country if present) ──────────────────────────
+function cityState(location: string): string {
+  const parts = location.split(',').map(s => s.trim()).filter(Boolean);
+  return parts.length >= 2 ? `${parts[0]}, ${parts[1]}` : parts[0] ?? location;
+}
 
 // ── Date formatter ───────────────────────────────────────────────────────────
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -120,38 +127,7 @@ export default function StatsScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* ── 1. Total Events hero ─────────────────────────────── */}
-        <View style={[styles.heroCard, CARD_SHADOW]}>
-          <Image source={PROFILE_BG} style={StyleSheet.absoluteFillObject as any} resizeMode="cover" />
-          <LinearGradient
-            colors={['rgba(12,28,60,0.92)', 'rgba(18,44,94,0.80)']}
-            style={StyleSheet.absoluteFillObject as any}
-          />
-          {/* Top: big number */}
-          <View style={styles.heroTop}>
-            <Text style={styles.heroNum}>{hasEvents ? eventCount : '—'}</Text>
-            <Text style={styles.heroLabel}>EVENTS ATTENDED</Text>
-          </View>
-          {/* Bottom: sub-stats */}
-          <View style={styles.heroDivider} />
-          <View style={styles.heroRow}>
-            {[
-              { v: hasEvents ? cityCount  : '—', l: 'CITIES'  },
-              { v: hasEvents ? venueCount : '—', l: 'VENUES'  },
-              { v: hasEvents ? yearCount  : '—', l: 'YEARS'   },
-            ].map((s, i, arr) => (
-              <React.Fragment key={s.l}>
-                <View style={styles.heroStat}>
-                  <Text style={styles.heroStatNum}>{s.v}</Text>
-                  <Text style={styles.heroStatLabel}>{s.l}</Text>
-                </View>
-                {i < arr.length - 1 && <View style={styles.heroStatDiv} />}
-              </React.Fragment>
-            ))}
-          </View>
-        </View>
-
-        {/* ── 2. Fan Level ─────────────────────────────────────── */}
+        {/* ── 1. Fan Level ─────────────────────────────────────── */}
         <View style={[styles.fanLevelCard, CARD_SHADOW]}>
           <View style={styles.fanLevelHeader}>
             <View>
@@ -184,6 +160,37 @@ export default function StatsScreen() {
                 <Text style={styles.markerLabel}>{m.label}</Text>
                 <Text style={styles.markerRange}>{m.min === 50 ? '50+' : `${m.min}-${m.min === 25 ? 49 : m.min === 10 ? 24 : 9}`}</Text>
               </View>
+            ))}
+          </View>
+        </View>
+
+        {/* ── 2. Total Events hero ─────────────────────────────── */}
+        <View style={[styles.heroCard, CARD_SHADOW]}>
+          <Image source={OTHER_SPORTS_BG} style={[StyleSheet.absoluteFillObject as any, { opacity: 0.5 }]} resizeMode="cover" />
+          <LinearGradient
+            colors={['rgba(12,28,60,0.92)', 'rgba(18,44,94,0.80)']}
+            style={StyleSheet.absoluteFillObject as any}
+          />
+          {/* Top: big number */}
+          <View style={styles.heroTop}>
+            <Text style={styles.heroNum}>{hasEvents ? eventCount : '—'}</Text>
+            <Text style={styles.heroLabel}>EVENTS ATTENDED</Text>
+          </View>
+          {/* Bottom: sub-stats */}
+          <View style={styles.heroDivider} />
+          <View style={styles.heroRow}>
+            {[
+              { v: hasEvents ? cityCount  : '—', l: 'CITIES'  },
+              { v: hasEvents ? venueCount : '—', l: 'VENUES'  },
+              { v: hasEvents ? yearCount  : '—', l: 'YEARS'   },
+            ].map((s, i, arr) => (
+              <React.Fragment key={s.l}>
+                <View style={styles.heroStat}>
+                  <Text style={styles.heroStatNum}>{s.v}</Text>
+                  <Text style={styles.heroStatLabel}>{s.l}</Text>
+                </View>
+                {i < arr.length - 1 && <View style={styles.heroStatDiv} />}
+              </React.Fragment>
             ))}
           </View>
         </View>
@@ -223,7 +230,7 @@ export default function StatsScreen() {
             style={StyleSheet.absoluteFillObject as any}
           />
           <View style={styles.darkCardContent}>
-            <Text style={styles.goldLabel}>YOUR FIRST EVENT</Text>
+            <Text style={styles.goldLabel}>YOUR FIRST EXPERIENCE</Text>
             {firstEvent ? (
               <>
                 <Text style={styles.firstEventTitle} numberOfLines={2}>{firstEvent.title}</Text>
@@ -259,7 +266,7 @@ export default function StatsScreen() {
             <Ionicons name="map" size={18} color={COLORS.gold} style={{ marginBottom: 6 }} />
             <Text style={styles.insightLabel}>FAVORITE CITY</Text>
             <Text style={styles.insightValue} numberOfLines={2}>
-              {favoriteCity?.name ?? '—'}
+              {favoriteCity ? cityState(favoriteCity.name) : '—'}
             </Text>
             {favoriteCity && (
               <Text style={styles.insightCount}>{favoriteCity.count} visit{favoriteCity.count !== 1 ? 's' : ''}</Text>
