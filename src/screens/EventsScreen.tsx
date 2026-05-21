@@ -29,8 +29,9 @@ const CATEGORIES = [
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SIDE_PADDING = SCREEN_WIDTH * 0.05;
-const TAB_CLEARANCE = 120;
-const LIST_BOTTOM_PADDING = TAB_CLEARANCE;
+// paddingBottom lifts the last card off the floating tab bar after scrollToEnd
+// (tab bar height + bottom offset = 84; 120 gives ~36px clearance).
+const LIST_BOTTOM_PADDING = 120;
 
 export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const { user, localEventsVersion } = useAuth();
@@ -46,17 +47,14 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const flatListRef = useRef<FlatList>(null);
   const pendingScrollToEnd = useRef(true);
   const filteredEventsRef = useRef<Event[]>([]);
-  const listLayoutHeight = useRef(0);
 
-  // Scroll so the last card's bottom sits 160px above the viewport bottom (clears tab bar).
-  // Clears pendingScrollToEnd only when it actually executes (layout height is known).
+  // scrollToEnd lets the native scroll view compute the offset from its own
+  // current viewport and content sizes, so a stale JS-side layout height can't
+  // produce a wrong offset (the cold-start race we used to hit). The last
+  // card's bottom lands LIST_BOTTOM_PADDING above the visible bottom.
   const scrollToLastCard = useCallback(() => {
-    const n = filteredEventsRef.current.length;
-    if (n === 0 || listLayoutHeight.current === 0) return;
-    pendingScrollToEnd.current = false;
-    const lastCardLayoutBottom = STACKED_CARD_HEIGHT + Math.max(0, n - 1) * PEEK_HEIGHT;
-    const offset = Math.max(0, lastCardLayoutBottom - listLayoutHeight.current + TAB_CLEARANCE);
-    flatListRef.current?.scrollToOffset({ offset, animated: false });
+    if (filteredEventsRef.current.length === 0) return;
+    flatListRef.current?.scrollToEnd({ animated: false });
   }, []);
 
   const fetchEvents = useCallback(async () => {
@@ -109,22 +107,20 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   // Keep ref in sync so the focus listener always sees the latest list
   filteredEventsRef.current = filteredEvents;
 
-  // Scroll to last card when data first arrives after a cold load / focus.
-  // NOTE: intentionally not called here — scrollToLastCard must run after the
-  // FlatList has native content laid out, which onContentSizeChange guarantees.
-  // The focus / tabPress listeners call it directly (items already rendered then).
+  // Re-arm the pending flag whenever the list empties, so the next batch of
+  // data triggers a scroll-to-end via onLayout / onContentSizeChange.
   useEffect(() => {
     if (filteredEvents.length === 0) pendingScrollToEnd.current = true;
   }, [filteredEvents]);
 
-  // Mark scroll pending on every screen focus (app open + tab tap)
+  // Mark scroll pending on every screen focus (app open + tab tap). Pending
+  // stays true until the user scrolls (onScrollBeginDrag), so any layout or
+  // content-size events that arrive after focus also keep the list pinned to
+  // the last card.
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
-      if (filteredEventsRef.current.length > 0) {
-        scrollToLastCard();
-      } else {
-        pendingScrollToEnd.current = true;
-      }
+      pendingScrollToEnd.current = true;
+      scrollToLastCard();
     });
     return unsubscribe;
   }, [navigation, scrollToLastCard]);
@@ -193,11 +189,8 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
       if (detailVisible) {
         closeDetail();
       }
-      if (filteredEventsRef.current.length > 0) {
-        scrollToLastCard();
-      } else {
-        pendingScrollToEnd.current = true;
-      }
+      pendingScrollToEnd.current = true;
+      scrollToLastCard();
     });
     return unsubscribe;
   }, [navigation, scrollToLastCard, detailVisible, closeDetail]);
@@ -324,12 +317,22 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
         renderItem={renderEventCard}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
-        onLayout={e => { listLayoutHeight.current = e.nativeEvent.layout.height; }}
+        // Both onLayout (FlatList container resized — e.g. when category pills
+        // appear) and onContentSizeChange (items rendered) can fire in either
+        // order on cold start. Triggering from both, and only clearing the
+        // pending flag on user interaction, makes the final scroll position
+        // correct regardless of which event lands last.
+        onLayout={() => {
+          if (pendingScrollToEnd.current && filteredEventsRef.current.length > 0) {
+            scrollToLastCard();
+          }
+        }}
         onContentSizeChange={() => {
           if (pendingScrollToEnd.current && filteredEventsRef.current.length > 0) {
             scrollToLastCard();
           }
         }}
+        onScrollBeginDrag={() => { pendingScrollToEnd.current = false; }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.navy} />
         }
