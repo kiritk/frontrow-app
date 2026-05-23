@@ -4,8 +4,9 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import ConfettiCannon from 'react-native-confetti-cannon';
 import { useFonts, Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold, Outfit_700Bold } from '@expo-google-fonts/outfit';
 import { Audiowide_400Regular } from '@expo-google-fonts/audiowide';
 import { Limelight_400Regular } from '@expo-google-fonts/limelight';
@@ -22,6 +23,8 @@ import StatsScreen from './src/screens/StatsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import SplashScreen from './src/screens/SplashScreen';
 import OnboardingFlow, { OnboardingData } from './src/screens/onboarding/OnboardingFlow';
+import { buildPreviewEvent } from './src/screens/onboarding/ConfirmationStep';
+import { saveLocalEvent } from './src/lib/localStorage';
 import AddEventButton from './src/components/AddEventButton';
 import { COLORS, FONTS } from './src/theme/colors';
 import { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_OFFSET } from './src/theme/layout';
@@ -86,8 +89,17 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
   );
 }
 
-function MainApp() {
+function MainApp({ playWelcomeConfetti = false }: { playWelcomeConfetti?: boolean }) {
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showConfetti, setShowConfetti] = useState(playWelcomeConfetti);
+
+  useEffect(() => {
+    if (!playWelcomeConfetti) return;
+    setShowConfetti(true);
+    const t = setTimeout(() => setShowConfetti(false), 3500);
+    return () => clearTimeout(t);
+  }, [playWelcomeConfetti]);
+
   const handleEventAdded = () => {
     setRefreshKey(prev => prev + 1);
   };
@@ -116,6 +128,17 @@ function MainApp() {
         <Tab.Screen name="Profile" component={ProfileScreen} />
       </Tab.Navigator>
       <AddEventButton onEventAdded={handleEventAdded} />
+      {showConfetti && (
+        <ConfettiCannon
+          count={150}
+          origin={{ x: Dimensions.get('window').width / 2, y: -20 }}
+          fadeOut
+          explosionSpeed={400}
+          fallSpeed={2500}
+          colors={[COLORS.navy, '#FFD700', '#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3']}
+          autoStart
+        />
+      )}
     </View>
   );
 }
@@ -144,6 +167,7 @@ export default function App() {
 
   const [showSplash, setShowSplash] = useState<boolean | null>(null);
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
+  const [playWelcomeConfetti, setPlayWelcomeConfetti] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -161,8 +185,18 @@ export default function App() {
   };
 
   const handleOnboardingComplete = async (data: OnboardingData) => {
+    if (data.eventType) {
+      const preview = buildPreviewEvent(data.eventType, data.details, data.photos);
+      const { id, created_at, ...rest } = preview;
+      try {
+        await saveLocalEvent(rest);
+      } catch (e) {
+        console.warn('Failed to save onboarding event', e);
+      }
+    }
     await AsyncStorage.setItem(ONBOARDING_DATA_KEY, JSON.stringify(data));
     await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
+    setPlayWelcomeConfetti(true);
     setShowOnboarding(false);
   };
 
@@ -198,7 +232,7 @@ export default function App() {
         <AuthProvider>
           <NavigationContainer>
             <StatusBar style="dark" />
-            <MainApp />
+            <MainApp playWelcomeConfetti={playWelcomeConfetti} />
           </NavigationContainer>
         </AuthProvider>
       </SafeAreaProvider>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import EventTypeStep, { EventTypeValue } from './EventTypeStep';
 import DetailsStep, { DetailsData } from './DetailsStep';
 import PhotosStep from './PhotosStep';
+import ConfirmationStep from './ConfirmationStep';
 
 export interface OnboardingData {
   eventType: EventTypeValue | null;
@@ -28,10 +29,6 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [eventType, setEventType] = useState<EventTypeValue | null>(null);
   const [details, setDetails] = useState<DetailsData>(emptyDetails);
   const [photos, setPhotos] = useState<string[]>([]);
-
-  const finish = (finalPhotos: string[]) => {
-    onComplete({ eventType, details, photos: finalPhotos });
-  };
 
   if (step === 0) {
     return (
@@ -61,11 +58,23 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         photos={photos}
         onChange={setPhotos}
         onBack={() => setStep(1)}
-        onContinue={() => finish(photos)}
+        onContinue={() => setStep(3)}
         onSkip={() => {
           setPhotos([]);
-          finish([]);
+          setStep(3);
         }}
+      />
+    );
+  }
+
+  if (step === 3 && eventType) {
+    return (
+      <ConfirmationStep
+        eventType={eventType}
+        details={details}
+        photos={photos}
+        onBack={() => setStep(2)}
+        onAddExperience={() => onComplete({ eventType, details, photos })}
       />
     );
   }
