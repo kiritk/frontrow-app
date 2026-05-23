@@ -21,6 +21,7 @@ import MapScreen from './src/screens/MapScreen';
 import StatsScreen from './src/screens/StatsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import SplashScreen from './src/screens/SplashScreen';
+import OnboardingFlow, { OnboardingData } from './src/screens/onboarding/OnboardingFlow';
 import AddEventButton from './src/components/AddEventButton';
 import { COLORS, FONTS } from './src/theme/colors';
 import { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_OFFSET } from './src/theme/layout';
@@ -120,6 +121,8 @@ function MainApp() {
 }
 
 const SPLASH_SEEN_KEY = 'frontrow_splash_seen';
+const ONBOARDING_COMPLETE_KEY = 'frontrow_onboarding_complete';
+const ONBOARDING_DATA_KEY = 'frontrow_onboarding_data';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -140,10 +143,15 @@ export default function App() {
   });
 
   const [showSplash, setShowSplash] = useState<boolean | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
 
   useEffect(() => {
-    AsyncStorage.getItem(SPLASH_SEEN_KEY).then(value => {
-      setShowSplash(value !== 'true');
+    Promise.all([
+      AsyncStorage.getItem(SPLASH_SEEN_KEY),
+      AsyncStorage.getItem(ONBOARDING_COMPLETE_KEY),
+    ]).then(([splashValue, onboardingValue]) => {
+      setShowSplash(splashValue !== 'true');
+      setShowOnboarding(onboardingValue !== 'true');
     });
   }, []);
 
@@ -152,7 +160,13 @@ export default function App() {
     setShowSplash(false);
   };
 
-  if (!fontsLoaded || showSplash === null) {
+  const handleOnboardingComplete = async (data: OnboardingData) => {
+    await AsyncStorage.setItem(ONBOARDING_DATA_KEY, JSON.stringify(data));
+    await AsyncStorage.setItem(ONBOARDING_COMPLETE_KEY, 'true');
+    setShowOnboarding(false);
+  };
+
+  if (!fontsLoaded || showSplash === null || showOnboarding === null) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.cream }}>
         <ActivityIndicator size="large" color={COLORS.navy} />
@@ -165,6 +179,15 @@ export default function App() {
       <SafeAreaProvider>
         <StatusBar style="light" />
         <SplashScreen onComplete={handleSplashComplete} />
+      </SafeAreaProvider>
+    );
+  }
+
+  if (showOnboarding) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar style="dark" />
+        <OnboardingFlow onComplete={handleOnboardingComplete} />
       </SafeAreaProvider>
     );
   }
