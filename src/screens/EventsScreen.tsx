@@ -41,6 +41,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const insets = useSafeAreaInsets();
   const listBottomPadding =
     insets.bottom + TAB_BAR_BOTTOM_OFFSET + TAB_BAR_HEIGHT + LIST_BOTTOM_CLEARANCE;
+  console.log('[EventsScreen] insets.bottom=', insets.bottom, 'listBottomPadding=', listBottomPadding);
   const [events, setEvents] = useState<Event[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>('All');
@@ -321,7 +322,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
         data={filteredEvents}
         renderItem={renderEventCard}
         keyExtractor={item => item.id}
-        contentContainerStyle={{ paddingBottom: listBottomPadding }}
+        ListFooterComponent={<View style={{ height: listBottomPadding, backgroundColor: 'rgba(255,0,0,0.25)' }} />}
         // Both onLayout (FlatList container resized — e.g. when category pills
         // appear) and onContentSizeChange (items rendered) can fire in either
         // order on cold start. Triggering from both, and only clearing the
