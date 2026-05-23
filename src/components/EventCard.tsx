@@ -14,6 +14,7 @@ import { COLORS, FONTS } from '../theme/colors';
 import { getTeamByName } from '../data/nflTeams';
 import { getMLBTeamByName } from '../data/mlbTeams';
 import { LocalEvent } from '../lib/localStorage';
+import { parseEventDate } from '../lib/dates';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -173,7 +174,7 @@ const getEventLabel = (type: string, sport?: string): string => {
 };
 
 const formatDate = (dateString: string) => {
-  const d = new Date(dateString);
+  const d = parseEventDate(dateString);
   const month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
   const day = d.getDate();
   const year = d.getFullYear();

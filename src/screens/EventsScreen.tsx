@@ -15,6 +15,7 @@ import * as Haptics from 'expo-haptics';
 import { LocalEvent } from '../lib/localStorage';
 import { COLORS, SPACING, FONT_SIZES, FONTS } from '../theme/colors';
 import { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_OFFSET } from '../theme/layout';
+import { parseEventDate } from '../lib/dates';
 
 type Event = LocalEvent;
 
@@ -79,15 +80,15 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
 
   const yearTabs = useMemo(() => {
     const set = new Set<string>();
-    events.forEach(e => set.add(new Date(e.date).getFullYear().toString()));
+    events.forEach(e => set.add(parseEventDate(e.date).getFullYear().toString()));
     const years = Array.from(set).sort((a, b) => Number(b) - Number(a));
     return ['Upcoming', 'All', ...years];
   }, [events]);
 
   const yearFilteredEvents = useMemo(() => {
     if (selectedYear === 'All') return events;
-    if (selectedYear === 'Upcoming') return events.filter(e => new Date(e.date) >= new Date());
-    return events.filter(e => new Date(e.date).getFullYear().toString() === selectedYear);
+    if (selectedYear === 'Upcoming') return events.filter(e => parseEventDate(e.date) >= new Date());
+    return events.filter(e => parseEventDate(e.date).getFullYear().toString() === selectedYear);
   }, [events, selectedYear]);
 
   const visibleCategories = useMemo(() => {
@@ -106,7 +107,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
     const base = selectedCategory === 'all'
       ? yearFilteredEvents
       : yearFilteredEvents.filter(e => e.type === selectedCategory);
-    return [...base].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return [...base].sort((a, b) => parseEventDate(a.date).getTime() - parseEventDate(b.date).getTime());
   }, [yearFilteredEvents, selectedCategory]);
 
   // Keep ref in sync so the focus listener always sees the latest list

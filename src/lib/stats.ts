@@ -1,4 +1,5 @@
 import { LocalEvent } from './localStorage';
+import { parseEventDate } from './dates';
 
 export interface EventStats {
   eventCount: number;
@@ -23,7 +24,7 @@ export function computeEventStats(events: LocalEvent[]): EventStats {
       events
         .map(e => {
           if (!e.date) return null;
-          const year = new Date(e.date).getFullYear();
+          const year = parseEventDate(e.date).getFullYear();
           return Number.isFinite(year) ? year : null;
         })
         .filter((y): y is number => y !== null),
@@ -46,7 +47,7 @@ export function computeExtendedStats(events: LocalEvent[]): ExtendedEventStats {
   }
 
   const firstEvent = [...events].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    (a, b) => parseEventDate(a.date).getTime() - parseEventDate(b.date).getTime(),
   )[0];
 
   const venueCounts = new Map<string, number>();
