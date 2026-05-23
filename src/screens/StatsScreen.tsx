@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, RefreshControl,
-  Image, Dimensions,
+  Image, ImageBackground, Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -162,7 +162,12 @@ export default function StatsScreen() {
 
         {/* ── 2. Total Events hero ─────────────────────────────── */}
         <View style={[styles.heroCard, CARD_SHADOW]}>
-          <Image source={OTHER_SPORTS_BG} style={[StyleSheet.absoluteFillObject as any, { opacity: 0.5 }]} resizeMode="cover" />
+          <ImageBackground
+            source={OTHER_SPORTS_BG}
+            style={StyleSheet.absoluteFillObject as any}
+            imageStyle={{ opacity: 0.5 }}
+            resizeMode="cover"
+          />
           <LinearGradient
             colors={['rgba(12,28,60,0.92)', 'rgba(18,44,94,0.80)']}
             style={StyleSheet.absoluteFillObject as any}
