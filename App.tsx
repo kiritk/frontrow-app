@@ -26,6 +26,12 @@ import { COLORS, FONTS } from './src/theme/colors';
 
 const Tab = createBottomTabNavigator();
 
+// Floating tab-bar pill dimensions. Exported so screens can compute their own
+// bottom content insets (the pill is absolutely positioned, so nothing else
+// reserves space for it automatically).
+export const TAB_BAR_HEIGHT = 60;
+export const TAB_BAR_BOTTOM_OFFSET = 24;
+
 // Visible tabs in the pill bar — Profile is omitted (accessed via header icon).
 const VISIBLE_TABS = ['Events', 'Map', 'Stats'];
 
@@ -185,7 +191,7 @@ export default function App() {
 const styles = StyleSheet.create({
   tabBarWrapper: {
     position: 'absolute',
-    bottom: 24,
+    bottom: TAB_BAR_BOTTOM_OFFSET,
     left: 20,
     right: 88,
     flexDirection: 'row',
@@ -196,7 +202,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: COLORS.white,
     borderRadius: 30,
-    height: 60,
+    height: TAB_BAR_HEIGHT,
     paddingHorizontal: 16,
     alignItems: 'center',
     shadowColor: '#000',

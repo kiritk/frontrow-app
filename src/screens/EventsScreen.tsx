@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, TouchableOpacity, FlatList,
   RefreshControl, ScrollView, Dimensions, Animated, Easing,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
@@ -14,6 +14,7 @@ import AppHeader from '../components/AppHeader';
 import * as Haptics from 'expo-haptics';
 import { LocalEvent } from '../lib/localStorage';
 import { COLORS, SPACING, FONT_SIZES, FONTS } from '../theme/colors';
+import { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_OFFSET } from '../../App';
 
 type Event = LocalEvent;
 
@@ -29,13 +30,17 @@ const CATEGORIES = [
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SIDE_PADDING = SCREEN_WIDTH * 0.05;
-// paddingBottom lifts the last card off the floating tab bar after scrollToEnd
-// (tab bar height + bottom offset = 84; 120 gives ~36px clearance).
-const LIST_BOTTOM_PADDING = 120;
+// Extra breathing room above the floating tab-bar pill. Combined at runtime
+// with the device's bottom safe-area inset and the tab-bar dimensions so the
+// last card always clears the pill, regardless of device or pill changes.
+const LIST_BOTTOM_CLEARANCE = 24;
 
 export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const { user, localEventsVersion } = useAuth();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+  const listBottomPadding =
+    insets.bottom + TAB_BAR_BOTTOM_OFFSET + TAB_BAR_HEIGHT + LIST_BOTTOM_CLEARANCE;
   const [events, setEvents] = useState<Event[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>('All');
@@ -51,7 +56,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   // scrollToEnd lets the native scroll view compute the offset from its own
   // current viewport and content sizes, so a stale JS-side layout height can't
   // produce a wrong offset (the cold-start race we used to hit). The last
-  // card's bottom lands LIST_BOTTOM_PADDING above the visible bottom.
+  // card's bottom lands listBottomPadding above the visible bottom.
   const scrollToLastCard = useCallback(() => {
     if (filteredEventsRef.current.length === 0) return;
     flatListRef.current?.scrollToEnd({ animated: false });
@@ -316,7 +321,7 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
         data={filteredEvents}
         renderItem={renderEventCard}
         keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={{ paddingBottom: listBottomPadding }}
         // Both onLayout (FlatList container resized — e.g. when category pills
         // appear) and onContentSizeChange (items rendered) can fire in either
         // order on cold start. Triggering from both, and only clearing the
@@ -446,10 +451,6 @@ const styles = StyleSheet.create({
   categoryPillTextActive: {
     color: COLORS.white,
     fontFamily: FONTS.semiBold,
-  },
-  // List
-  listContent: {
-    paddingBottom: LIST_BOTTOM_PADDING,
   },
   empty: {
     alignItems: 'center',
