@@ -119,6 +119,17 @@ export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
     if (filteredEvents.length === 0) pendingScrollToEnd.current = true;
   }, [filteredEvents]);
 
+  // Belt-and-suspenders: whenever the list contents change (cold start, year /
+  // category filter swap), schedule a scroll-to-end on the next frame. The
+  // onLayout / onContentSizeChange triggers below cover most cases, but if the
+  // FlatList already had the same content size on mount neither fires, leaving
+  // the user at the top of the list.
+  useEffect(() => {
+    if (filteredEvents.length === 0 || !pendingScrollToEnd.current) return;
+    const raf = requestAnimationFrame(() => scrollToLastCard());
+    return () => cancelAnimationFrame(raf);
+  }, [filteredEvents, scrollToLastCard]);
+
   // Mark scroll pending on every screen focus (app open + tab tap). Pending
   // stays true until the user scrolls (onScrollBeginDrag), so any layout or
   // content-size events that arrive after focus also keep the list pinned to
