@@ -1,32 +1,54 @@
 import React, { useState } from 'react';
 import EventTypeStep, { EventTypeValue } from './EventTypeStep';
+import DetailsStep, { DetailsData } from './DetailsStep';
 
 export interface OnboardingData {
   eventType: EventTypeValue | null;
+  details: DetailsData;
 }
 
 interface OnboardingFlowProps {
   onComplete: (data: OnboardingData) => void;
 }
 
+const emptyDetails: DetailsData = {
+  sportType: null,
+  homeTeam: null,
+  awayTeam: null,
+  eventName: '',
+  venue: '',
+  selectedCity: null,
+  eventDate: null,
+};
+
 export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [step, setStep] = useState(0);
-  const [data, setData] = useState<OnboardingData>({ eventType: null });
-
-  const goNext = () => setStep((s) => s + 1);
-  const goBack = () => setStep((s) => Math.max(0, s - 1));
+  const [eventType, setEventType] = useState<EventTypeValue | null>(null);
+  const [details, setDetails] = useState<DetailsData>(emptyDetails);
 
   if (step === 0) {
     return (
       <EventTypeStep
-        value={data.eventType}
-        onChange={(v) => setData((d) => ({ ...d, eventType: v }))}
-        onContinue={goNext}
+        value={eventType}
+        onChange={setEventType}
+        onContinue={() => setStep(1)}
       />
     );
   }
 
-  // No further steps yet — finish the flow.
-  onComplete(data);
+  if (step === 1 && eventType) {
+    return (
+      <DetailsStep
+        eventType={eventType}
+        value={details}
+        onChange={setDetails}
+        onBack={() => setStep(0)}
+        onContinue={() => {
+          onComplete({ eventType, details });
+        }}
+      />
+    );
+  }
+
   return null;
 }
