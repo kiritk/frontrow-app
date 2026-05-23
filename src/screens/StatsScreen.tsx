@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, RefreshControl,
-  TouchableOpacity, Image, Dimensions,
+  Image, Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -121,10 +121,6 @@ export default function StatsScreen() {
         {/* ── Page header ─────────────────────────────────────── */}
         <View style={styles.pageHeader}>
           <Text style={styles.pageTitle}>Stats</Text>
-          <TouchableOpacity style={styles.editBtn} onPress={() => navigation.navigate('Profile')}>
-            <Ionicons name="pencil" size={13} color={COLORS.navy} />
-            <Text style={styles.editBtnText}>Edit</Text>
-          </TouchableOpacity>
         </View>
 
         {/* ── 1. Fan Level ─────────────────────────────────────── */}
@@ -301,21 +297,6 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontFamily: FONTS.bold,
     fontSize: 28,
-    color: COLORS.navy,
-  },
-  editBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingVertical: 7,
-    paddingHorizontal: SPACING.md,
-    borderRadius: BORDER_RADIUS.full,
-    borderWidth: 1.5,
-    borderColor: COLORS.navy,
-  },
-  editBtnText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: FONT_SIZES.sm,
     color: COLORS.navy,
   },
 
