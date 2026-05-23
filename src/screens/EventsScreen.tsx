@@ -14,7 +14,7 @@ import AppHeader from '../components/AppHeader';
 import * as Haptics from 'expo-haptics';
 import { LocalEvent } from '../lib/localStorage';
 import { COLORS, SPACING, FONT_SIZES, FONTS } from '../theme/colors';
-import { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_OFFSET } from '../../App';
+import { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_OFFSET } from '../theme/layout';
 
 type Event = LocalEvent;
 

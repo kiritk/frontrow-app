@@ -23,14 +23,9 @@ import ProfileScreen from './src/screens/ProfileScreen';
 import SplashScreen from './src/screens/SplashScreen';
 import AddEventButton from './src/components/AddEventButton';
 import { COLORS, FONTS } from './src/theme/colors';
+import { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_OFFSET } from './src/theme/layout';
 
 const Tab = createBottomTabNavigator();
-
-// Floating tab-bar pill dimensions. Exported so screens can compute their own
-// bottom content insets (the pill is absolutely positioned, so nothing else
-// reserves space for it automatically).
-export const TAB_BAR_HEIGHT = 60;
-export const TAB_BAR_BOTTOM_OFFSET = 24;
 
 // Visible tabs in the pill bar — Profile is omitted (accessed via header icon).
 const VISIBLE_TABS = ['Events', 'Map', 'Stats'];
