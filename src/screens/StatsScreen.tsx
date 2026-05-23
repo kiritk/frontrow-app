@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, RefreshControl,
-  Image, Dimensions,
+  Image, ImageBackground, Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -12,6 +12,7 @@ import { getLocalEvents } from '../lib/localStorage';
 import { computeExtendedStats, getFanLevel } from '../lib/stats';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 import AppHeader from '../components/AppHeader';
+import EventTypePie from '../components/EventTypePie';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const H_PAD = SPACING.lg;
@@ -41,17 +42,6 @@ function getTypeBg(type: string, sport?: string) {
   }
   return OTHER_BG;
 }
-
-// ── Type config ──────────────────────────────────────────────────────────────
-type IconName = React.ComponentProps<typeof Ionicons>['name'];
-const TYPE_CONFIG: Record<string, { label: string; grad: [string, string]; icon: IconName }> = {
-  sports:   { label: 'Sports',    grad: ['#BA4813', '#5a2208'], icon: 'trophy' },
-  concert:  { label: 'Concerts',  grad: ['#4C1D90', '#220d42'], icon: 'musical-notes' },
-  theater:  { label: 'Theater',   grad: ['#223766', '#0f1c35'], icon: 'film' },
-  comedy:   { label: 'Comedy',    grad: ['#7c1010', '#3a0000'], icon: 'mic' },
-  landmark: { label: 'Landmarks', grad: ['#3b3734', '#1a1816'], icon: 'location' },
-  other:    { label: 'Other',     grad: ['#c0490b', '#6a2005'], icon: 'ellipsis-horizontal' },
-};
 
 // ── City/state extractor (drops country if present) ──────────────────────────
 function cityState(location: string): string {
@@ -162,7 +152,12 @@ export default function StatsScreen() {
 
         {/* ── 2. Total Events hero ─────────────────────────────── */}
         <View style={[styles.heroCard, CARD_SHADOW]}>
-          <Image source={OTHER_SPORTS_BG} style={[StyleSheet.absoluteFillObject as any, { opacity: 0.5 }]} resizeMode="cover" />
+          <ImageBackground
+            source={OTHER_SPORTS_BG}
+            style={StyleSheet.absoluteFillObject as any}
+            imageStyle={{ opacity: 0.5 }}
+            resizeMode="cover"
+          />
           <LinearGradient
             colors={['rgba(12,28,60,0.92)', 'rgba(18,44,94,0.80)']}
             style={StyleSheet.absoluteFillObject as any}
@@ -192,23 +187,12 @@ export default function StatsScreen() {
         </View>
 
         {/* ── 3. Events by Type ────────────────────────────────── */}
-        <View style={[styles.whiteCard, CARD_SHADOW]}>
-          <Text style={styles.whiteCardTitle}>Events by Type</Text>
+        <View style={[styles.pieCard, CARD_SHADOW]}>
+          <Text style={styles.pieCardTitle}>Events by Type</Text>
           {eventsByType.length > 0 ? (
-            <View style={styles.typeGrid}>
-              {eventsByType.map(({ type, count }) => {
-                const cfg = TYPE_CONFIG[type] ?? TYPE_CONFIG.other;
-                return (
-                  <LinearGradient key={type} colors={cfg.grad} style={styles.typeChip}>
-                    <Ionicons name={cfg.icon} size={14} color="rgba(255,255,255,0.85)" />
-                    <Text style={styles.typeChipLabel}>{cfg.label}</Text>
-                    <Text style={styles.typeChipCount}>{count}</Text>
-                  </LinearGradient>
-                );
-              })}
-            </View>
+            <EventTypePie slices={eventsByType} />
           ) : (
-            <Text style={styles.emptyHint}>Add events to see your breakdown</Text>
+            <Text style={styles.emptyHintDark}>Add events to see your breakdown</Text>
           )}
         </View>
 
@@ -432,43 +416,27 @@ const styles = StyleSheet.create({
     color: COLORS.gray,
   },
 
-  // ── White card (Events by Type) ────────────────────────────────────────────
-  whiteCard: {
-    backgroundColor: COLORS.white,
+  // ── Pie card (Events by Type) ──────────────────────────────────────────────
+  pieCard: {
+    backgroundColor: COLORS.navy,
     borderRadius: 20,
     padding: SPACING.lg,
     borderWidth: 1,
-    borderColor: '#E8E8E8',
+    borderColor: 'rgba(255,255,255,0.08)',
   },
-  whiteCardTitle: {
+  pieCardTitle: {
     fontFamily: FONTS.bold,
     fontSize: FONT_SIZES.lg,
-    color: COLORS.navy,
+    color: '#FFFFFF',
     marginBottom: SPACING.md,
   },
-  typeGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
-  },
-  typeChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 30,
-  },
-  typeChipLabel: {
-    fontFamily: FONTS.semiBold,
+  emptyHintDark: {
+    fontFamily: FONTS.regular,
     fontSize: FONT_SIZES.sm,
-    color: '#FFFFFF',
-  },
-  typeChipCount: {
-    fontFamily: FONTS.bold,
-    fontSize: FONT_SIZES.md,
-    color: '#FFFFFF',
-    opacity: 0.9,
+    color: 'rgba(255,255,255,0.6)',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    paddingVertical: SPACING.lg,
   },
 
   // ── Dark card (First Event) ────────────────────────────────────────────────
@@ -538,13 +506,6 @@ const styles = StyleSheet.create({
   },
 
   // ── Empty states ───────────────────────────────────────────────────────────
-  emptyHint: {
-    fontFamily: FONTS.regular,
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.gray,
-    textAlign: 'center',
-    paddingVertical: SPACING.sm,
-  },
   emptyWhite: {
     fontFamily: FONTS.regular,
     fontSize: FONT_SIZES.md,
