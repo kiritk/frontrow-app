@@ -2,13 +2,16 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import Svg, { Path, Line, Defs, LinearGradient as SvgLinearGradient, Stop, Circle, G } from 'react-native-svg';
 import { FONTS } from '../theme/colors';
 
 const CONCERT_BG = require('../../assets/images/concert_bg.png');
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH - 48;
+const PERF_RADIUS = 14;
+const WRAPPER_WIDTH = SCREEN_WIDTH - 48;
+// The visible ticket is narrower than the wrapper because PERF_RADIUS of room
+// is reserved on each side for the white half-circle bumps to poke into.
+const CARD_WIDTH = WRAPPER_WIDTH - PERF_RADIUS * 2;
 
 interface FanCardProps {
   firstName: string;
@@ -21,107 +24,14 @@ interface FanCardProps {
   yearCount: number;
 }
 
-type TierKey = 'Rookie' | 'Pro' | 'All-Star' | 'Legend';
+const TIER_COLORS: Record<string, string> = {
+  Rookie:     '#3B82F6',
+  Pro:        '#EF4444',
+  'All-Star': '#22C55E',
+  Legend:     '#F59E0B',
+};
 
-const TIERS: { key: TierKey; label: string; range: string; min: number; max: number; color: string }[] = [
-  { key: 'Rookie',   label: 'Rookie',   range: '0 – 9',  min: 0,  max: 10, color: '#3B82F6' },
-  { key: 'Pro',      label: 'Pro',      range: '10 – 24', min: 10, max: 25, color: '#EF4444' },
-  { key: 'All-Star', label: 'All-Star', range: '25 – 49', min: 25, max: 50, color: '#22C55E' },
-  { key: 'Legend',   label: 'Legend',   range: '50+',    min: 50, max: Infinity, color: '#F59E0B' },
-];
-
-function findTier(name: string) {
-  return TIERS.find(t => t.key === name) ?? TIERS[0];
-}
-
-function computeOverallProgress(eventCount: number) {
-  // Map 0..50 events linearly to 0..1; anything past Legend pegs at 1.
-  return Math.min(1, eventCount / 50);
-}
-
-// ── Hero illustration (stage trusses + crowd) ───────────────────────────────
-function HeroArt({ width, height, color = 'rgba(180,140,220,0.55)' }: { width: number; height: number; color?: string }) {
-  // Two stage trusses framing the big number. All line work, no fills.
-  const stroke = color;
-  const strokeWidth = 2;
-  const trussW = width * 0.18;
-  const trussH = height * 0.55;
-  const baseY = height * 0.78;
-  const leftX = width * 0.12;
-  const rightX = width - leftX - trussW;
-  return (
-    <Svg width={width} height={height} style={StyleSheet.absoluteFillObject}>
-      <Defs>
-        <SvgLinearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor="rgba(160,110,200,0.0)" />
-          <Stop offset="1" stopColor="rgba(160,110,200,0.35)" />
-        </SvgLinearGradient>
-      </Defs>
-
-      {/* Light beams from stage trusses */}
-      <Path d={`M ${leftX + trussW / 2} ${baseY - trussH * 0.05} L ${width * 0.1} ${height}`} stroke={stroke} strokeWidth={1} opacity={0.25} />
-      <Path d={`M ${leftX + trussW / 2} ${baseY - trussH * 0.05} L ${width * 0.35} ${height}`} stroke={stroke} strokeWidth={1} opacity={0.25} />
-      <Path d={`M ${rightX + trussW / 2} ${baseY - trussH * 0.05} L ${width * 0.65} ${height}`} stroke={stroke} strokeWidth={1} opacity={0.25} />
-      <Path d={`M ${rightX + trussW / 2} ${baseY - trussH * 0.05} L ${width * 0.9} ${height}`} stroke={stroke} strokeWidth={1} opacity={0.25} />
-
-      {/* Left truss */}
-      <Truss x={leftX} y={baseY - trussH} w={trussW} h={trussH} stroke={stroke} sw={strokeWidth} />
-      {/* Right truss */}
-      <Truss x={rightX} y={baseY - trussH} w={trussW} h={trussH} stroke={stroke} sw={strokeWidth} />
-
-      {/* Stage floor line */}
-      <Line x1={0} y1={baseY} x2={width} y2={baseY} stroke={stroke} strokeWidth={1.5} />
-
-      {/* Crowd silhouette (stylized humps) */}
-      <CrowdLine y={baseY} width={width} stroke={stroke} />
-    </Svg>
-  );
-}
-
-function Truss({ x, y, w, h, stroke, sw }: { x: number; y: number; w: number; h: number; stroke: string; sw: number }) {
-  // Vertical I-beam style truss with X-bracing inside.
-  const segments = 5;
-  const segH = h / segments;
-  return (
-    <G>
-      <Line x1={x} y1={y} x2={x} y2={y + h} stroke={stroke} strokeWidth={sw} />
-      <Line x1={x + w} y1={y} x2={x + w} y2={y + h} stroke={stroke} strokeWidth={sw} />
-      {/* Cross bracing */}
-      {Array.from({ length: segments }).map((_, i) => {
-        const y0 = y + i * segH;
-        const y1 = y + (i + 1) * segH;
-        return (
-          <G key={i}>
-            <Line x1={x} y1={y0} x2={x + w} y2={y1} stroke={stroke} strokeWidth={1} opacity={0.7} />
-            <Line x1={x + w} y1={y0} x2={x} y2={y1} stroke={stroke} strokeWidth={1} opacity={0.7} />
-            <Line x1={x} y1={y1} x2={x + w} y2={y1} stroke={stroke} strokeWidth={0.8} opacity={0.5} />
-          </G>
-        );
-      })}
-      {/* Light fixtures at top */}
-      <Circle cx={x + w * 0.3} cy={y + 4} r={2} fill={stroke} opacity={0.6} />
-      <Circle cx={x + w * 0.7} cy={y + 4} r={2} fill={stroke} opacity={0.6} />
-    </G>
-  );
-}
-
-function CrowdLine({ y, width, stroke }: { y: number; width: number; stroke: string }) {
-  // Generate a row of rounded "heads" along the floor line.
-  const heads: React.ReactElement[] = [];
-  let x = 4;
-  let i = 0;
-  while (x < width - 4) {
-    const r = 4 + ((i * 7) % 5);
-    heads.push(<Circle key={`h${i}`} cx={x + r} cy={y - r * 0.4} r={r} stroke={stroke} strokeWidth={1} fill="none" opacity={0.55} />);
-    x += r * 2 + 2;
-    i += 1;
-  }
-  return <G>{heads}</G>;
-}
-
-// ── Decorative barcode ──────────────────────────────────────────────────────
 function Barcode({ width, height = 36 }: { width: number; height?: number }) {
-  // Deterministic but irregular-looking bar pattern.
   const seed = 'frontrow';
   const bars: React.ReactElement[] = [];
   let cursor = 0;
@@ -149,22 +59,28 @@ function Barcode({ width, height = 36 }: { width: number; height?: number }) {
   return <View style={{ width, height, position: 'relative' }}>{bars}</View>;
 }
 
-// ── Main component ─────────────────────────────────────────────────────────
+function StatCell({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {
+  return (
+    <View style={styles.statCell}>
+      <View style={styles.statIcon}>{icon}</View>
+      <View>
+        <Text style={styles.statValue}>{value}</Text>
+        <Text style={styles.statLabel}>{label}</Text>
+      </View>
+    </View>
+  );
+}
+
 export default function FanCard({
-  firstName, lastName, profileImage, fanLevel,
+  fanLevel,
   eventCount, cityCount, venueCount, yearCount,
 }: FanCardProps) {
-  const tier = findTier(fanLevel);
-  const overall = computeOverallProgress(eventCount);
-  const nextTier = TIERS[TIERS.findIndex(t => t.key === tier.key) + 1];
-  const eventsToNext = nextTier ? nextTier.min - eventCount : 0;
-
-  const hue = tier.color;
+  const hue = TIER_COLORS[fanLevel] ?? TIER_COLORS.Rookie;
 
   return (
-    <View style={styles.card}>
-      {/* ──────────── TOP STUB ──────────── */}
-      <View style={styles.stub}>
+    <View style={styles.wrapper}>
+      {/* ── Top half (rounded top corners only) ── */}
+      <View style={styles.cardTop}>
         <Image source={CONCERT_BG} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
         <LinearGradient
           colors={['rgba(15,20,55,0.92)', 'rgba(28,18,60,0.85)', 'rgba(60,15,55,0.85)']}
@@ -183,73 +99,23 @@ export default function FanCard({
           adjustsFontSizeToFit
           minimumFontScale={0.6}
         >
-          {tier.key.toUpperCase()}
+          {fanLevel.toUpperCase()}
         </Text>
-
-        {nextTier ? (
-          <View style={styles.nextPill}>
-            <MaterialCommunityIcons name="crown-outline" size={18} color="#B388FF" style={{ marginRight: 8 }} />
-            <Text style={styles.nextText}>
-              {eventsToNext} more events to{' '}
-              <Text style={[styles.nextHighlight, { color: nextTier.color }]}>{nextTier.key}</Text>
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.nextPill}>
-            <MaterialCommunityIcons name="crown" size={18} color="#FBBF24" style={{ marginRight: 8 }} />
-            <Text style={styles.nextText}>You're at max level</Text>
-          </View>
-        )}
-
-        {/* Progress bar */}
-        <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${overall * 100}%`, backgroundColor: hue }]} />
-        </View>
-
-        {/* Tier dots row */}
-        <View style={styles.tierRow}>
-          {TIERS.map(t => (
-            <View key={t.key} style={styles.tierCol}>
-              <View style={[styles.tierDot, { backgroundColor: t.color }]} />
-              <Text style={[styles.tierLabel, t.key === tier.key && { color: '#FFFFFF', fontFamily: FONTS.semiBold }]}>
-                {t.label}
-              </Text>
-              <Text style={styles.tierRange}>{t.range}</Text>
-            </View>
-          ))}
-        </View>
       </View>
 
-      {/* ──────────── PERFORATION ──────────── */}
-      <View style={styles.perfRow}>
-        <View style={[styles.perfCircle, styles.perfLeft]} />
+      {/* ── Perforation strip with white half-circle bumps that poke outside ── */}
+      <View style={styles.perfStrip}>
+        <View style={[styles.perfBump, styles.perfBumpLeft]} />
         <View style={styles.perfLine}>
-          {Array.from({ length: 28 }).map((_, i) => (
+          {Array.from({ length: 26 }).map((_, i) => (
             <View key={i} style={styles.perfDash} />
           ))}
         </View>
-        <View style={[styles.perfCircle, styles.perfRight]} />
+        <View style={[styles.perfBump, styles.perfBumpRight]} />
       </View>
 
-      {/* ──────────── BOTTOM MAIN ──────────── */}
-      <View style={styles.main}>
-        {/* Hero block with SVG line art */}
-        <View style={styles.heroBlock}>
-          <HeroArt width={CARD_WIDTH} height={220} />
-          <View style={styles.heroCenter} pointerEvents="none">
-            <Text style={styles.heroNumber}>{eventCount}</Text>
-            <Text style={styles.heroLabel}>EVENTS ATTENDED</Text>
-          </View>
-        </View>
-
-        {/* Dashed divider */}
-        <View style={styles.dashRow}>
-          {Array.from({ length: 28 }).map((_, i) => (
-            <View key={i} style={styles.dashDash} />
-          ))}
-        </View>
-
-        {/* 2×2 stat grid */}
+      {/* ── Bottom half (rounded bottom corners only) ── */}
+      <View style={styles.cardBottom}>
         <View style={styles.statGrid}>
           <StatCell icon={<Ionicons name="ticket-outline" size={34} color="#B388FF" />} value={eventCount} label={'EVENTS\nATTENDED'} />
           <View style={styles.statDivider} />
@@ -262,7 +128,6 @@ export default function FanCard({
           <StatCell icon={<Ionicons name="calendar-outline" size={34} color="#FBBF24" />} value={yearCount} label={'YEARS\nWITH US'} />
         </View>
 
-        {/* Barcode + footer text */}
         <View style={styles.barcodeWrap}>
           <Barcode width={CARD_WIDTH * 0.7} />
         </View>
@@ -273,44 +138,54 @@ export default function FanCard({
   );
 }
 
-function StatCell({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {
-  return (
-    <View style={styles.statCell}>
-      <View style={styles.statIcon}>{icon}</View>
-      <View>
-        <Text style={styles.statValue}>{value}</Text>
-        <Text style={styles.statLabel}>{label}</Text>
-      </View>
-    </View>
-  );
-}
-
-const TICKET_BG = '#0B1538'; // deep navy
+const TICKET_BG = '#0B1538';
 const TICKET_BORDER = 'rgba(120,90,200,0.45)';
+const PERF_STRIP_HEIGHT = PERF_RADIUS * 2 + 4;
 
 const styles = StyleSheet.create({
-  card: {
-    width: CARD_WIDTH,
-    backgroundColor: TICKET_BG,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: TICKET_BORDER,
-    overflow: 'hidden',
+  wrapper: {
+    width: WRAPPER_WIDTH,
+    alignSelf: 'center',
+    // Drop shadow on the wrapper so it sits under the whole ticket.
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.4,
     shadowRadius: 18,
     elevation: 10,
   },
 
-  // ── Top stub ────────────────────────────────────────────────────────────
-  stub: {
-    paddingTop: 20,
-    paddingHorizontal: 18,
-    paddingBottom: 22,
-    alignItems: 'center',
+  // ── Card halves ─────────────────────────────────────────────────────────
+  cardTop: {
+    width: CARD_WIDTH,
+    alignSelf: 'center',
+    backgroundColor: TICKET_BG,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    borderColor: TICKET_BORDER,
     overflow: 'hidden',
+    paddingTop: 24,
+    paddingHorizontal: 18,
+    paddingBottom: 26,
+    alignItems: 'center',
   },
+  cardBottom: {
+    width: CARD_WIDTH,
+    alignSelf: 'center',
+    backgroundColor: TICKET_BG,
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderColor: TICKET_BORDER,
+    overflow: 'hidden',
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 22,
+  },
+
+  // ── Top stub content ────────────────────────────────────────────────────
   fanLevelPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -329,93 +204,26 @@ const styles = StyleSheet.create({
   },
   tierName: {
     fontFamily: FONTS.bold,
-    fontSize: 80,
+    fontSize: 96,
     letterSpacing: 2,
-    marginTop: 6,
-    marginBottom: 14,
+    marginTop: 10,
     textShadowColor: 'rgba(0,0,0,0.55)',
     textShadowOffset: { width: 0, height: 4 },
     textShadowRadius: 12,
   },
-  nextPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(50,30,90,0.55)',
-    borderColor: 'rgba(150,110,220,0.45)',
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 14,
-    marginBottom: 16,
-  },
-  nextText: {
-    fontFamily: FONTS.medium,
-    fontSize: 13,
-    color: '#FFFFFF',
-  },
-  nextHighlight: {
-    fontFamily: FONTS.bold,
-  },
-  progressTrack: {
-    width: '100%',
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    overflow: 'hidden',
-    marginBottom: 12,
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  tierRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  tierCol: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 4,
-  },
-  tierDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginBottom: 4,
-  },
-  tierLabel: {
-    fontFamily: FONTS.medium,
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.9)',
-  },
-  tierRange: {
-    fontFamily: FONTS.regular,
-    fontSize: 10,
-    color: 'rgba(255,255,255,0.55)',
-  },
 
-  // ── Perforation ─────────────────────────────────────────────────────────
-  perfRow: {
-    height: 22,
+  // ── Perforation strip ───────────────────────────────────────────────────
+  perfStrip: {
+    width: CARD_WIDTH,
+    height: PERF_STRIP_HEIGHT,
+    alignSelf: 'center',
     backgroundColor: TICKET_BG,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: TICKET_BORDER,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    position: 'relative',
-  },
-  perfCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#000',
-  },
-  perfLeft: {
-    marginLeft: -11,
-  },
-  perfRight: {
-    marginRight: -11,
+    paddingHorizontal: 14,
   },
   perfLine: {
     flex: 1,
@@ -429,52 +237,23 @@ const styles = StyleSheet.create({
     height: 1.5,
     backgroundColor: 'rgba(255,255,255,0.35)',
   },
+  // White half-circles whose centers sit exactly on each card edge.
+  perfBump: {
+    position: 'absolute',
+    width: PERF_RADIUS * 2,
+    height: PERF_RADIUS * 2,
+    borderRadius: PERF_RADIUS,
+    backgroundColor: '#FFFFFF',
+    top: (PERF_STRIP_HEIGHT - PERF_RADIUS * 2) / 2,
+  },
+  perfBumpLeft: {
+    left: -PERF_RADIUS,
+  },
+  perfBumpRight: {
+    right: -PERF_RADIUS,
+  },
 
-  // ── Bottom main ─────────────────────────────────────────────────────────
-  main: {
-    paddingHorizontal: 18,
-    paddingTop: 6,
-    paddingBottom: 22,
-  },
-  heroBlock: {
-    height: 220,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  heroCenter: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroNumber: {
-    fontFamily: FONTS.bold,
-    fontSize: 140,
-    color: '#FFFFFF',
-    lineHeight: 140,
-    letterSpacing: -2,
-    textShadowColor: 'rgba(0,0,0,0.55)',
-    textShadowOffset: { width: 0, height: 4 },
-    textShadowRadius: 16,
-  },
-  heroLabel: {
-    fontFamily: FONTS.semiBold,
-    fontSize: 16,
-    letterSpacing: 6,
-    color: 'rgba(255,255,255,0.85)',
-    marginTop: 2,
-  },
-  dashRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 18,
-    marginBottom: 18,
-  },
-  dashDash: {
-    width: 6,
-    height: 1.5,
-    backgroundColor: 'rgba(255,255,255,0.25)',
-  },
+  // ── Bottom main content ─────────────────────────────────────────────────
   statGrid: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -484,7 +263,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 4,
   },
   statIcon: {
