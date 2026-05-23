@@ -34,7 +34,7 @@ const SIDE_PADDING = SCREEN_WIDTH * 0.05;
 // Extra breathing room above the floating tab-bar pill. Combined at runtime
 // with the device's bottom safe-area inset and the tab-bar dimensions so the
 // last card always clears the pill, regardless of device or pill changes.
-const LIST_BOTTOM_CLEARANCE = 24;
+const LIST_BOTTOM_CLEARANCE = 48;
 
 export default function EventsScreen({ refreshKey }: { refreshKey?: number }) {
   const { user, localEventsVersion } = useAuth();
