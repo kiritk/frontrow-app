@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image } from 'react-native';
 import MapView, { Marker, Callout } from 'react-native-maps';
 import { COLORS, FONTS, FONT_SIZES, SPACING, BORDER_RADIUS } from '../theme/colors';
 import { getTeamByName } from '../data/nflTeams';
+import { parseEventDate } from '../lib/dates';
 import { getMLBTeamByName } from '../data/mlbTeams';
 
 interface Event {
@@ -198,7 +199,7 @@ export default function EventsMap({ events }: EventsMapProps) {
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    const date = parseEventDate(dateString);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 

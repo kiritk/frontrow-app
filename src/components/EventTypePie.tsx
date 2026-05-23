@@ -25,11 +25,11 @@ const SLICE_LABELS: Record<string, string> = {
   other:    'Other',
 };
 
-const SVG_SIZE = 220;
+const SVG_SIZE = 180;
 const CENTER = SVG_SIZE / 2;
-const INNER_R = 30;
-const MIN_OUTER_R = 60;
-const MAX_OUTER_R = 100;
+const INNER_R = 24;
+const MIN_OUTER_R = 50;
+const MAX_OUTER_R = 84;
 
 function arcPath(
   cx: number,
@@ -109,20 +109,18 @@ export default function EventTypePie({ slices }: { slices: Slice[] }) {
 
 const styles = StyleSheet.create({
   container: {
+    flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.lg,
   },
   legend: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: SPACING.md,
-    rowGap: SPACING.sm,
+    flex: 1,
+    gap: SPACING.sm,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
   legendDot: {
     width: 10,

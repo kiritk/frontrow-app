@@ -13,6 +13,7 @@ import { computeExtendedStats, getFanLevel } from '../lib/stats';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 import AppHeader from '../components/AppHeader';
 import EventTypePie from '../components/EventTypePie';
+import { parseEventDate } from '../lib/dates';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const H_PAD = SPACING.lg;
@@ -52,7 +53,7 @@ function cityState(location: string): string {
 // ── Date formatter ───────────────────────────────────────────────────────────
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function fmtDate(iso: string) {
-  const d = new Date(iso);
+  const d = parseEventDate(iso);
   return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
 }
 
