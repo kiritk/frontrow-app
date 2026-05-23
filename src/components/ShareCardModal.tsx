@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Modal,
-  Share, Alert, ActivityIndicator, Platform,
+  Share, Alert, ActivityIndicator, Platform, ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -107,7 +107,11 @@ export default function ShareCardModal({ visible, onClose }: ShareCardModalProps
           </View>
 
           {/* Card */}
-          <View style={styles.cardArea}>
+          <ScrollView
+            style={styles.cardArea}
+            contentContainerStyle={styles.cardAreaContent}
+            showsVerticalScrollIndicator={false}
+          >
             <ViewShot ref={cardRef} options={{ format: 'png', quality: 1 }}>
               <FanCard
                 firstName={profile.firstName}
@@ -120,7 +124,7 @@ export default function ShareCardModal({ visible, onClose }: ShareCardModalProps
                 yearCount={yearCount}
               />
             </ViewShot>
-          </View>
+          </ScrollView>
         </SafeAreaView>
 
         {/* Bottom CTAs */}
@@ -197,9 +201,11 @@ const styles = StyleSheet.create({
   },
   cardArea: {
     flex: 1,
-    justifyContent: 'center',
+  },
+  cardAreaContent: {
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
   },
   bottomSafeArea: {
     backgroundColor: '#F2F2F7',
