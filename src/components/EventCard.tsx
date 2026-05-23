@@ -376,7 +376,7 @@ export default React.memo(function EventCard({ event, onPress, isFront = false, 
         </View>
       </TouchableOpacity>
 
-      {detailCard && (
+      {(detailCard || isFront) && (
         <>
           <View style={styles.perforationLine} pointerEvents="none">
             {Array.from({ length: PERFORATION_DASHES }).map((_, i) => (
@@ -399,18 +399,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a2e',
     borderWidth: 1.5,
     borderColor: 'rgba(255,255,255,0.20)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 10,
   },
   detailCardWrapper: {
     borderRadius: 10,
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 0,
   },
   perforation: {
     position: 'absolute',
