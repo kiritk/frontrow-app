@@ -385,8 +385,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cream,
   },
   pageTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: 28,
+    fontFamily: FONTS.instrumentSerifItalic,
+    fontSize: 34,
     color: COLORS.navy,
     paddingHorizontal: SIDE_PADDING,
     paddingTop: SPACING.lg,
