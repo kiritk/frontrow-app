@@ -29,13 +29,15 @@ const BG_FADE = '#FBFCFC';
 export type SportTypeValue = 'nfl' | 'mlb' | 'nba' | 'soccer' | 'tennis' | 'other';
 export type SportTeam = NFLTeam | MLBTeam;
 
-const SPORT_TYPES: { value: SportTypeValue; label: string }[] = [
-  { value: 'nfl', label: 'NFL' },
-  { value: 'mlb', label: 'MLB' },
-  { value: 'nba', label: 'NBA' },
-  { value: 'soccer', label: 'Soccer' },
-  { value: 'tennis', label: 'Tennis' },
-  { value: 'other', label: 'Other' },
+type IonIcon = keyof typeof Ionicons.glyphMap;
+
+const SPORT_TYPES: { value: SportTypeValue; label: string; icon: IonIcon }[] = [
+  { value: 'nfl', label: 'NFL', icon: 'american-football-outline' },
+  { value: 'mlb', label: 'MLB', icon: 'baseball-outline' },
+  { value: 'nba', label: 'NBA', icon: 'basketball-outline' },
+  { value: 'soccer', label: 'Soccer', icon: 'football-outline' },
+  { value: 'tennis', label: 'Tennis', icon: 'tennisball-outline' },
+  { value: 'other', label: 'Other', icon: 'ribbon-outline' },
 ];
 
 export interface DetailsData {
@@ -64,7 +66,6 @@ export default function DetailsStep({
   onBack,
 }: DetailsStepProps) {
   const insets = useSafeAreaInsets();
-  const [sportOpen, setSportOpen] = useState(false);
   const [homeQuery, setHomeQuery] = useState(value.homeTeam?.fullName ?? '');
   const [awayQuery, setAwayQuery] = useState(value.awayTeam?.fullName ?? '');
   const [showHomeDropdown, setShowHomeDropdown] = useState(false);
@@ -96,7 +97,6 @@ export default function DetailsStep({
   })();
 
   const handleSelectSport = (sport: SportTypeValue) => {
-    setSportOpen(false);
     if (sport === value.sportType) return;
     patch({
       sportType: sport,
@@ -182,10 +182,6 @@ export default function DetailsStep({
     }
   })();
 
-  const sportLabel = value.sportType
-    ? SPORT_TYPES.find((s) => s.value === value.sportType)?.label
-    : null;
-
   return (
     <View style={styles.root}>
       <ImageBackground
@@ -225,91 +221,75 @@ export default function DetailsStep({
 
           <View style={styles.fieldsList}>
             {isSports && (
-              <View>
-                <Pressable
-                  style={styles.fieldCard}
-                  onPress={() => setSportOpen((o) => !o)}
-                >
-                  <Text style={styles.fieldLabel}>SPORT TYPE</Text>
-                  <View style={styles.fieldValueRow}>
-                    <Text
-                      style={[
-                        styles.fieldValue,
-                        !sportLabel && styles.fieldValuePlaceholder,
-                      ]}
-                    >
-                      {sportLabel ?? 'Select a sport'}
-                    </Text>
-                    <Ionicons
-                      name={sportOpen ? 'chevron-up' : 'chevron-down'}
-                      size={16}
-                      color={COLORS.black}
-                    />
-                  </View>
-                </Pressable>
-                {sportOpen && (
-                  <View style={styles.dropdownPanel}>
-                    {SPORT_TYPES.map((s, i) => (
+              <View style={styles.sectionCard}>
+                <Text style={styles.sectionTitle}>Select a Sport</Text>
+                <View style={styles.pillGrid}>
+                  {SPORT_TYPES.map((s) => {
+                    const active = value.sportType === s.value;
+                    return (
                       <TouchableOpacity
                         key={s.value}
-                        style={[
-                          styles.dropdownOption,
-                          i !== 0 && styles.dropdownOptionBordered,
-                        ]}
+                        style={[styles.pill, active && styles.pillActive]}
                         onPress={() => handleSelectSport(s.value)}
-                        activeOpacity={0.7}
+                        activeOpacity={0.85}
                       >
-                        <Text style={styles.dropdownOptionText}>{s.label}</Text>
-                        {value.sportType === s.value && (
-                          <Ionicons name="checkmark" size={16} color={COLORS.black} />
-                        )}
+                        <Ionicons
+                          name={s.icon}
+                          size={16}
+                          color={active ? COLORS.white : COLORS.navy}
+                        />
+                        <Text style={[styles.pillLabel, active && styles.pillLabelActive]}>
+                          {s.label}
+                        </Text>
                       </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
+                    );
+                  })}
+                </View>
               </View>
             )}
 
             {isTeamSport && (
-              <>
-                <View style={[styles.fieldCard, { zIndex: 20 }]}>
-                  <Text style={styles.fieldLabel}>HOME TEAM</Text>
-                  <View style={styles.inputWithDropdown}>
-                    <TextInput
-                      style={styles.inlineInput}
-                      placeholder="Search teams..."
-                      placeholderTextColor={COLORS.grayLight}
-                      value={homeQuery}
-                      onChangeText={(t) => {
-                        setHomeQuery(t);
-                        setShowHomeDropdown(true);
-                        if (value.homeTeam && t !== value.homeTeam.fullName) {
-                          patch({ homeTeam: null, venue: '', eventName: '' });
-                        }
-                      }}
-                      onFocus={() => {
-                        setShowHomeDropdown(true);
-                        setShowAwayDropdown(false);
-                      }}
-                    />
-                    {showHomeDropdown && (
-                      <TeamDropdown
-                        teams={filterTeams(homeQuery, value.awayTeam)}
-                        onSelect={selectHome}
+              <View style={[styles.sectionCard, { zIndex: 20 }]}>
+                <Text style={styles.sectionTitle}>Select the Teams</Text>
+                <View style={styles.teamRow}>
+                  <View style={[styles.teamColumn, { zIndex: 20 }]}>
+                    <Text style={styles.teamLabel}>Home Team</Text>
+                    <View style={styles.inputWithDropdown}>
+                      <TextInput
+                        style={styles.teamInput}
+                        placeholder="Search teams.."
+                        placeholderTextColor={COLORS.grayLight}
+                        value={homeQuery}
+                        onChangeText={(t) => {
+                          setHomeQuery(t);
+                          setShowHomeDropdown(true);
+                          if (value.homeTeam && t !== value.homeTeam.fullName) {
+                            patch({ homeTeam: null, venue: '', eventName: '' });
+                          }
+                        }}
+                        onFocus={() => {
+                          setShowHomeDropdown(true);
+                          setShowAwayDropdown(false);
+                        }}
                       />
-                    )}
+                      {showHomeDropdown && (
+                        <TeamDropdown
+                          teams={filterTeams(homeQuery, value.awayTeam)}
+                          onSelect={selectHome}
+                        />
+                      )}
+                    </View>
                   </View>
-                </View>
-
-                <View style={[styles.fieldCard, { zIndex: 10 }]}>
-                  <Text style={styles.fieldLabel}>AWAY TEAM</Text>
-                  <View style={styles.inputWithDropdown}>
-                    <TextInput
-                      style={styles.inlineInput}
-                      placeholder="Search teams..."
-                      placeholderTextColor={COLORS.grayLight}
-                      value={awayQuery}
-                      onChangeText={(t) => {
+                  <Text style={styles.vsText}>vs</Text>
+                  <View style={[styles.teamColumn, { zIndex: 10 }]}>
+                    <Text style={styles.teamLabel}>Away Team</Text>
+                    <View style={styles.inputWithDropdown}>
+                      <TextInput
+                        style={styles.teamInput}
+                        placeholder="Search teams.."
+                        placeholderTextColor={COLORS.grayLight}
+                        value={awayQuery}
+                        onChangeText={(t) => {
                         setAwayQuery(t);
                         setShowAwayDropdown(true);
                         if (value.awayTeam && t !== value.awayTeam.fullName) {
@@ -329,7 +309,8 @@ export default function DetailsStep({
                     )}
                   </View>
                 </View>
-              </>
+                </View>
+              </View>
             )}
 
             {!isTeamSport && (
@@ -547,6 +528,86 @@ const styles = StyleSheet.create({
   },
   fieldsList: {
     gap: 14,
+  },
+  sectionCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ECECEC',
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  sectionTitle: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 17,
+    color: COLORS.navy,
+  },
+  pillGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 14,
+  },
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: COLORS.white,
+    borderRadius: 999,
+    paddingVertical: 9,
+    borderWidth: 1.5,
+    borderColor: '#E5E5E5',
+    width: (SCREEN_WIDTH - 24 * 2 - 20 * 2 - 8 * 2 - 2) / 3,
+  },
+  pillActive: {
+    backgroundColor: COLORS.navy,
+    borderColor: COLORS.navy,
+  },
+  pillLabel: {
+    fontFamily: FONTS.medium,
+    fontSize: 14,
+    color: COLORS.navy,
+  },
+  pillLabelActive: {
+    color: COLORS.white,
+  },
+  teamRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 14,
+  },
+  teamColumn: {
+    flex: 1,
+  },
+  teamLabel: {
+    fontFamily: FONTS.semiBold,
+    fontSize: 14,
+    color: COLORS.navy,
+    marginBottom: 6,
+  },
+  teamInput: {
+    fontFamily: FONTS.regular,
+    fontSize: 15,
+    color: COLORS.navy,
+    backgroundColor: COLORS.white,
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: COLORS.grayLight,
+  },
+  vsText: {
+    fontFamily: FONTS.bold,
+    fontSize: 16,
+    color: COLORS.navy,
+    marginHorizontal: 10,
+    marginTop: 32,
   },
   fieldCard: {
     backgroundColor: COLORS.white,
