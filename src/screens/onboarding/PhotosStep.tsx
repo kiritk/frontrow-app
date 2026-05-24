@@ -198,11 +198,10 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
   },
   title: {
-    fontFamily: FONTS.bold,
-    fontSize: 30,
+    fontFamily: FONTS.instrumentSerifItalic,
+    fontSize: 34,
     color: COLORS.black,
-    fontStyle: 'italic',
-    lineHeight: 36,
+    lineHeight: 40,
     marginBottom: 10,
   },
   subtitle: {

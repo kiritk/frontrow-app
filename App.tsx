@@ -15,6 +15,7 @@ import { Iceland_400Regular } from '@expo-google-fonts/iceland';
 import { Zain_400Regular } from '@expo-google-fonts/zain';
 import { VT323_400Regular } from '@expo-google-fonts/vt323';
 import { Tourney_900Black } from '@expo-google-fonts/tourney';
+import { InstrumentSerif_400Regular_Italic } from '@expo-google-fonts/instrument-serif';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthProvider } from './src/context/AuthContext';
 import EventsScreen from './src/screens/EventsScreen';
@@ -160,6 +161,7 @@ export default function App() {
     Zain_400Regular,
     VT323_400Regular,
     Tourney_900Black,
+    InstrumentSerif_400Regular_Italic,
     GeistMono_400Regular: require('./assets/fonts/GeistMono_400Regular.ttf'),
     GeistMono_500Medium: require('./assets/fonts/GeistMono_500Medium.ttf'),
     GeistMono_700Bold: require('./assets/fonts/GeistMono_700Bold.ttf'),
