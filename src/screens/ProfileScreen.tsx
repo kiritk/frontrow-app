@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  Image, Modal, Alert,
+  Image, ImageBackground, Modal, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -100,7 +100,12 @@ export default function ProfileScreen({ navigation }: any) {
     >
       {view === 'main' && (
         <View style={styles.modalRoot}>
-          <View style={styles.header}>
+          <ImageBackground
+            source={require('../../assets/images/splash_screen_bg.jpg')}
+            style={styles.header}
+            imageStyle={styles.headerImage}
+            resizeMode="cover"
+          >
             <SafeAreaView edges={['top']} style={styles.headerSafeArea}>
               <View style={styles.headerTopRow}>
                 <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
@@ -120,7 +125,7 @@ export default function ProfileScreen({ navigation }: any) {
             </View>
             <Text style={styles.userName}>{getDisplayName()}</Text>
             <View style={{ height: SPACING.xl }} />
-          </View>
+          </ImageBackground>
 
           <ScrollView contentContainerStyle={styles.scrollContent} bounces={false}>
             <View style={styles.contentArea}>
@@ -233,14 +238,20 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: HEADER_COLOR,
+    alignItems: 'center',
+    overflow: 'hidden',
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
-    alignItems: 'center',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.7,
     shadowRadius: 20,
     elevation: 12,
+  },
+  headerImage: {
+    opacity: 0.2,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
   },
   headerSafeArea: {
     alignSelf: 'stretch',
