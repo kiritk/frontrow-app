@@ -26,6 +26,7 @@ import SplashScreen from './src/screens/SplashScreen';
 import OnboardingFlow, { OnboardingData } from './src/screens/onboarding/OnboardingFlow';
 import { buildPreviewEvent } from './src/screens/onboarding/ConfirmationStep';
 import { saveLocalEvent } from './src/lib/localStorage';
+import { registerRestartOnboarding } from './src/lib/onboardingControl';
 import AddEventButton from './src/components/AddEventButton';
 import { COLORS, FONTS } from './src/theme/colors';
 import { TAB_BAR_HEIGHT, TAB_BAR_BOTTOM_OFFSET } from './src/theme/layout';
@@ -178,6 +179,19 @@ export default function App() {
     ]).then(([splashValue, onboardingValue]) => {
       setShowSplash(splashValue !== 'true');
       setShowOnboarding(onboardingValue !== 'true');
+    });
+  }, []);
+
+  useEffect(() => {
+    return registerRestartOnboarding(async () => {
+      await AsyncStorage.multiRemove([
+        SPLASH_SEEN_KEY,
+        ONBOARDING_COMPLETE_KEY,
+        ONBOARDING_DATA_KEY,
+      ]);
+      setPlayWelcomeConfetti(false);
+      setShowOnboarding(true);
+      setShowSplash(true);
     });
   }, []);
 

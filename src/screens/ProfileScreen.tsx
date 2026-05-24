@@ -11,6 +11,7 @@ import AuthScreen from './AuthScreen';
 import EditProfileScreen from './EditProfileScreen';
 import AboutScreen from './AboutScreen';
 import ShareCardModal from '../components/ShareCardModal';
+import { restartOnboarding } from '../lib/onboardingControl';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
 const HEADER_COLOR = '#162A45';
@@ -171,6 +172,21 @@ export default function ProfileScreen({ navigation }: any) {
                     onPress={() => setView('auth')}
                   />
                 )}
+                <MenuItem
+                  icon="refresh-outline"
+                  title="Restart Onboarding"
+                  subtitle="Walk through the welcome flow again"
+                  onPress={() =>
+                    Alert.alert(
+                      'Restart onboarding?',
+                      'You\'ll see the splash screen and onboarding flow again. Your saved events will stay put.',
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Restart', onPress: () => restartOnboarding() },
+                      ],
+                    )
+                  }
+                />
               </View>
             </View>
           </ScrollView>
