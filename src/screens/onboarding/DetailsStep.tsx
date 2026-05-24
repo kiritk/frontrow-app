@@ -209,7 +209,7 @@ export default function DetailsStep({
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               activeOpacity={0.7}
             >
-              <Ionicons name="arrow-back" size={16} color={COLORS.black} />
+              <Ionicons name="arrow-back" size={16} color={COLORS.gray} />
               <Text style={styles.backText}>BACK</Text>
             </TouchableOpacity>
           </View>
@@ -395,7 +395,7 @@ export default function DetailsStep({
           </View>
         </ScrollView>
 
-        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom - 10, 6) }]}>
           <TouchableOpacity
             style={[styles.continueButton, !canContinue && styles.continueButtonDisabled]}
             onPress={onContinue}
@@ -499,6 +499,7 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   headerRow: {
+    marginTop: 5,
     marginBottom: 18,
   },
   backButton: {
@@ -508,7 +509,7 @@ const styles = StyleSheet.create({
   backText: {
     fontFamily: FONTS.medium,
     fontSize: 13,
-    color: COLORS.black,
+    color: COLORS.gray,
     marginLeft: 6,
     letterSpacing: 1.2,
   },
@@ -703,7 +704,7 @@ const styles = StyleSheet.create({
   continueButton: {
     backgroundColor: COLORS.black,
     borderRadius: 999,
-    paddingVertical: 20,
+    paddingVertical: 15,
     alignItems: 'center',
     width: SCREEN_WIDTH - 32,
     alignSelf: 'center',

@@ -90,7 +90,7 @@ export default function PhotosStep({
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               activeOpacity={0.7}
             >
-              <Ionicons name="arrow-back" size={16} color={COLORS.black} />
+              <Ionicons name="arrow-back" size={16} color={COLORS.gray} />
               <Text style={styles.backText}>BACK</Text>
             </TouchableOpacity>
           </View>
@@ -140,7 +140,7 @@ export default function PhotosStep({
           </TouchableOpacity>
         </ScrollView>
 
-        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom - 10, 6) }]}>
           <TouchableOpacity
             onPress={onSkip}
             style={styles.skipButton}
@@ -186,6 +186,7 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   headerRow: {
+    marginTop: 5,
     marginBottom: 18,
   },
   backButton: {
@@ -195,7 +196,7 @@ const styles = StyleSheet.create({
   backText: {
     fontFamily: FONTS.medium,
     fontSize: 13,
-    color: COLORS.black,
+    color: COLORS.gray,
     marginLeft: 6,
     letterSpacing: 1.2,
   },
@@ -218,7 +219,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#D0D0D0',
     borderStyle: 'dashed',
-    minHeight: 320,
+    minHeight: 300,
     paddingVertical: 24,
     paddingHorizontal: 18,
     backgroundColor: 'rgba(255,255,255,0.5)',
@@ -293,7 +294,7 @@ const styles = StyleSheet.create({
   continueButton: {
     backgroundColor: COLORS.black,
     borderRadius: 999,
-    paddingVertical: 20,
+    paddingVertical: 15,
     alignItems: 'center',
     width: SCREEN_WIDTH - 32,
     alignSelf: 'center',

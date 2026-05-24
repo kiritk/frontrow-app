@@ -3,11 +3,9 @@ import {
   View,
   Text,
   StyleSheet,
-  ImageBackground,
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, FONTS } from '../../theme/colors';
@@ -19,7 +17,7 @@ import { DetailsData } from './DetailsStep';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const BG_FADE = '#FBFCFC';
-const ACCENT = '#D63B5A';
+const ACCENT = COLORS.navy;
 
 const formatDateForDB = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -90,18 +88,6 @@ export default function ConfirmationStep({
 
   return (
     <View style={styles.root}>
-      <ImageBackground
-        source={require('../../../assets/images/splash_screen_bg.jpg')}
-        style={styles.bgImage}
-        resizeMode="cover"
-      >
-        <LinearGradient
-          colors={['rgba(251,252,252,0)', 'rgba(251,252,252,0)', BG_FADE]}
-          locations={[0, 0.55, 1]}
-          style={StyleSheet.absoluteFill}
-        />
-      </ImageBackground>
-
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <View style={styles.headerRow}>
           <TouchableOpacity
@@ -110,7 +96,7 @@ export default function ConfirmationStep({
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             activeOpacity={0.7}
           >
-            <Ionicons name="arrow-back" size={16} color={COLORS.black} />
+            <Ionicons name="arrow-back" size={16} color={COLORS.gray} />
             <Text style={styles.backText}>BACK</Text>
           </TouchableOpacity>
         </View>
@@ -128,7 +114,7 @@ export default function ConfirmationStep({
           </Text>
         </View>
 
-        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom - 10, 6) }]}>
           <TouchableOpacity
             style={styles.ctaButton}
             onPress={onAddExperience}
@@ -148,21 +134,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: BG_FADE,
   },
-  bgImage: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 220,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   safeArea: {
     flex: 1,
   },
   headerRow: {
     paddingHorizontal: 24,
-    paddingTop: 8,
+    paddingTop: 13,
     marginBottom: 8,
   },
   backButton: {
@@ -172,7 +149,7 @@ const styles = StyleSheet.create({
   backText: {
     fontFamily: FONTS.medium,
     fontSize: 13,
-    color: COLORS.black,
+    color: COLORS.gray,
     marginLeft: 6,
     letterSpacing: 1.2,
   },
@@ -216,7 +193,7 @@ const styles = StyleSheet.create({
   ctaButton: {
     backgroundColor: ACCENT,
     borderRadius: 999,
-    paddingVertical: 20,
+    paddingVertical: 15,
     paddingHorizontal: 24,
     alignItems: 'center',
     justifyContent: 'center',
@@ -224,7 +201,7 @@ const styles = StyleSheet.create({
     width: SCREEN_WIDTH - 32,
     alignSelf: 'center',
     shadowColor: ACCENT,
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.25,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 },
     elevation: 8,
