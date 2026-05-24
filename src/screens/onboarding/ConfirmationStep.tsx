@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   },
   headerRow: {
     paddingHorizontal: 24,
-    paddingTop: 13,
+    paddingTop: 18,
     marginBottom: 8,
   },
   backButton: {
@@ -161,11 +161,6 @@ const styles = StyleSheet.create({
   },
   tiltedCard: {
     transform: [{ rotate: '-4deg' }],
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 12,
   },
   bottomBlock: {
     paddingHorizontal: 24,

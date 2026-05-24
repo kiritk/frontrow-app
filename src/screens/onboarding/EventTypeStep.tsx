@@ -54,7 +54,7 @@ export default function EventTypeStep({
       >
         <LinearGradient
           colors={['rgba(251,252,252,0)', 'rgba(251,252,252,0)', BG_FADE]}
-          locations={[0, 0.55, 1]}
+          locations={[0, 0.25, 1]}
           style={StyleSheet.absoluteFill}
         />
       </ImageBackground>
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   headerRow: {
-    marginTop: 5,
+    marginTop: 10,
     marginBottom: 18,
   },
   backButton: {
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   continueButton: {
-    backgroundColor: COLORS.black,
+    backgroundColor: COLORS.navy,
     borderRadius: 999,
     paddingVertical: 15,
     alignItems: 'center',
