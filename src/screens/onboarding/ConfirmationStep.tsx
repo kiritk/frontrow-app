@@ -44,7 +44,6 @@ export function buildPreviewEvent(
     venue_location: details.selectedCity?.displayName,
     date: formatDateForDB(date),
     photos: photos.length > 0 ? photos : undefined,
-    cover_photo: photos[0],
     latitude: details.selectedCity?.latitude,
     longitude: details.selectedCity?.longitude,
     home_team: details.homeTeam

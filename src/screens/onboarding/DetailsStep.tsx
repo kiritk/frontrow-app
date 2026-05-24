@@ -11,7 +11,6 @@ import {
   Pressable,
   Platform,
   Keyboard,
-  KeyboardAvoidingView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -211,15 +210,13 @@ export default function DetailsStep({
       </ImageBackground>
 
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-        <KeyboardAvoidingView
-          style={styles.flex1}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
         <ScrollView
           ref={scrollRef}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
         >
           <View style={styles.headerRow}>
             <TouchableOpacity
@@ -450,7 +447,6 @@ export default function DetailsStep({
             <Text style={styles.continueText}>Continue</Text>
           </TouchableOpacity>
         </View>
-        </KeyboardAvoidingView>
 
         {showDatePicker && Platform.OS === 'ios' && (
           <Pressable style={styles.dateOverlay} onPress={() => setShowDatePicker(false)}>
@@ -537,9 +533,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   safeArea: {
-    flex: 1,
-  },
-  flex1: {
     flex: 1,
   },
   sectionHeader: {
