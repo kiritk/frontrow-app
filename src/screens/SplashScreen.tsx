@@ -1,12 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS } from '../theme/colors';
+import { COLORS, FONTS } from '../theme/colors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-const FONT_GEIST_REGULAR = 'GeistMono_400Regular';
-const FONT_GEIST_BOLD = 'GeistMono_700Bold';
 const FONT_GEIST_MEDIUM = 'GeistMono_500Medium';
 
 interface SplashScreenProps {
@@ -22,26 +20,26 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         resizeMode="cover"
       >
         <LinearGradient
-          colors={['rgba(0,0,0,0.45)', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.5)']}
-          locations={[0, 0.3, 0.7, 1]}
-          style={styles.overlay}
-        >
-          {/* Top content */}
-          <View style={styles.topContent}>
-            <Text style={styles.title}>Front{'\n'}Row</Text>
-            <View style={styles.subtitlePill}>
-              <Text style={styles.subtitle}>Never forget that moment</Text>
-            </View>
-          </View>
-
-          {/* Bottom CTA */}
-          <View style={styles.bottomContent}>
-            <TouchableOpacity style={styles.ctaButton} onPress={onComplete} activeOpacity={0.9}>
-              <Text style={styles.ctaText}>Start your journey</Text>
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
+          colors={['rgba(251,252,252,0)', 'rgba(251,252,252,1)']}
+          locations={[0, 1]}
+          style={styles.imageGradient}
+        />
       </ImageBackground>
+
+      <View style={styles.content}>
+        <View style={styles.textBlock}>
+          <Text style={styles.title}>Front Row</Text>
+          <Text style={styles.description}>
+            Track your favorite live events, experiences, and memories all in one app.
+          </Text>
+        </View>
+
+        <View style={styles.bottomContent}>
+          <TouchableOpacity style={styles.ctaButton} onPress={onComplete} activeOpacity={0.9}>
+            <Text style={styles.ctaText}>Start your journey</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 }
@@ -49,42 +47,40 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#FBFCFC',
   },
   background: {
-    flex: 1,
+    height: '55%',
+    width: '100%',
+    justifyContent: 'flex-end',
   },
-  overlay: {
+  imageGradient: {
+    height: '70%',
+    width: '100%',
+  },
+  content: {
     flex: 1,
-    justifyContent: 'space-between',
-    paddingTop: 100,
-    paddingBottom: 80,
     paddingHorizontal: 28,
+    paddingTop: 24,
+    paddingBottom: 80,
+    justifyContent: 'space-between',
   },
-  topContent: {
+  textBlock: {
     alignItems: 'flex-start',
   },
   title: {
-    fontFamily: FONT_GEIST_BOLD,
-    fontSize: 72,
-    color: COLORS.white,
-    lineHeight: 80,
-    letterSpacing: -2,
+    fontFamily: FONTS.instrumentSerifItalic,
+    fontSize: 64,
+    color: COLORS.navy,
+    lineHeight: 70,
+    letterSpacing: -1,
   },
-  subtitlePill: {
-    backgroundColor: 'rgba(106,106,106,0.9)',
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#D1D1D1',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+  description: {
+    fontFamily: FONTS.regular,
+    fontSize: 18,
+    color: COLORS.black,
+    lineHeight: 26,
     marginTop: 16,
-  },
-  subtitle: {
-    fontFamily: FONT_GEIST_REGULAR,
-    fontSize: 16,
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
   },
   bottomContent: {
     alignItems: 'center',
