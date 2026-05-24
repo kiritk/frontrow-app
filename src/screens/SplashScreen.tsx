@@ -8,6 +8,7 @@ import {
   PanResponder,
   LayoutChangeEvent,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../theme/colors';
 
@@ -94,11 +95,19 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require('../../assets/images/splash_screen_bg.jpg')}
-        style={styles.background}
-        resizeMode="cover"
-      />
+      <View style={styles.background}>
+        <Image
+          source={require('../../assets/images/splash_screen_bg.jpg')}
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        />
+        <LinearGradient
+          colors={['rgba(251,252,252,0)', 'rgba(251,252,252,1)']}
+          locations={[0, 1]}
+          style={styles.backgroundGradient}
+          pointerEvents="none"
+        />
+      </View>
 
       <View style={styles.content}>
         <View style={styles.textBlock}>
@@ -140,6 +149,18 @@ const styles = StyleSheet.create({
   background: {
     height: '55%',
     width: '100%',
+  },
+  backgroundImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
+  backgroundGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: '55%',
+    bottom: 0,
   },
   content: {
     flex: 1,
