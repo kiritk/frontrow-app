@@ -439,6 +439,7 @@ export default function DetailsStep({
             </Pressable>
           </View>
         </ScrollView>
+        </KeyboardAvoidingView>
 
         <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom - 10, 6) }]}>
           <TouchableOpacity
@@ -450,7 +451,6 @@ export default function DetailsStep({
             <Text style={styles.continueText}>Continue</Text>
           </TouchableOpacity>
         </View>
-        </KeyboardAvoidingView>
 
         {showDatePicker && Platform.OS === 'ios' && (
           <Pressable style={styles.dateOverlay} onPress={() => setShowDatePicker(false)}>
