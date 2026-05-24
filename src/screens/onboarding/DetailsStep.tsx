@@ -21,6 +21,7 @@ import { NFL_TEAMS, NFLTeam } from '../../data/nflTeams';
 import { MLB_TEAMS, MLBTeam } from '../../data/mlbTeams';
 import { searchCities, City } from '../../lib/geonames';
 import { EventTypeValue } from './EventTypeStep';
+import { getOnboardingBgImage } from './typeBackgrounds';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -198,7 +199,7 @@ export default function DetailsStep({
   return (
     <View style={styles.root}>
       <ImageBackground
-        source={require('../../../assets/images/splash_screen_bg.jpg')}
+        source={getOnboardingBgImage(eventType, value.sportType, value.homeTeam?.stadiumImage)}
         style={styles.bgImage}
         resizeMode="cover"
       >

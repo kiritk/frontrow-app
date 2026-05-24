@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   ImageBackground,
+  ImageSourcePropType,
   TouchableOpacity,
   ScrollView,
   Image,
@@ -15,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS, FONTS } from '../../theme/colors';
+import { getOnboardingBgImage, type EventTypeKey, type SportTypeKey } from './typeBackgrounds';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -24,6 +26,9 @@ const MAX_PHOTOS = 6;
 
 interface PhotosStepProps {
   photos: string[];
+  eventType: EventTypeKey;
+  sportType?: SportTypeKey | null;
+  homeStadiumImage?: ImageSourcePropType | null;
   onChange: (photos: string[]) => void;
   onContinue: () => void;
   onSkip: () => void;
@@ -32,6 +37,9 @@ interface PhotosStepProps {
 
 export default function PhotosStep({
   photos,
+  eventType,
+  sportType,
+  homeStadiumImage,
   onChange,
   onContinue,
   onSkip,
@@ -67,7 +75,7 @@ export default function PhotosStep({
   return (
     <View style={styles.root}>
       <ImageBackground
-        source={require('../../../assets/images/splash_screen_bg.jpg')}
+        source={getOnboardingBgImage(eventType, sportType, homeStadiumImage)}
         style={styles.bgImage}
         resizeMode="cover"
       >
