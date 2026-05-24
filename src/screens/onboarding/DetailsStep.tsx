@@ -11,6 +11,7 @@ import {
   Pressable,
   Platform,
   Keyboard,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -74,6 +75,9 @@ export default function DetailsStep({
   const [cityResults, setCityResults] = useState<City[]>([]);
   const [showCityDropdown, setShowCityDropdown] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [sportExpanded, setSportExpanded] = useState(!value.sportType);
+  const scrollRef = useRef<ScrollView>(null);
+  const teamSectionY = useRef(0);
 
   const isSports = eventType === 'sports';
   const isTeamSport = isSports && (value.sportType === 'nfl' || value.sportType === 'mlb');
@@ -97,7 +101,10 @@ export default function DetailsStep({
   })();
 
   const handleSelectSport = (sport: SportTypeValue) => {
-    if (sport === value.sportType) return;
+    if (sport === value.sportType) {
+      setSportExpanded(false);
+      return;
+    }
     patch({
       sportType: sport,
       homeTeam: null,
@@ -107,6 +114,13 @@ export default function DetailsStep({
     });
     setHomeQuery('');
     setAwayQuery('');
+    setSportExpanded(false);
+  };
+
+  const handleTeamInputFocus = () => {
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ y: Math.max(teamSectionY.current - 24, 0), animated: true });
+    });
   };
 
   const teamsList: SportTeam[] =
@@ -191,13 +205,18 @@ export default function DetailsStep({
       >
         <LinearGradient
           colors={['rgba(251,252,252,0)', 'rgba(251,252,252,0)', BG_FADE]}
-          locations={[0, 0.55, 1]}
+          locations={[0, 0.25, 1]}
           style={StyleSheet.absoluteFill}
         />
       </ImageBackground>
 
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <KeyboardAvoidingView
+          style={styles.flex1}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
@@ -221,35 +240,59 @@ export default function DetailsStep({
 
           <View style={styles.fieldsList}>
             {isSports && (
-              <View style={styles.sectionCard}>
-                <Text style={styles.sectionTitle}>Select a Sport</Text>
-                <View style={styles.pillGrid}>
-                  {SPORT_TYPES.map((s) => {
-                    const active = value.sportType === s.value;
-                    return (
-                      <TouchableOpacity
-                        key={s.value}
-                        style={[styles.pill, active && styles.pillActive]}
-                        onPress={() => handleSelectSport(s.value)}
-                        activeOpacity={0.85}
-                      >
-                        <Ionicons
-                          name={s.icon}
-                          size={16}
-                          color={active ? COLORS.white : COLORS.navy}
-                        />
-                        <Text style={[styles.pillLabel, active && styles.pillLabelActive]}>
-                          {s.label}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+              <TouchableOpacity
+                style={styles.sectionCard}
+                activeOpacity={value.sportType ? 0.7 : 1}
+                onPress={() => {
+                  if (value.sportType) setSportExpanded((e) => !e);
+                }}
+              >
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Select a Sport</Text>
+                  {value.sportType && !sportExpanded && (
+                    <Ionicons
+                      name={
+                        SPORT_TYPES.find((s) => s.value === value.sportType)?.icon ?? 'ellipse'
+                      }
+                      size={18}
+                      color={COLORS.navy}
+                    />
+                  )}
                 </View>
-              </View>
+                {sportExpanded && (
+                  <View style={styles.pillGrid}>
+                    {SPORT_TYPES.map((s) => {
+                      const active = value.sportType === s.value;
+                      return (
+                        <TouchableOpacity
+                          key={s.value}
+                          style={[styles.pill, active && styles.pillActive]}
+                          onPress={() => handleSelectSport(s.value)}
+                          activeOpacity={0.85}
+                        >
+                          <Ionicons
+                            name={s.icon}
+                            size={16}
+                            color={active ? COLORS.white : COLORS.navy}
+                          />
+                          <Text style={[styles.pillLabel, active && styles.pillLabelActive]}>
+                            {s.label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
+              </TouchableOpacity>
             )}
 
             {isTeamSport && (
-              <View style={[styles.sectionCard, { zIndex: 20 }]}>
+              <View
+                style={[styles.sectionCard, { zIndex: 20 }]}
+                onLayout={(e) => {
+                  teamSectionY.current = e.nativeEvent.layout.y;
+                }}
+              >
                 <Text style={styles.sectionTitle}>Select the Teams</Text>
                 <View style={styles.teamRow}>
                   <View style={[styles.teamColumn, { zIndex: 20 }]}>
@@ -270,6 +313,7 @@ export default function DetailsStep({
                         onFocus={() => {
                           setShowHomeDropdown(true);
                           setShowAwayDropdown(false);
+                          handleTeamInputFocus();
                         }}
                       />
                       {showHomeDropdown && (
@@ -299,6 +343,7 @@ export default function DetailsStep({
                       onFocus={() => {
                         setShowAwayDropdown(true);
                         setShowHomeDropdown(false);
+                        handleTeamInputFocus();
                       }}
                     />
                     {showAwayDropdown && (
@@ -405,6 +450,7 @@ export default function DetailsStep({
             <Text style={styles.continueText}>Continue</Text>
           </TouchableOpacity>
         </View>
+        </KeyboardAvoidingView>
 
         {showDatePicker && Platform.OS === 'ios' && (
           <Pressable style={styles.dateOverlay} onPress={() => setShowDatePicker(false)}>
@@ -493,13 +539,21 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  flex1: {
+    flex: 1,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   scrollContent: {
     paddingHorizontal: 24,
     paddingTop: 160,
     paddingBottom: 24,
   },
   headerRow: {
-    marginTop: 5,
+    marginTop: 10,
     marginBottom: 18,
   },
   backButton: {
@@ -702,7 +756,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   continueButton: {
-    backgroundColor: COLORS.black,
+    backgroundColor: COLORS.navy,
     borderRadius: 999,
     paddingVertical: 15,
     alignItems: 'center',
