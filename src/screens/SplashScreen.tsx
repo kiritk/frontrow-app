@@ -1,19 +1,98 @@
-import React from 'react';
-import { View, Text, StyleSheet, ImageBackground, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ImageBackground,
+  Animated,
+  PanResponder,
+  LayoutChangeEvent,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS } from '../theme/colors';
+import { Ionicons } from '@expo/vector-icons';
+import { COLORS, FONTS } from '../theme/colors';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-const FONT_GEIST_REGULAR = 'GeistMono_400Regular';
-const FONT_GEIST_BOLD = 'GeistMono_700Bold';
-const FONT_GEIST_MEDIUM = 'GeistMono_500Medium';
+const THUMB_SIZE = 56;
+const TRACK_HEIGHT = 64;
+const TRACK_PADDING = 4;
+const COMPLETE_THRESHOLD = 0.85;
 
 interface SplashScreenProps {
   onComplete: () => void;
 }
 
 export default function SplashScreen({ onComplete }: SplashScreenProps) {
+  const [trackWidth, setTrackWidth] = useState(0);
+  const translateX = useRef(new Animated.Value(0)).current;
+  const currentXRef = useRef(0);
+  const startXRef = useRef(0);
+  const completedRef = useRef(false);
+
+  const maxTranslate = Math.max(0, trackWidth - THUMB_SIZE - TRACK_PADDING * 2);
+
+  useEffect(() => {
+    const id = translateX.addListener(({ value }) => {
+      currentXRef.current = value;
+    });
+    return () => translateX.removeListener(id);
+  }, [translateX]);
+
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: () => true,
+        onPanResponderGrant: () => {
+          startXRef.current = currentXRef.current;
+        },
+        onPanResponderMove: (_, gesture) => {
+          const next = Math.min(
+            Math.max(0, startXRef.current + gesture.dx),
+            maxTranslate,
+          );
+          translateX.setValue(next);
+        },
+        onPanResponderRelease: () => {
+          if (maxTranslate > 0 && currentXRef.current >= maxTranslate * COMPLETE_THRESHOLD) {
+            Animated.timing(translateX, {
+              toValue: maxTranslate,
+              duration: 120,
+              useNativeDriver: true,
+            }).start(() => {
+              if (!completedRef.current) {
+                completedRef.current = true;
+                onComplete();
+              }
+            });
+          } else {
+            Animated.spring(translateX, {
+              toValue: 0,
+              useNativeDriver: true,
+              bounciness: 0,
+            }).start();
+          }
+        },
+        onPanResponderTerminate: () => {
+          Animated.spring(translateX, {
+            toValue: 0,
+            useNativeDriver: true,
+            bounciness: 0,
+          }).start();
+        },
+      }),
+    [maxTranslate, onComplete, translateX],
+  );
+
+  const onTrackLayout = (e: LayoutChangeEvent) => {
+    setTrackWidth(e.nativeEvent.layout.width);
+  };
+
+  const labelOpacity = translateX.interpolate({
+    inputRange: [0, Math.max(1, maxTranslate)],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
   return (
     <View style={styles.container}>
       <ImageBackground
@@ -22,26 +101,40 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         resizeMode="cover"
       >
         <LinearGradient
-          colors={['rgba(0,0,0,0.45)', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.5)']}
-          locations={[0, 0.3, 0.7, 1]}
-          style={styles.overlay}
-        >
-          {/* Top content */}
-          <View style={styles.topContent}>
-            <Text style={styles.title}>Front{'\n'}Row</Text>
-            <View style={styles.subtitlePill}>
-              <Text style={styles.subtitle}>Never forget that moment</Text>
-            </View>
-          </View>
-
-          {/* Bottom CTA */}
-          <View style={styles.bottomContent}>
-            <TouchableOpacity style={styles.ctaButton} onPress={onComplete} activeOpacity={0.9}>
-              <Text style={styles.ctaText}>Start your journey</Text>
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
+          colors={['rgba(251,252,252,0)', 'rgba(251,252,252,1)']}
+          locations={[0, 1]}
+          style={styles.imageGradient}
+        />
       </ImageBackground>
+
+      <View style={styles.content}>
+        <View style={styles.textBlock}>
+          <Text style={styles.title}>Front Row</Text>
+          <Text style={styles.description}>
+            Track your favorite live events, experiences, and memories all in one app.
+          </Text>
+        </View>
+
+        <View style={styles.bottomContent}>
+          <View style={styles.sliderTrack} onLayout={onTrackLayout}>
+            <Animated.Text style={[styles.sliderLabel, { opacity: labelOpacity }]}>
+              Add your first event
+            </Animated.Text>
+
+            <View style={styles.chevronGroup} pointerEvents="none">
+              <Ionicons name="chevron-forward" size={22} color={COLORS.black} style={styles.chevron} />
+              <Ionicons name="chevron-forward" size={22} color={COLORS.black} style={styles.chevronOverlap} />
+            </View>
+
+            <Animated.View
+              style={[styles.thumb, { transform: [{ translateX }] }]}
+              {...panResponder.panHandlers}
+            >
+              <Ionicons name="ticket" size={26} color={COLORS.white} style={styles.ticketIcon} />
+            </Animated.View>
+          </View>
+        </View>
+      </View>
     </View>
   );
 }
@@ -49,58 +142,83 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#FBFCFC',
   },
   background: {
-    flex: 1,
+    height: '55%',
+    width: '100%',
+    justifyContent: 'flex-end',
   },
-  overlay: {
+  imageGradient: {
+    height: '70%',
+    width: '100%',
+  },
+  content: {
     flex: 1,
-    justifyContent: 'space-between',
-    paddingTop: 100,
-    paddingBottom: 80,
     paddingHorizontal: 28,
+    paddingTop: 24,
+    paddingBottom: 56,
+    justifyContent: 'space-between',
   },
-  topContent: {
+  textBlock: {
     alignItems: 'flex-start',
   },
   title: {
-    fontFamily: FONT_GEIST_BOLD,
-    fontSize: 72,
-    color: COLORS.white,
-    lineHeight: 80,
-    letterSpacing: -2,
+    fontFamily: FONTS.instrumentSerifItalic,
+    fontSize: 64,
+    color: COLORS.navy,
+    lineHeight: 70,
+    letterSpacing: -1,
   },
-  subtitlePill: {
-    backgroundColor: 'rgba(106,106,106,0.9)',
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#D1D1D1',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+  description: {
+    fontFamily: FONTS.regular,
+    fontSize: 18,
+    color: COLORS.black,
+    lineHeight: 26,
     marginTop: 16,
   },
-  subtitle: {
-    fontFamily: FONT_GEIST_REGULAR,
-    fontSize: 16,
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
-  },
   bottomContent: {
+    alignItems: 'stretch',
+  },
+  sliderTrack: {
+    height: TRACK_HEIGHT,
+    borderRadius: TRACK_HEIGHT / 2,
+    backgroundColor: '#EFEFEF',
+    borderWidth: 2,
+    borderColor: COLORS.navy,
+    justifyContent: 'center',
+    paddingHorizontal: TRACK_PADDING,
+  },
+  sliderLabel: {
+    textAlign: 'center',
+    fontFamily: FONTS.regular,
+    fontSize: 18,
+    color: COLORS.black,
+  },
+  chevronGroup: {
+    position: 'absolute',
+    right: 20,
+    top: 0,
+    bottom: 0,
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  ctaButton: {
-    backgroundColor: COLORS.white,
-    borderRadius: 30,
-    paddingVertical: 18,
-    paddingHorizontal: 48,
-    width: SCREEN_WIDTH - 80,
-    alignItems: 'center',
+  chevron: {
+    marginRight: -10,
   },
-  ctaText: {
-    fontFamily: FONT_GEIST_MEDIUM,
-    fontSize: 17,
-    color: '#1a1a1a',
-    letterSpacing: 0.5,
+  chevronOverlap: {},
+  thumb: {
+    position: 'absolute',
+    left: TRACK_PADDING,
+    top: TRACK_PADDING,
+    width: THUMB_SIZE,
+    height: THUMB_SIZE,
+    borderRadius: THUMB_SIZE / 2,
+    backgroundColor: COLORS.navy,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ticketIcon: {
+    transform: [{ rotate: '-20deg' }],
   },
 });
