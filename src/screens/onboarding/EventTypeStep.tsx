@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ImageBackground,
   TouchableOpacity,
-  ScrollView,
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -61,10 +60,7 @@ export default function EventTypeStep({
       </ImageBackground>
 
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+        <View style={styles.scrollContent}>
           <View style={styles.headerRow}>
             {onBack ? (
               <TouchableOpacity
@@ -73,7 +69,7 @@ export default function EventTypeStep({
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                 activeOpacity={0.7}
               >
-                <Ionicons name="arrow-back" size={16} color={COLORS.black} />
+                <Ionicons name="arrow-back" size={16} color={COLORS.gray} />
                 <Text style={styles.backText}>BACK</Text>
               </TouchableOpacity>
             ) : (
@@ -122,9 +118,9 @@ export default function EventTypeStep({
               );
             })}
           </View>
-        </ScrollView>
+        </View>
 
-        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom - 10, 6) }]}>
           <TouchableOpacity
             style={[styles.continueButton, !canContinue && styles.continueButtonDisabled]}
             onPress={onContinue}
@@ -139,8 +135,8 @@ export default function EventTypeStep({
   );
 }
 
-const ACCENT = '#D63B5A';
-const ACCENT_BG = 'rgba(214,59,90,0.06)';
+const ACCENT = COLORS.navy;
+const ACCENT_BG = 'rgba(30,58,95,0.06)';
 
 const styles = StyleSheet.create({
   root: {
@@ -160,11 +156,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 160,
-    paddingBottom: 24,
+    paddingTop: 165,
+    paddingBottom: 12,
   },
   headerRow: {
+    marginTop: 5,
     marginBottom: 18,
   },
   backButton: {
@@ -177,7 +175,7 @@ const styles = StyleSheet.create({
   backText: {
     fontFamily: FONTS.medium,
     fontSize: 13,
-    color: COLORS.black,
+    color: COLORS.gray,
     marginLeft: 6,
     letterSpacing: 1.2,
   },
@@ -244,7 +242,7 @@ const styles = StyleSheet.create({
   continueButton: {
     backgroundColor: COLORS.black,
     borderRadius: 999,
-    paddingVertical: 20,
+    paddingVertical: 15,
     alignItems: 'center',
     width: SCREEN_WIDTH - 32,
     alignSelf: 'center',
