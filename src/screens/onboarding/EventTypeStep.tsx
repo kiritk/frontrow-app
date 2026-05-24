@@ -9,7 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, FONTS } from '../../theme/colors';
 
@@ -17,13 +17,15 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const BG_FADE = '#FBFCFC';
 
+type IonIcon = keyof typeof Ionicons.glyphMap;
+
 export const EVENT_TYPE_OPTIONS = [
-  { value: 'concert', label: 'Concert' },
-  { value: 'sports', label: 'Sports' },
-  { value: 'theater', label: 'Theater' },
-  { value: 'comedy', label: 'Comedy' },
-  { value: 'landmark', label: 'Landmarks' },
-  { value: 'other', label: 'Other' },
+  { value: 'concert', label: 'Concert', icon: 'musical-notes-outline' as IonIcon },
+  { value: 'sports', label: 'Sports', icon: 'trophy-outline' as IonIcon },
+  { value: 'theater', label: 'Theater', icon: 'drama-masks' as const },
+  { value: 'comedy', label: 'Comedy', icon: 'mic-outline' as IonIcon },
+  { value: 'landmark', label: 'Landmarks', icon: 'location-outline' as IonIcon },
+  { value: 'other', label: 'Other', icon: 'ellipsis-horizontal-outline' as IonIcon },
 ] as const;
 
 export type EventTypeValue = (typeof EVENT_TYPE_OPTIONS)[number]['value'];
@@ -87,6 +89,7 @@ export default function EventTypeStep({
           <View style={styles.optionsList}>
             {EVENT_TYPE_OPTIONS.map((option) => {
               const selected = value === option.value;
+              const iconColor = selected ? ACCENT : COLORS.black;
               return (
                 <TouchableOpacity
                   key={option.value}
@@ -94,6 +97,21 @@ export default function EventTypeStep({
                   onPress={() => onChange(option.value)}
                   activeOpacity={0.85}
                 >
+                  {option.icon === 'drama-masks' ? (
+                    <MaterialCommunityIcons
+                      name="drama-masks"
+                      size={20}
+                      color={iconColor}
+                      style={styles.optionIcon}
+                    />
+                  ) : (
+                    <Ionicons
+                      name={option.icon}
+                      size={20}
+                      color={iconColor}
+                      style={styles.optionIcon}
+                    />
+                  )}
                   <Text style={[styles.optionLabel, selected && styles.optionLabelSelected]}>
                     {option.label}
                   </Text>
@@ -134,14 +152,16 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 320,
+    height: 220,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   safeArea: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 250,
+    paddingTop: 160,
     paddingBottom: 24,
   },
   headerRow: {
@@ -176,24 +196,27 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   optionsList: {
-    gap: 12,
+    gap: 10,
   },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     backgroundColor: COLORS.white,
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: '#ECECEC',
-    paddingVertical: 18,
-    paddingHorizontal: 22,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
   },
   optionSelected: {
     borderColor: ACCENT,
     backgroundColor: ACCENT_BG,
   },
+  optionIcon: {
+    marginRight: 12,
+  },
   optionLabel: {
+    flex: 1,
     fontFamily: FONTS.semiBold,
     fontSize: 16,
     color: COLORS.black,
