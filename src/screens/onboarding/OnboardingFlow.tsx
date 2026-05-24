@@ -52,10 +52,13 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     );
   }
 
-  if (step === 2) {
+  if (step === 2 && eventType) {
     return (
       <PhotosStep
         photos={photos}
+        eventType={eventType}
+        sportType={details.sportType}
+        homeStadiumImage={details.homeTeam?.stadiumImage}
         onChange={setPhotos}
         onBack={() => setStep(1)}
         onContinue={() => setStep(3)}
