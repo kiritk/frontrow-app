@@ -146,12 +146,6 @@ const styles = StyleSheet.create({
   wrapper: {
     width: WRAPPER_WIDTH,
     alignSelf: 'center',
-    // Drop shadow on the wrapper so it sits under the whole ticket.
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.4,
-    shadowRadius: 18,
-    elevation: 10,
   },
 
   // ── Card halves ─────────────────────────────────────────────────────────
