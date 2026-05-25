@@ -105,7 +105,7 @@ export default function PhotosStep({
 
           <Text style={styles.title}>Add a few photos?</Text>
           <Text style={styles.subtitle}>
-            Add some pictures to this experience. You can always add more later.
+            Add up to 6 pictures from your event. They can be accessed and edited at any time.
           </Text>
 
           <TouchableOpacity
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   skipText: {
     fontFamily: FONTS.semiBold,
     fontSize: 16,
-    color: COLORS.black,
+    color: COLORS.navy,
   },
   continueButton: {
     backgroundColor: COLORS.navy,
