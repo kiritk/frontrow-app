@@ -686,7 +686,7 @@ const styles = StyleSheet.create({
   fieldValue: {
     fontFamily: FONTS.semiBold,
     fontSize: 16,
-    color: COLORS.black,
+    color: COLORS.navy,
     flex: 1,
   },
   fieldValuePlaceholder: {
@@ -696,7 +696,7 @@ const styles = StyleSheet.create({
   inlineInput: {
     fontFamily: FONTS.semiBold,
     fontSize: 16,
-    color: COLORS.black,
+    color: COLORS.navy,
     paddingVertical: 0,
   },
   inputWithDropdown: {
