@@ -79,7 +79,7 @@ export default function EventTypeStep({
 
           <Text style={styles.title}>What's the type of experience?</Text>
           <Text style={styles.subtitle}>
-            Select the type of live experience you went too. You'll be able to add more later.
+            Select the type of a live event you recently went to. This is just your first one, you'll  be able to add more later.
           </Text>
 
           <View style={styles.optionsList}>

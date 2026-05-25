@@ -233,7 +233,7 @@ export default function DetailsStep({
 
           <Text style={styles.title}>Let's add a few more details.</Text>
           <Text style={styles.subtitle}>
-            Help us specify the details of this live experience.
+            Help us specify some  details for your live event. And don't worry, you can always edit them later.
           </Text>
 
           <View style={styles.fieldsList}>
@@ -370,14 +370,14 @@ export default function DetailsStep({
             )}
 
             <View style={[styles.fieldCard, { zIndex: 5 }]}>
-              <Text style={styles.fieldLabel}>VENUE LOCATION</Text>
+              <Text style={styles.fieldLabel}>EVENT LOCATION</Text>
               {isTeamSport && value.venue ? (
                 <Text style={styles.fieldValue}>{value.venue}</Text>
               ) : (
                 <View style={styles.inputWithDropdown}>
                   <TextInput
                     style={styles.inlineInput}
-                    placeholder="e.g. Madison Square Garden"
+                    placeholder="e.g. Los Angeles, California"
                     placeholderTextColor={COLORS.grayLight}
                     value={cityQuery}
                     onChangeText={(t) => {
@@ -686,7 +686,7 @@ const styles = StyleSheet.create({
   fieldValue: {
     fontFamily: FONTS.semiBold,
     fontSize: 16,
-    color: COLORS.black,
+    color: COLORS.navy,
     flex: 1,
   },
   fieldValuePlaceholder: {
@@ -696,7 +696,7 @@ const styles = StyleSheet.create({
   inlineInput: {
     fontFamily: FONTS.semiBold,
     fontSize: 16,
-    color: COLORS.black,
+    color: COLORS.navy,
     paddingVertical: 0,
   },
   inputWithDropdown: {

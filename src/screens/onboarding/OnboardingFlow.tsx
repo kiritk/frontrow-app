@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import EventTypeStep, { EventTypeValue } from './EventTypeStep';
 import DetailsStep, { DetailsData } from './DetailsStep';
 import PhotosStep from './PhotosStep';
 import ConfirmationStep from './ConfirmationStep';
+import { prefetchOnboardingBgImages } from './typeBackgrounds';
 
 export interface OnboardingData {
   eventType: EventTypeValue | null;
@@ -29,6 +30,10 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [eventType, setEventType] = useState<EventTypeValue | null>(null);
   const [details, setDetails] = useState<DetailsData>(emptyDetails);
   const [photos, setPhotos] = useState<string[]>([]);
+
+  useEffect(() => {
+    prefetchOnboardingBgImages();
+  }, []);
 
   if (step === 0) {
     return (
