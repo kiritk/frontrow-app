@@ -370,14 +370,14 @@ export default function DetailsStep({
             )}
 
             <View style={[styles.fieldCard, { zIndex: 5 }]}>
-              <Text style={styles.fieldLabel}>VENUE LOCATION</Text>
+              <Text style={styles.fieldLabel}>EVENT LOCATION</Text>
               {isTeamSport && value.venue ? (
                 <Text style={styles.fieldValue}>{value.venue}</Text>
               ) : (
                 <View style={styles.inputWithDropdown}>
                   <TextInput
                     style={styles.inlineInput}
-                    placeholder="e.g. Madison Square Garden"
+                    placeholder="e.g. Los Angeles, California"
                     placeholderTextColor={COLORS.grayLight}
                     value={cityQuery}
                     onChangeText={(t) => {
