@@ -119,6 +119,16 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
         <View style={styles.bottomContent}>
           <View style={styles.sliderTrack} onLayout={onTrackLayout}>
+            <Animated.View
+              style={[
+                styles.fill,
+                {
+                  width: Animated.add(translateX, new Animated.Value(THUMB_SIZE / 2)),
+                },
+              ]}
+              pointerEvents="none"
+            />
+
             <Animated.Text style={[styles.sliderLabel, { opacity: labelOpacity }]}>
               Add your first event
             </Animated.Text>
@@ -197,6 +207,15 @@ const styles = StyleSheet.create({
     borderColor: COLORS.navy,
     justifyContent: 'center',
     paddingHorizontal: TRACK_PADDING,
+    overflow: 'hidden',
+  },
+  fill: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: COLORS.navy,
+    opacity: 0.18,
   },
   sliderLabel: {
     textAlign: 'center',
