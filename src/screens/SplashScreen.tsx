@@ -181,9 +181,9 @@ const styles = StyleSheet.create({
   },
   description: {
     fontFamily: FONTS.regular,
-    fontSize: 18,
-    color: COLORS.black,
-    lineHeight: 26,
+    fontSize: 22,
+    color: COLORS.grayDark,
+    lineHeight: 30,
     marginTop: 16,
   },
   bottomContent: {
