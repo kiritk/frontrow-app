@@ -12,9 +12,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../theme/colors';
 
-const THUMB_SIZE = 56;
+const THUMB_SIZE = 60;
 const TRACK_HEIGHT = 64;
-const TRACK_PADDING = 4;
+const TRACK_PADDING = 0;
 const COMPLETE_THRESHOLD = 0.85;
 
 interface SplashScreenProps {
@@ -236,8 +236,8 @@ const styles = StyleSheet.create({
   chevronOverlap: {},
   thumb: {
     position: 'absolute',
-    left: TRACK_PADDING,
-    top: TRACK_PADDING,
+    left: 0,
+    top: 0,
     width: THUMB_SIZE,
     height: THUMB_SIZE,
     borderRadius: THUMB_SIZE / 2,
