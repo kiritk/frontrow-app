@@ -57,7 +57,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             Animated.timing(translateX, {
               toValue: maxTranslate,
               duration: 120,
-              useNativeDriver: true,
+              useNativeDriver: false,
             }).start(() => {
               if (!completedRef.current) {
                 completedRef.current = true;
@@ -67,7 +67,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           } else {
             Animated.spring(translateX, {
               toValue: 0,
-              useNativeDriver: true,
+              useNativeDriver: false,
               bounciness: 0,
             }).start();
           }
@@ -75,7 +75,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         onPanResponderTerminate: () => {
           Animated.spring(translateX, {
             toValue: 0,
-            useNativeDriver: true,
+            useNativeDriver: false,
             bounciness: 0,
           }).start();
         },
@@ -90,6 +90,12 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
   const labelOpacity = translateX.interpolate({
     inputRange: [0, Math.max(1, maxTranslate)],
     outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
+  const fillWidth = translateX.interpolate({
+    inputRange: [0, Math.max(1, maxTranslate)],
+    outputRange: [TRACK_PADDING + THUMB_SIZE / 2, Math.max(TRACK_PADDING + THUMB_SIZE / 2, trackWidth)],
     extrapolate: 'clamp',
   });
 
@@ -120,15 +126,9 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         <View style={styles.bottomContent}>
           <View style={styles.sliderTrack} onLayout={onTrackLayout}>
             <Animated.View
-              style={[
-                styles.fill,
-                {
-                  width: Animated.add(translateX, new Animated.Value(THUMB_SIZE / 2)),
-                },
-              ]}
+              style={[styles.sliderFill, { width: fillWidth }]}
               pointerEvents="none"
             />
-
             <Animated.Text style={[styles.sliderLabel, { opacity: labelOpacity }]}>
               Add your first event
             </Animated.Text>
@@ -209,13 +209,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: TRACK_PADDING,
     overflow: 'hidden',
   },
-  fill: {
+  sliderFill: {
     position: 'absolute',
     left: 0,
     top: 0,
     bottom: 0,
-    backgroundColor: COLORS.navy,
-    opacity: 0.18,
+    backgroundColor: '#96ABBD',
   },
   sliderLabel: {
     textAlign: 'center',
