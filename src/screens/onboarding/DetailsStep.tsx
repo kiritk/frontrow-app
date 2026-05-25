@@ -233,7 +233,7 @@ export default function DetailsStep({
 
           <Text style={styles.title}>Let's add a few more details.</Text>
           <Text style={styles.subtitle}>
-            Help us specify the details of this live experience.
+            Help us specify some  details for your live event. And don't worry, you can always edit them later.
           </Text>
 
           <View style={styles.fieldsList}>
