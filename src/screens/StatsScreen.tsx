@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   pageTitle: {
-    fontFamily: FONTS.instrumentSerifItalic,
+    fontFamily: FONTS.geistMonoBold,
     fontSize: 34,
     color: COLORS.navy,
   },
