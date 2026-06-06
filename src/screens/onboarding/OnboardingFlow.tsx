@@ -17,6 +17,7 @@ interface OnboardingFlowProps {
 
 const emptyDetails: DetailsData = {
   sportType: null,
+  theaterType: null,
   homeTeam: null,
   awayTeam: null,
   eventName: '',

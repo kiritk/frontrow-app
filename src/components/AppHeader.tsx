@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.creamDark,
   },
   logoText: {
-    fontFamily: FONTS.geistMonoBold,
+    fontFamily: FONTS.instrumentSerifItalic,
     fontSize: 18,
     color: COLORS.navy,
   },

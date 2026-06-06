@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cream,
   },
   pageTitle: {
-    fontFamily: FONTS.instrumentSerifItalic,
+    fontFamily: FONTS.geistMonoBold,
     fontSize: 34,
     color: COLORS.navy,
     paddingHorizontal: SPACING.lg,
