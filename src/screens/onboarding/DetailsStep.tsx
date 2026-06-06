@@ -13,7 +13,7 @@ import {
   Keyboard,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, FONTS } from '../../theme/colors';
@@ -29,8 +29,10 @@ const BG_FADE = '#FBFCFC';
 
 export type SportTypeValue = 'nfl' | 'mlb' | 'nba' | 'soccer' | 'tennis' | 'other';
 export type SportTeam = NFLTeam | MLBTeam;
+export type TheaterTypeValue = 'movie' | 'play' | 'musical';
 
 type IonIcon = keyof typeof Ionicons.glyphMap;
+type MciIcon = keyof typeof MaterialCommunityIcons.glyphMap;
 
 const SPORT_TYPES: { value: SportTypeValue; label: string; icon: IonIcon }[] = [
   { value: 'nfl', label: 'NFL', icon: 'american-football-outline' },
@@ -41,8 +43,15 @@ const SPORT_TYPES: { value: SportTypeValue; label: string; icon: IonIcon }[] = [
   { value: 'other', label: 'Other', icon: 'ribbon-outline' },
 ];
 
+const THEATER_TYPES: { value: TheaterTypeValue; label: string; icon: MciIcon }[] = [
+  { value: 'movie', label: 'Movie', icon: 'movie-open-outline' },
+  { value: 'play', label: 'Play', icon: 'drama-masks' },
+  { value: 'musical', label: 'Musical', icon: 'music-note-outline' },
+];
+
 export interface DetailsData {
   sportType: SportTypeValue | null;
+  theaterType: TheaterTypeValue | null;
   homeTeam: SportTeam | null;
   awayTeam: SportTeam | null;
   eventName: string;
@@ -76,11 +85,13 @@ export default function DetailsStep({
   const [showCityDropdown, setShowCityDropdown] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [sportExpanded, setSportExpanded] = useState(!value.sportType);
+  const [theaterExpanded, setTheaterExpanded] = useState(!value.theaterType);
   const scrollRef = useRef<ScrollView>(null);
   const teamSectionY = useRef(0);
 
   const isSports = eventType === 'sports';
   const isTeamSport = isSports && (value.sportType === 'nfl' || value.sportType === 'mlb');
+  const isTheater = eventType === 'theater';
 
   const patch = (partial: Partial<DetailsData>) => onChange({ ...value, ...partial });
 
@@ -92,6 +103,9 @@ export default function DetailsStep({
       } else {
         if (!value.eventName.trim()) return false;
       }
+    } else if (isTheater) {
+      if (!value.theaterType) return false;
+      if (!value.eventName.trim()) return false;
     } else {
       if (!value.eventName.trim()) return false;
     }
@@ -115,6 +129,15 @@ export default function DetailsStep({
     setHomeQuery('');
     setAwayQuery('');
     setSportExpanded(false);
+  };
+
+  const handleSelectTheater = (theater: TheaterTypeValue) => {
+    if (theater === value.theaterType) {
+      setTheaterExpanded(false);
+      return;
+    }
+    patch({ theaterType: theater });
+    setTheaterExpanded(false);
   };
 
   const handleTeamInputFocus = () => {
@@ -184,7 +207,16 @@ export default function DetailsStep({
       case 'concert':
         return 'Who did you see?';
       case 'theater':
-        return 'What was the show?';
+        switch (value.theaterType) {
+          case 'movie':
+            return 'Which movie did you watch?';
+          case 'play':
+            return 'Which play did you see?';
+          case 'musical':
+            return 'Which musical did you see?';
+          default:
+            return 'What was the show?';
+        }
       case 'comedy':
         return 'Who was the comedian?';
       case 'landmark':
@@ -275,6 +307,54 @@ export default function DetailsStep({
                           />
                           <Text style={[styles.pillLabel, active && styles.pillLabelActive]}>
                             {s.label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
+              </TouchableOpacity>
+            )}
+
+            {isTheater && (
+              <TouchableOpacity
+                style={styles.sectionCard}
+                activeOpacity={value.theaterType ? 0.7 : 1}
+                onPress={() => {
+                  if (value.theaterType) setTheaterExpanded((e) => !e);
+                }}
+              >
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>What kind of show?</Text>
+                  {value.theaterType && !theaterExpanded && (
+                    <MaterialCommunityIcons
+                      name={
+                        THEATER_TYPES.find((t) => t.value === value.theaterType)?.icon ??
+                        'drama-masks'
+                      }
+                      size={18}
+                      color={COLORS.navy}
+                    />
+                  )}
+                </View>
+                {theaterExpanded && (
+                  <View style={styles.pillGrid}>
+                    {THEATER_TYPES.map((t) => {
+                      const active = value.theaterType === t.value;
+                      return (
+                        <TouchableOpacity
+                          key={t.value}
+                          style={[styles.pill, active && styles.pillActive]}
+                          onPress={() => handleSelectTheater(t.value)}
+                          activeOpacity={0.85}
+                        >
+                          <MaterialCommunityIcons
+                            name={t.icon}
+                            size={16}
+                            color={active ? COLORS.white : COLORS.navy}
+                          />
+                          <Text style={[styles.pillLabel, active && styles.pillLabelActive]}>
+                            {t.label}
                           </Text>
                         </TouchableOpacity>
                       );
