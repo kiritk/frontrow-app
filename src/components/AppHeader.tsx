@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import ShareCardModal from './ShareCardModal';
 import { useAuth } from '../context/AuthContext';
+import { getAvatarSource } from '../lib/avatars';
 import { COLORS, SPACING, BORDER_RADIUS, FONTS } from '../theme/colors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -14,6 +15,7 @@ export default function AppHeader() {
   const { profile } = useAuth();
   const [shareVisible, setShareVisible] = useState(false);
   const profileImage = profile.profileImage;
+  const avatarSource = getAvatarSource(profile.avatarId);
 
   return (
     <>
@@ -24,6 +26,8 @@ export default function AppHeader() {
         >
           {profileImage ? (
             <Image source={{ uri: profileImage }} style={styles.profileButtonImage} />
+          ) : avatarSource ? (
+            <Image source={avatarSource} style={styles.profileButtonImage} />
           ) : (
             <View style={styles.profileButtonPlaceholder}>
               <Ionicons name="person" size={18} color={COLORS.navy} />
@@ -60,6 +64,7 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     borderWidth: 2,
     borderColor: COLORS.navy,
+    backgroundColor: COLORS.white,
   },
   profileButtonPlaceholder: {
     width: 38,

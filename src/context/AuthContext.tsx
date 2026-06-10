@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { migrateGuestEvents } from '../lib/eventService';
 import { clearLocalEvents } from '../lib/localStorage';
+import { pickRandomAvatarId } from '../lib/avatars';
 
 const PROFILE_STORAGE_KEY = 'frontrow_user_profile';
 
@@ -11,9 +12,22 @@ export interface UserProfile {
   firstName: string;
   lastName: string;
   profileImage: string | null;
+  avatarId: number | null;
 }
 
-const EMPTY_PROFILE: UserProfile = { firstName: '', lastName: '', profileImage: null };
+const EMPTY_PROFILE: UserProfile = {
+  firstName: '',
+  lastName: '',
+  profileImage: null,
+  avatarId: null,
+};
+
+const freshProfile = (): UserProfile => ({
+  firstName: '',
+  lastName: '',
+  profileImage: null,
+  avatarId: pickRandomAvatarId(),
+});
 
 interface AuthContextType {
   user: User | null;
@@ -65,16 +79,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Load cached profile once on mount.  Subsequent changes flow through updateProfile.
+  // First-time users (and legacy profiles missing an avatarId) get a random
+  // built-in avatar assigned and persisted so it stays stable across sessions.
   useEffect(() => {
     AsyncStorage.getItem(PROFILE_STORAGE_KEY).then(stored => {
-      if (!stored) return;
+      if (!stored) {
+        const fresh = freshProfile();
+        setProfile(fresh);
+        AsyncStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(fresh)).catch(() => {});
+        return;
+      }
       try {
         const parsed = JSON.parse(stored) as Partial<UserProfile>;
-        setProfile({
+        const next: UserProfile = {
           firstName: parsed.firstName || '',
           lastName: parsed.lastName || '',
           profileImage: parsed.profileImage || null,
-        });
+          avatarId: parsed.avatarId ?? pickRandomAvatarId(),
+        };
+        setProfile(next);
+        if (next.avatarId !== parsed.avatarId) {
+          AsyncStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(next)).catch(() => {});
+        }
       } catch (error) {
         console.warn('[AuthContext] Failed to parse cached profile:', error);
       }
@@ -127,11 +153,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // (including photos) before ending the Supabase session.
   const signOut = async () => {
     try {
-      await Promise.all([
-        AsyncStorage.removeItem(PROFILE_STORAGE_KEY),
-        clearLocalEvents(),
-      ]);
-      setProfile(EMPTY_PROFILE);
+      await clearLocalEvents();
+      const fresh = freshProfile();
+      await AsyncStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(fresh));
+      setProfile(fresh);
     } catch (error) {
       console.warn('[AuthContext] Failed to clear local data on sign out:', error);
     }

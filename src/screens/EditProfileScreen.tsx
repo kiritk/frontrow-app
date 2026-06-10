@@ -6,6 +6,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { useAuth } from '../context/AuthContext';
+import { getAvatarSource } from '../lib/avatars';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
 const UPDATE_BTN_COLOR = '#3B35B4';
@@ -31,9 +33,11 @@ export default function EditProfileScreen({
   onBack,
   onSave,
 }: EditProfileScreenProps) {
+  const { profile } = useAuth();
   const [firstName, setFirstName] = useState(initialFirstName);
   const [lastName, setLastName] = useState(initialLastName);
   const [profileImage, setProfileImage] = useState<string | null>(initialProfileImage);
+  const avatarSource = getAvatarSource(profile.avatarId);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -80,6 +84,8 @@ export default function EditProfileScreen({
           <TouchableOpacity style={styles.avatarWrapper} onPress={pickImage}>
             {profileImage ? (
               <Image source={{ uri: profileImage }} style={styles.avatarImage} />
+            ) : avatarSource ? (
+              <Image source={avatarSource} style={styles.avatarImage} />
             ) : (
               <View style={styles.avatarPlaceholder} />
             )}
@@ -158,6 +164,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
+    backgroundColor: '#FFFFFF',
   },
   avatarPlaceholder: {
     width: 120,
