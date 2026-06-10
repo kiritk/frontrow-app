@@ -112,7 +112,12 @@ export default function ProfileScreen({ navigation }: any) {
                   <Text style={styles.cancelText}>Cancel</Text>
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Profile</Text>
-                <View style={styles.cancelButton} />
+                <View style={styles.editSlot}>
+                  <TouchableOpacity style={styles.editPill} onPress={() => setView('edit')}>
+                    <Ionicons name="pencil" size={14} color="rgba(255,255,255,0.85)" />
+                    <Text style={styles.editPillText}>Edit</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </SafeAreaView>
 
@@ -131,14 +136,8 @@ export default function ProfileScreen({ navigation }: any) {
             <View style={styles.contentArea}>
               <View style={styles.menuCard}>
                 <MenuItem
-                  icon="pencil-outline"
-                  title="Edit profile"
-                  onPress={() => setView('edit')}
-                />
-                <View style={styles.divider} />
-                <MenuItem
                   icon="heart-outline"
-                  title="About App"
+                  title="About Us"
                   onPress={() => setView('about')}
                 />
                 <View style={styles.divider} />
@@ -277,6 +276,24 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.full,
     overflow: 'hidden',
     textAlign: 'center',
+  },
+  editSlot: {
+    minWidth: 80,
+    alignItems: 'flex-end',
+  },
+  editPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: BORDER_RADIUS.full,
+  },
+  editPillText: {
+    fontFamily: FONTS.medium,
+    fontSize: FONT_SIZES.md,
+    color: 'rgba(255,255,255,0.85)',
   },
   headerTitle: {
     fontFamily: FONTS.semiBold,

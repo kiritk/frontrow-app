@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   },
   logoText: {
     fontFamily: FONTS.instrumentSerifItalic,
-    fontSize: 18,
+    fontSize: 25,
     color: COLORS.navy,
   },
   shareButton: {
