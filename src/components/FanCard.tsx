@@ -125,14 +125,13 @@ export default function FanCard({
         <View style={styles.statGrid}>
           <StatCell icon={<MaterialCommunityIcons name="stadium-outline" size={34} color="#4ADE80" />} value={venueCount} label={'VENUES\nVISITED'} />
           <View style={styles.statDivider} />
-          <StatCell icon={<Ionicons name="calendar-outline" size={34} color="#FBBF24" />} value={yearCount} label={'YEARS\nWITH US'} />
+          <StatCell icon={<Ionicons name="calendar-outline" size={34} color="#FBBF24" />} value={yearCount} label={'YEARS\nOF EVENTS'} />
         </View>
 
         <View style={styles.barcodeWrap}>
           <Barcode width={CARD_WIDTH * 0.7} />
         </View>
-        <Text style={styles.footerLine1}>THANK YOU FOR BEING</Text>
-        <Text style={styles.footerLine2}>PART OF THE EXPERIENCE!</Text>
+        <Text style={styles.footerLogo}>Front Row</Text>
       </View>
     </View>
   );
@@ -231,13 +230,13 @@ const styles = StyleSheet.create({
     height: 1.5,
     backgroundColor: 'rgba(255,255,255,0.35)',
   },
-  // White half-circles whose centers sit exactly on each card edge.
+  // Half-circles matching the Your Card page background, whose centers sit exactly on each card edge.
   perfBump: {
     position: 'absolute',
     width: PERF_RADIUS * 2,
     height: PERF_RADIUS * 2,
     borderRadius: PERF_RADIUS,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F2F2F7',
     top: (PERF_STRIP_HEIGHT - PERF_RADIUS * 2) / 2,
   },
   perfBumpLeft: {
@@ -291,19 +290,10 @@ const styles = StyleSheet.create({
     marginTop: 22,
     marginBottom: 14,
   },
-  footerLine1: {
-    fontFamily: FONTS.medium,
-    fontSize: 11,
-    letterSpacing: 2.5,
-    color: 'rgba(255,255,255,0.65)',
+  footerLogo: {
+    fontFamily: FONTS.instrumentSerifItalic,
+    fontSize: 28,
+    color: '#FFFFFF',
     textAlign: 'center',
-  },
-  footerLine2: {
-    fontFamily: FONTS.medium,
-    fontSize: 11,
-    letterSpacing: 2.5,
-    color: 'rgba(255,255,255,0.65)',
-    textAlign: 'center',
-    marginTop: 2,
   },
 });
