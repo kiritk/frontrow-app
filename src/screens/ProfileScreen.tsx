@@ -177,23 +177,22 @@ export default function ProfileScreen({ navigation }: any) {
                     onPress={() => setView('auth')}
                   />
                 )}
-                {false && (
-                  <MenuItem
-                    icon="refresh-outline"
-                    title="Restart Onboarding"
-                    subtitle="Walk through the welcome flow again"
-                    onPress={() =>
-                      Alert.alert(
-                        'Restart onboarding?',
-                        'You\'ll see the splash screen and onboarding flow again. Your saved events will stay put.',
-                        [
-                          { text: 'Cancel', style: 'cancel' },
-                          { text: 'Restart', onPress: () => restartOnboarding() },
-                        ],
-                      )
-                    }
-                  />
-                )}
+                <View style={styles.divider} />
+                <MenuItem
+                  icon="refresh-outline"
+                  title="Restart Onboarding"
+                  subtitle="Walk through the welcome flow again"
+                  onPress={() =>
+                    Alert.alert(
+                      'Restart onboarding?',
+                      'You\'ll see the splash screen and onboarding flow again. Your saved events will stay put.',
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Restart', onPress: () => restartOnboarding() },
+                      ],
+                    )
+                  }
+                />
               </View>
             </View>
           </ScrollView>
