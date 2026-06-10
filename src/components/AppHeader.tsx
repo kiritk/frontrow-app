@@ -81,8 +81,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     paddingVertical: 4,
     borderRadius: BORDER_RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.creamDark,
   },
   logoText: {
     fontFamily: FONTS.instrumentSerifItalic,
