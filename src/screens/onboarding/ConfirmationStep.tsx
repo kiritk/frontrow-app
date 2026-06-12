@@ -7,6 +7,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, FONTS } from '../../theme/colors';
 import EventCard from '../../components/EventCard';
@@ -116,7 +117,10 @@ export default function ConfirmationStep({
         <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom - 10, 6) }]}>
           <TouchableOpacity
             style={styles.ctaButton}
-            onPress={onAddExperience}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onAddExperience();
+            }}
             activeOpacity={0.9}
           >
             <Ionicons name="add-circle" size={18} color={COLORS.white} style={{ marginRight: 8 }} />
