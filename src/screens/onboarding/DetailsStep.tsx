@@ -44,9 +44,9 @@ const SPORT_TYPES: { value: SportTypeValue; label: string; icon: IonIcon }[] = [
 ];
 
 const THEATER_TYPES: { value: TheaterTypeValue; label: string; icon: MciIcon }[] = [
-  { value: 'movie', label: 'Movie', icon: 'movie-open-outline' },
   { value: 'play', label: 'Play', icon: 'drama-masks' },
   { value: 'musical', label: 'Musical', icon: 'music-note-outline' },
+  { value: 'movie', label: 'Movie', icon: 'movie-open-outline' },
 ];
 
 export interface DetailsData {
@@ -217,11 +217,11 @@ export default function DetailsStep({
       case 'theater':
         switch (value.theaterType) {
           case 'movie':
-            return 'Which movie did you watch?';
+            return 'What movie was it?';
           case 'play':
-            return 'Which play did you see?';
+            return 'What was the play?';
           case 'musical':
-            return 'Which musical did you see?';
+            return 'What was the musical?';
           default:
             return 'What was the show?';
         }
