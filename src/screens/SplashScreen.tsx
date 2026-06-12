@@ -193,9 +193,9 @@ const styles = StyleSheet.create({
   },
   description: {
     fontFamily: FONTS.regular,
-    fontSize: 22,
+    fontSize: 20,
     color: COLORS.grayDark,
-    lineHeight: 30,
+    lineHeight: 28,
     marginTop: 16,
   },
   bottomContent: {
