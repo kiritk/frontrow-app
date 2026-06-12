@@ -132,7 +132,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
               pointerEvents="none"
             />
             <Animated.Text style={[styles.sliderLabel, { opacity: labelOpacity }]}>
-              Add your first event
+              Get started
             </Animated.Text>
 
             <View style={styles.chevronGroup} pointerEvents="none">
