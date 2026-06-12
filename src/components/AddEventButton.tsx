@@ -38,6 +38,12 @@ const SPORT_TYPES = [
   { value: 'other', label: 'Other', icon: 'ribbon-outline' as const },
 ];
 
+const THEATER_TYPES = [
+  { value: 'play', label: 'Play', icon: 'drama-masks' as const },
+  { value: 'musical', label: 'Musical', icon: 'music-note-outline' as const },
+  { value: 'movie', label: 'Movie', icon: 'movie-open-outline' as const },
+];
+
 type SportTeam = NFLTeam | MLBTeam;
 
 export default function AddEventButton({ onEventAdded }: { onEventAdded: () => void }) {
@@ -49,6 +55,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   // Form state
   const [eventType, setEventType] = useState('');
   const [sportType, setSportType] = useState('');
+  const [theaterType, setTheaterType] = useState('');
   const [eventName, setEventName] = useState('');
   const [venue, setVenue] = useState('');
   const [eventDate, setEventDate] = useState<Date>(new Date());
@@ -77,6 +84,7 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   // Collapse/expand state for sections
   const [eventTypeExpanded, setEventTypeExpanded] = useState(true);
   const [sportTypeExpanded, setSportTypeExpanded] = useState(true);
+  const [theaterTypeExpanded, setTheaterTypeExpanded] = useState(true);
   const [teamsExpanded, setTeamsExpanded] = useState(true);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
@@ -95,8 +103,9 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
       if (isTeamSport) return !!(homeTeam && awayTeam);
       return true;
     }
+    if (eventType === 'theater') return !!theaterType;
     return true;
-  }, [eventType, sportType, isTeamSport, homeTeam, awayTeam]);
+  }, [eventType, sportType, theaterType, isTeamSport, homeTeam, awayTeam]);
 
   const canSubmit = useMemo(() => {
     if (!eventType) return false;
@@ -106,13 +115,13 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
   }, [eventType, dateSelected, isTeamSport, homeTeam, awayTeam, eventName, selectedCity]);
 
   const resetForm = () => {
-    setEventType(''); setSportType(''); setEventName(''); setVenue('');
+    setEventType(''); setSportType(''); setTheaterType(''); setEventName(''); setVenue('');
     setEventDate(new Date()); setDateSelected(false); setShowDatePicker(false);
     setPhotos([]); setCoverPhoto(null);
     setHomeTeam(null); setAwayTeam(null); setHomeTeamQuery(''); setAwayTeamQuery('');
     setShowHomeDropdown(false); setShowAwayDropdown(false);
     setSelectedCity(null); setCityQuery(''); setShowCityDropdown(false); setCityResults([]);
-    setEventTypeExpanded(true); setSportTypeExpanded(true); setTeamsExpanded(true);
+    setEventTypeExpanded(true); setSportTypeExpanded(true); setTheaterTypeExpanded(true); setTeamsExpanded(true);
   };
 
   const handleClose = () => {
@@ -125,12 +134,12 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (type === eventType) return;
     // Reset downstream fields
-    setSportType(''); setEventName(''); setVenue('');
+    setSportType(''); setTheaterType(''); setEventName(''); setVenue('');
     setEventDate(new Date()); setDateSelected(false); setPhotos([]);
     setHomeTeam(null); setAwayTeam(null); setHomeTeamQuery(''); setAwayTeamQuery('');
     setShowHomeDropdown(false); setShowAwayDropdown(false);
     setSelectedCity(null); setCityQuery(''); setShowCityDropdown(false);
-    setSportTypeExpanded(true); setTeamsExpanded(true);
+    setSportTypeExpanded(true); setTheaterTypeExpanded(true); setTeamsExpanded(true);
     setEventType(type);
     setEventTypeExpanded(false);
   };
@@ -146,6 +155,13 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
     setTeamsExpanded(true);
     setSportType(type);
     setSportTypeExpanded(false);
+  };
+
+  const handleSelectTheaterType = (type: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (type === theaterType) return;
+    setTheaterType(type);
+    setTheaterTypeExpanded(false);
   };
 
   const handleDatePress = () => {
@@ -177,9 +193,16 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
         default: return { name: 'Team vs Team...', ...whereWhen };
       }
     }
+    if (eventType === 'theater') {
+      switch (theaterType) {
+        case 'play': return { name: 'What was the play?', ...whereWhen };
+        case 'musical': return { name: 'What was the musical?', ...whereWhen };
+        case 'movie': return { name: 'What movie was it?', ...whereWhen };
+        default: return { name: 'What was the show?', ...whereWhen };
+      }
+    }
     switch (eventType) {
       case 'concert': return { name: 'Who did you see?', ...whereWhen };
-      case 'theater': return { name: 'What was the show?', ...whereWhen };
       case 'comedy': return { name: 'Who was the comedian?', ...whereWhen };
       case 'landmark': return { name: 'What was the landmark?', ...whereWhen };
       default: return { name: 'What was the experience?', ...whereWhen };
@@ -443,6 +466,43 @@ export default function AddEventButton({ onEventAdded }: { onEventAdded: () => v
                             onPress={() => handleSelectSportType(type.value)}
                           >
                             <Ionicons name={type.icon} size={16} color={active ? COLORS.white : COLORS.navy} />
+                            <Text style={[styles.pillLabel, active && styles.pillLabelActive]}>{type.label}</Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  )}
+                </TouchableOpacity>
+              )}
+
+              {/* Theater Type Section - collapsible */}
+              {eventType === 'theater' && (
+                <TouchableOpacity
+                  style={styles.sectionCard}
+                  onPress={() => { if (theaterType) setTheaterTypeExpanded(!theaterTypeExpanded); }}
+                  activeOpacity={theaterType ? 0.7 : 1}
+                >
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>What kind of show?</Text>
+                    {theaterType && !theaterTypeExpanded && (
+                      <MaterialCommunityIcons
+                        name={THEATER_TYPES.find(t => t.value === theaterType)?.icon || 'drama-masks'}
+                        size={18}
+                        color={COLORS.navy}
+                      />
+                    )}
+                  </View>
+                  {theaterTypeExpanded && (
+                    <View style={styles.pillGrid}>
+                      {THEATER_TYPES.map((type) => {
+                        const active = theaterType === type.value;
+                        return (
+                          <TouchableOpacity
+                            key={type.value}
+                            style={[styles.pill, active && styles.pillActive]}
+                            onPress={() => handleSelectTheaterType(type.value)}
+                          >
+                            <MaterialCommunityIcons name={type.icon} size={16} color={active ? COLORS.white : COLORS.navy} />
                             <Text style={[styles.pillLabel, active && styles.pillLabelActive]}>{type.label}</Text>
                           </TouchableOpacity>
                         );
