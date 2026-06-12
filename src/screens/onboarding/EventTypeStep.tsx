@@ -77,7 +77,7 @@ export default function EventTypeStep({
             )}
           </View>
 
-          <Text style={styles.title}>What's the type of experience?</Text>
+          <Text style={styles.title}>Let's add your first event</Text>
           <Text style={styles.subtitle}>
             Select the type of a live event you recently went to. This is just your first one, you'll  be able to add more later.
           </Text>

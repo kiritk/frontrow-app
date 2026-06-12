@@ -88,6 +88,7 @@ export default function DetailsStep({
   const [theaterExpanded, setTheaterExpanded] = useState(!value.theaterType);
   const scrollRef = useRef<ScrollView>(null);
   const teamSectionY = useRef(0);
+  const citySectionY = useRef(0);
 
   const isSports = eventType === 'sports';
   const isTeamSport = isSports && (value.sportType === 'nfl' || value.sportType === 'mlb');
@@ -144,6 +145,13 @@ export default function DetailsStep({
     requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({ y: Math.max(teamSectionY.current - 24, 0), animated: true });
     });
+  };
+
+  const handleCityInputFocus = () => {
+    setShowCityDropdown(true);
+    setTimeout(() => {
+      scrollRef.current?.scrollTo({ y: Math.max(citySectionY.current - 24, 0), animated: true });
+    }, 250);
   };
 
   const teamsList: SportTeam[] =
@@ -449,7 +457,12 @@ export default function DetailsStep({
               </View>
             )}
 
-            <View style={[styles.fieldCard, { zIndex: 5 }]}>
+            <View
+              style={[styles.fieldCard, { zIndex: 5 }]}
+              onLayout={(e) => {
+                citySectionY.current = e.nativeEvent.layout.y;
+              }}
+            >
               <Text style={styles.fieldLabel}>EVENT LOCATION</Text>
               {isTeamSport && value.venue ? (
                 <Text style={styles.fieldValue}>{value.venue}</Text>
@@ -472,7 +485,7 @@ export default function DetailsStep({
                             : value.selectedCity,
                       });
                     }}
-                    onFocus={() => setShowCityDropdown(true)}
+                    onFocus={handleCityInputFocus}
                   />
                   {showCityDropdown && cityResults.length > 0 && (
                     <View style={styles.dropdownAbsolute}>

@@ -119,7 +119,9 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         <View style={styles.textBlock}>
           <Text style={styles.title}>Front Row</Text>
           <Text style={styles.description}>
-            Track your favorite live events, experiences, and memories all in one app.
+            Welcome to Front Row, your personal scrapbook for the moments you'll never forget.
+            {'\n\n'}
+            Track the sports, concerts, shows, and live experiences you've attended, all in one place.
           </Text>
         </View>
 
@@ -130,7 +132,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
               pointerEvents="none"
             />
             <Animated.Text style={[styles.sliderLabel, { opacity: labelOpacity }]}>
-              Add your first event
+              Get started
             </Animated.Text>
 
             <View style={styles.chevronGroup} pointerEvents="none">
