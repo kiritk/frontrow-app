@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FBFCFC',
   },
   background: {
-    height: '55%',
+    height: '45%',
     width: '100%',
   },
   backgroundImage: {
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    top: '55%',
+    top: '45%',
     bottom: 0,
   },
   content: {
@@ -193,9 +193,9 @@ const styles = StyleSheet.create({
   },
   description: {
     fontFamily: FONTS.regular,
-    fontSize: 22,
+    fontSize: 20,
     color: COLORS.grayDark,
-    lineHeight: 30,
+    lineHeight: 28,
     marginTop: 16,
   },
   bottomContent: {
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   },
   sliderLabel: {
     textAlign: 'center',
-    fontFamily: FONTS.regular,
+    fontFamily: FONTS.semiBold,
     fontSize: 18,
     color: COLORS.black,
   },
