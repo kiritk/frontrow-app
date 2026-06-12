@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   },
   sliderLabel: {
     textAlign: 'center',
-    fontFamily: FONTS.regular,
+    fontFamily: FONTS.semiBold,
     fontSize: 18,
     color: COLORS.black,
   },
