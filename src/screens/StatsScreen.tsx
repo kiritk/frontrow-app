@@ -66,6 +66,7 @@ export default function StatsScreen() {
             cityCount={cityCount}
             venueCount={venueCount}
             yearCount={yearCount}
+            bumpColor={COLORS.cream}
           />
         </View>
 
