@@ -107,7 +107,12 @@ export default function ProfileScreen({ navigation }: any) {
           >
             <SafeAreaView edges={['top']} style={styles.headerSafeArea}>
               <View style={styles.headerTopRow}>
-                <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={handleClose}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close profile"
+                >
                   <View style={styles.cancelIconCircle}>
                     <Ionicons name="close" size={18} color="rgba(255,255,255,0.85)" />
                   </View>
