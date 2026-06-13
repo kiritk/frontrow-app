@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  Image, ImageBackground, Modal, Alert, Linking,
+  Image, ImageBackground, Modal, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useIsFocused } from '@react-navigation/native';
+import * as WebBrowser from 'expo-web-browser';
 import { useAuth } from '../context/AuthContext';
 import AuthScreen from './AuthScreen';
 import EditProfileScreen from './EditProfileScreen';
@@ -164,13 +165,13 @@ export default function ProfileScreen({ navigation }: any) {
                 <MenuItem
                   icon="chatbubble-ellipses-outline"
                   title="Send Feedback"
-                  onPress={() => Linking.openURL('https://forms.gle/UbZbZCvWLyHw4NXz5')}
+                  onPress={() => WebBrowser.openBrowserAsync('https://forms.gle/UbZbZCvWLyHw4NXz5')}
                 />
                 <View style={styles.divider} />
                 <MenuItem
                   icon="lock-closed-outline"
                   title="Privacy Policy"
-                  onPress={() => Linking.openURL('https://www.front-row.app/privacy.html')}
+                  onPress={() => WebBrowser.openBrowserAsync('https://www.front-row.app/privacy.html')}
                 />
               </View>
 
