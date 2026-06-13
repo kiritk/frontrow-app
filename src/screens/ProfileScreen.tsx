@@ -108,7 +108,9 @@ export default function ProfileScreen({ navigation }: any) {
             <SafeAreaView edges={['top']} style={styles.headerSafeArea}>
               <View style={styles.headerTopRow}>
                 <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
-                  <Text style={styles.cancelText}>Cancel</Text>
+                  <View style={styles.cancelIconCircle}>
+                    <Ionicons name="close" size={18} color="rgba(255,255,255,0.85)" />
+                  </View>
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Profile</Text>
                 <View style={styles.editSlot}>
@@ -248,17 +250,15 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     minWidth: 80,
+    alignItems: 'flex-start',
   },
-  cancelText: {
-    fontFamily: FONTS.medium,
-    fontSize: FONT_SIZES.md,
-    color: 'rgba(255,255,255,0.85)',
+  cancelIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: 'rgba(255,255,255,0.15)',
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    borderRadius: BORDER_RADIUS.full,
-    overflow: 'hidden',
-    textAlign: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   editSlot: {
     minWidth: 80,
