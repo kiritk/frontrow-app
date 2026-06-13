@@ -22,6 +22,7 @@ interface FanCardProps {
   cityCount: number;
   venueCount: number;
   yearCount: number;
+  bumpColor?: string;
 }
 
 const TIER_COLORS: Record<string, string> = {
@@ -74,6 +75,7 @@ function StatCell({ icon, value, label }: { icon: React.ReactNode; value: number
 export default function FanCard({
   fanLevel,
   eventCount, cityCount, venueCount, yearCount,
+  bumpColor = '#F2F2F7',
 }: FanCardProps) {
   const hue = TIER_COLORS[fanLevel] ?? TIER_COLORS.Rookie;
 
@@ -103,15 +105,15 @@ export default function FanCard({
         </Text>
       </View>
 
-      {/* ── Perforation strip with white half-circle bumps that poke outside ── */}
+      {/* ── Perforation strip with half-circle bumps that poke outside ── */}
       <View style={styles.perfStrip}>
-        <View style={[styles.perfBump, styles.perfBumpLeft]} />
+        <View style={[styles.perfBump, styles.perfBumpLeft, { backgroundColor: bumpColor }]} />
         <View style={styles.perfLine}>
           {Array.from({ length: 26 }).map((_, i) => (
             <View key={i} style={styles.perfDash} />
           ))}
         </View>
-        <View style={[styles.perfBump, styles.perfBumpRight]} />
+        <View style={[styles.perfBump, styles.perfBumpRight, { backgroundColor: bumpColor }]} />
       </View>
 
       {/* ── Bottom half (rounded bottom corners only) ── */}
@@ -230,13 +232,13 @@ const styles = StyleSheet.create({
     height: 1.5,
     backgroundColor: 'rgba(255,255,255,0.35)',
   },
-  // Half-circles matching the Your Card page background, whose centers sit exactly on each card edge.
+  // Half-circles whose centers sit exactly on each card edge.
+  // Color is set per-call via the bumpColor prop so the bumps blend into whatever page is hosting the card.
   perfBump: {
     position: 'absolute',
     width: PERF_RADIUS * 2,
     height: PERF_RADIUS * 2,
     borderRadius: PERF_RADIUS,
-    backgroundColor: '#F2F2F7',
     top: (PERF_STRIP_HEIGHT - PERF_RADIUS * 2) / 2,
   },
   perfBumpLeft: {

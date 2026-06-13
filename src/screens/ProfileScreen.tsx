@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  Image, ImageBackground, Modal, Alert,
+  Image, ImageBackground, Modal, Alert, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -55,7 +55,7 @@ function MenuItem({
 }
 
 export default function ProfileScreen({ navigation }: any) {
-  const { user, signOut, profile, updateProfile } = useAuth();
+  const { user, signOut, deleteAccount, profile, updateProfile } = useAuth();
   const isFocused = useIsFocused();
   const [view, setView] = useState<ProfileView>('main');
   const [shareVisible, setShareVisible] = useState(false);
@@ -156,32 +156,69 @@ export default function ProfileScreen({ navigation }: any) {
                 />
                 <View style={styles.divider} />
                 <MenuItem
-                  icon="share-outline"
+                  icon="ticket-outline"
                   title="Share Stats"
                   onPress={() => setShareVisible(true)}
+                />
+                <View style={styles.divider} />
+                <MenuItem
+                  icon="chatbubble-ellipses-outline"
+                  title="Send Feedback"
+                  onPress={() => Linking.openURL('https://forms.gle/UbZbZCvWLyHw4NXz5')}
+                />
+                <View style={styles.divider} />
+                <MenuItem
+                  icon="lock-closed-outline"
+                  title="Privacy Policy"
+                  onPress={() => Linking.openURL('https://www.front-row.app/privacy.html')}
                 />
               </View>
 
               <Text style={styles.sectionLabel}>More</Text>
               <View style={styles.menuCard}>
                 {user ? (
-                  <MenuItem
-                    icon="log-out-outline"
-                    title="Log Out"
-                    titleColor={COLORS.error}
-                    iconBgColor="rgba(239, 68, 68, 0.12)"
-                    iconColor={COLORS.error}
-                    onPress={() =>
-                      Alert.alert(
-                        'Log out',
-                        'Are you sure you want to log out?',
-                        [
-                          { text: 'Cancel', style: 'cancel' },
-                          { text: 'Log out', style: 'destructive', onPress: () => signOut() },
-                        ],
-                      )
-                    }
-                  />
+                  <>
+                    <MenuItem
+                      icon="log-out-outline"
+                      title="Log Out"
+                      titleColor={COLORS.error}
+                      iconBgColor="rgba(239, 68, 68, 0.12)"
+                      iconColor={COLORS.error}
+                      onPress={() =>
+                        Alert.alert(
+                          'Log out',
+                          'Are you sure you want to log out?',
+                          [
+                            { text: 'Cancel', style: 'cancel' },
+                            { text: 'Log out', style: 'destructive', onPress: () => signOut() },
+                          ],
+                        )
+                      }
+                    />
+                    <View style={styles.divider} />
+                    <MenuItem
+                      icon="trash-outline"
+                      title="Delete Account"
+                      subtitle="Permanently remove your account and data"
+                      titleColor={COLORS.error}
+                      iconBgColor="rgba(239, 68, 68, 0.12)"
+                      iconColor={COLORS.error}
+                      onPress={() =>
+                        Alert.alert(
+                          'Delete account?',
+                          'This will permanently delete your account, your saved events, and all photos. This cannot be undone.',
+                          [
+                            { text: 'Cancel', style: 'cancel' },
+                            {
+                              text: 'Delete',
+                              style: 'destructive',
+                              onPress: () => deleteAccount(),
+                            },
+                          ],
+                        )
+                      }
+                    />
+                  </>
                 ) : (
                   <MenuItem
                     icon="link-outline"
