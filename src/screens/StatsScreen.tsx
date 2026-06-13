@@ -13,15 +13,6 @@ import FanCard from '../components/FanCard';
 
 const H_PAD = SPACING.lg;
 
-// ── Card shell helpers ───────────────────────────────────────────────────────
-const CARD_SHADOW = {
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.18,
-  shadowRadius: 12,
-  elevation: 5,
-};
-
 export default function StatsScreen() {
   const navigation = useNavigation<any>();
   const { user, profile, localEventsVersion } = useAuth();
@@ -79,7 +70,7 @@ export default function StatsScreen() {
         </View>
 
         {/* ── Fan Level ─────────────────────────────────────────── */}
-        <View style={[styles.fanLevelCard, CARD_SHADOW]}>
+        <View style={styles.fanLevelCard}>
           <View style={styles.fanLevelHeader}>
             <View>
               <Text style={styles.fanLevelTitle}>Fan Level</Text>
