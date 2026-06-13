@@ -142,6 +142,9 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
 
             <Animated.View
               style={[styles.thumb, { transform: [{ translateX }] }]}
+              accessibilityRole="adjustable"
+              accessibilityLabel="Get started"
+              accessibilityHint="Swipe right to start onboarding"
               {...panResponder.panHandlers}
             >
               <Ionicons name="ticket" size={26} color={COLORS.white} style={styles.ticketIcon} />
