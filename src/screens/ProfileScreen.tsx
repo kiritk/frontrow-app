@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  Image, ImageBackground, Modal, Alert,
+  Image, ImageBackground, Modal, Alert, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -156,9 +156,15 @@ export default function ProfileScreen({ navigation }: any) {
                 />
                 <View style={styles.divider} />
                 <MenuItem
-                  icon="share-outline"
+                  icon="ticket-outline"
                   title="Share Stats"
                   onPress={() => setShareVisible(true)}
+                />
+                <View style={styles.divider} />
+                <MenuItem
+                  icon="chatbubble-ellipses-outline"
+                  title="Send Feedback"
+                  onPress={() => Linking.openURL('https://forms.gle/UbZbZCvWLyHw4NXz5')}
                 />
               </View>
 
