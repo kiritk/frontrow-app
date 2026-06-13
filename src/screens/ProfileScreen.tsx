@@ -166,6 +166,12 @@ export default function ProfileScreen({ navigation }: any) {
                   title="Send Feedback"
                   onPress={() => Linking.openURL('https://forms.gle/UbZbZCvWLyHw4NXz5')}
                 />
+                <View style={styles.divider} />
+                <MenuItem
+                  icon="lock-closed-outline"
+                  title="Privacy Policy"
+                  onPress={() => Linking.openURL('https://www.front-row.app/privacy.html')}
+                />
               </View>
 
               <Text style={styles.sectionLabel}>More</Text>
