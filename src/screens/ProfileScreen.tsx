@@ -6,11 +6,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useIsFocused } from '@react-navigation/native';
-import { useAuth, UserProfile } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import AuthScreen from './AuthScreen';
 import EditProfileScreen from './EditProfileScreen';
 import AboutScreen from './AboutScreen';
 import ShareCardModal from '../components/ShareCardModal';
+import { restartOnboarding } from '../lib/onboardingControl';
+import { getAvatarSource } from '../lib/avatars';
 import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS, FONTS } from '../theme/colors';
 
 const HEADER_COLOR = '#162A45';
@@ -68,9 +70,13 @@ export default function ProfileScreen({ navigation }: any) {
     if (user && view === 'auth') setView('main');
   }, [user, view]);
 
-  const handleSaveProfile = async (data: UserProfile) => {
+  const handleSaveProfile = async (data: {
+    firstName: string;
+    lastName: string;
+    profileImage: string | null;
+  }) => {
     try {
-      await updateProfile(data);
+      await updateProfile({ ...profile, ...data });
       setView('main');
     } catch (error) {
       console.log('Error saving profile:', error);
@@ -130,6 +136,8 @@ export default function ProfileScreen({ navigation }: any) {
             <View style={styles.avatarContainer}>
               {profile.profileImage ? (
                 <Image source={{ uri: profile.profileImage }} style={styles.avatarImage} />
+              ) : getAvatarSource(profile.avatarId) ? (
+                <Image source={getAvatarSource(profile.avatarId)!} style={styles.avatarImage} />
               ) : (
                 <View style={styles.avatarPlaceholder} />
               )}
@@ -296,6 +304,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 3,
     borderColor: '#FFFFFF',
+    backgroundColor: '#FFFFFF',
     marginTop: SPACING.xl,
     marginBottom: SPACING.md,
   },
