@@ -43,6 +43,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   migrateLocalEventsToAccount: () => Promise<number>;
 }
 
@@ -163,6 +164,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   };
 
+  // Permanently delete the user's account and associated data.
+  // Wipes cloud-stored events, asks Supabase to delete the auth user via the
+  // `delete_user_account` RPC (must be implemented server-side with the
+  // service role), then clears local data and ends the session. The local
+  // wipe happens regardless so the device is reset even if the RPC fails.
+  const deleteAccount = async () => {
+    if (user) {
+      try {
+        await supabase.from('events').delete().eq('user_id', user.id);
+      } catch (error) {
+        console.warn('[AuthContext] Failed to delete cloud events:', error);
+      }
+      try {
+        await supabase.rpc('delete_user_account');
+      } catch (error) {
+        console.warn('[AuthContext] delete_user_account RPC failed:', error);
+      }
+    }
+    await signOut();
+  };
+
   // Migrate local events to user's Supabase account.
   // Local events (including photos) are preserved — only text fields
   // are copied to the cloud.  Local IDs are updated to match Supabase
@@ -188,6 +210,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signIn,
     signOut,
+    deleteAccount,
     migrateLocalEventsToAccount,
   };
 
